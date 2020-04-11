@@ -13,7 +13,7 @@
 {-# LANGUAGE
     RecordWildCards
   #-}
-module Main
+module Game.Takuzu.Main
   ( main
   ) where
 

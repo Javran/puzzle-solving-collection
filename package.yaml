@@ -1,12 +1,12 @@
-name:                takuzu-solver
-version:             0.1.0.0
-github:              "Javran/takuzu-solver"
-license:             BSD3
-author:              "Javran Cheng"
-maintainer:          "javran.c@gmail.com"
-copyright:           "Copyright: (c) 2019 Javran Cheng"
+name: takuzu-solver
+version: 0.1.0.0
+github: Javran/takuzu-solver
+license: BSD3
+author: Javran Cheng
+maintainer: javran.c@gmail.com
+copyright: "Copyright: (c) 2020 Javran Cheng"
 
-description:         description
+description: A solver for https://en.wikipedia.org/wiki/Takuzu
 
 dependencies:
 - base
@@ -14,12 +14,23 @@ dependencies:
 - terminfo
 - vector
 
-executables:
-  demo:
-    main:                Main.hs
-    source-dirs:         src
-    ghc-options:
+library:
+  source-dirs: src
+  ghc-options:
     - -Wall
     - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    - -O2
+
+executables:
+  demo:
+    main: Main.hs
+    source-dirs: exe
+    ghc-options:
+      - -main-is Main
+      - -Wall
+      - -threaded
+      - -O2
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - takuzu-solver
