@@ -21,3 +21,7 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+
+/z
+/stack.yaml.lock
+/takuzu-solver.cabal
