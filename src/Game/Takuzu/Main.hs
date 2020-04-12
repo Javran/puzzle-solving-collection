@@ -24,6 +24,7 @@ import qualified Data.Set as S
 import qualified Data.Vector as V
 
 import Game.Takuzu.Solver
+import Game.Takuzu.Parser
 
 {-
   TODO: those examples should be moved to tests.
@@ -46,7 +47,8 @@ exampleRaw0 =
 
 exampleRaw :: [] ([] Char)
 exampleRaw =
-  [ "  b b b     "
+  [ "br 12"
+  , "  b b b     "
   , "b  r   r   b"
   , "     b     r"
   , " b     r  b "
@@ -60,14 +62,10 @@ exampleRaw =
   , "r   b     r "
   ]
 
-example :: [[Maybe Cell]]
-example = (fmap . fmap) tr exampleRaw
+example :: (Int, [[Maybe Cell]])
+example = v
   where
-    tr ' ' = Nothing
-    tr 'r' = Just cRed
-    tr 'b' = Just cBlue
-    tr _ = undefined
-
+    Just v = parseBoard (unlines exampleRaw)
 
 pprBoard :: Terminal -> Board V.Vector -> IO ()
 pprBoard term Board{..} = do
@@ -95,6 +93,7 @@ pprBoard term Board{..} = do
 main :: IO ()
 main = do
   term <- setupTermFromEnv
-  let Just bd = mkBoard 6 example
+  let (sz, bdRaw) = example
+      Just bd = mkBoard (sz `quot` 2) bdRaw
   pprBoard term bd
   pprBoard term $ trySolve bd

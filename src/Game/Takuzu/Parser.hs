@@ -1,7 +1,8 @@
-module Game.Takuzu.Parser where
+module Game.Takuzu.Parser
+  ( parseBoard
+  ) where
 
 import Control.Monad
-import Control.Applicative
 import Data.Char
 import Text.ParserCombinators.ReadP hiding (many)
 
@@ -36,3 +37,8 @@ fullBoard = do
   (colors, sz) <- firstLine
   lns <- replicateM sz $ boardRow colors
   pure (sz, lns)
+
+parseBoard :: String -> Maybe (Int, [[Maybe Cell]])
+parseBoard raw = case readP_to_S (fullBoard <* eof) raw of
+  [(v, "")] -> Just v
+  _ -> Nothing
