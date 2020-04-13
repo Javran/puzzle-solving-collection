@@ -80,6 +80,8 @@ pprBoard term Board{..} = do
       case cell of
         Nothing -> putStr " "
         Just b ->
+          -- NOTE: the fancy, colorful output can be disabled by setting "TERM="
+          -- e.g. "TERM= stack exec -- demo" (note the space after TERM=)
           case getCapability term withForegroundColor of
             Nothing -> putStr $ if b then "1" else "0"
             Just useColor ->

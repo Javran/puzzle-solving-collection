@@ -1,5 +1,6 @@
 {-# LANGUAGE
     RecordWildCards
+  , NamedFieldPuns
   #-}
 module Game.Takuzu.Solver where
 
@@ -49,8 +50,8 @@ mkEmptyBoard halfN = Board {..}
   where
     bdLen = halfN * 2
     bdToFlatInd = index ((0,0), (bdLen-1,bdLen-1))
-    indexes = [0..bdLen-1]
-    bdTodos = S.fromList [(r,c) | r <- indexes, c <- indexes]
+    indices = [0..bdLen-1]
+    bdTodos = S.fromList [(r,c) | r <- indices, c <- indices]
     bdCells = V.fromListN (bdLen * bdLen) (repeat Nothing)
     tbl = S.fromList (mkTable halfN)
     bdRowCandidates = V.fromListN bdLen (repeat tbl)
@@ -62,9 +63,9 @@ mkEmptyBoard halfN = Board {..}
 updateCell :: Coord -> Cell -> Board V.Vector -> Maybe (Board V.Vector)
 updateCell coord@(row,col) cVal bd@Board{..} = do
   let ind = bdToFlatInd coord
-      indexes = [0 .. bdLen-1]
-      rowCoords = [(row,c) | c <- indexes]
-      colCoords = [(r,col) | r <- indexes]
+      indices = [0 .. bdLen-1]
+      rowCoords = [(row,c) | c <- indices]
+      colCoords = [(r,col) | r <- indices]
       bdCells' = bdCells V.// [(ind, Just cVal)]
       getCompleteLine :: [Maybe Cell] -> Maybe CompleteLine
       getCompleteLine = fmap (VU.fromListN bdLen) . sequence
@@ -142,13 +143,13 @@ summarizeLines ls = extractInd <$> [0 .. size-1]
 
 mkBoard :: Int -> [[Maybe Cell]] -> Maybe (Board V.Vector)
 mkBoard halfN rawMatPre =
-    foldM go (mkEmptyBoard halfN) (zip [(r,c) | r <- indexes, c <- indexes] (concat rawMat))
+    foldM go (mkEmptyBoard halfN) (zip [(r,c) | r <- indices, c <- indices] (concat rawMat))
   where
     n = halfN * 2
     go bd (coord, mCell) = case mCell of
       Nothing -> pure bd
       Just cVal -> updateCell coord cVal bd
-    indexes = [0..n-1]
+    indices = [0..n-1]
     -- making it n x n, filling in Nothing.
     rawMat =
       take n $

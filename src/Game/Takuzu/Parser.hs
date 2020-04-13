@@ -4,7 +4,7 @@ module Game.Takuzu.Parser
 
 import Control.Monad
 import Data.Char
-import Text.ParserCombinators.ReadP hiding (many)
+import Text.ParserCombinators.ReadP
 
 import Game.Takuzu.Solver
 
