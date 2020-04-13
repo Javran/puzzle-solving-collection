@@ -43,6 +43,14 @@ exampleRaw1 =
   , "r   b     r "
   ]
 
+areCompatible :: [[Maybe Cell]] -> [[Cell]] -> Bool
+areCompatible inpBd outBd = and $ zipWith rowCompatible inpBd outBd
+  where
+    rowCompatible :: [Maybe Cell] -> [Cell] -> Bool
+    rowCompatible xs ys = and $ zipWith cmp xs ys
+    cmp Nothing _ = True
+    cmp (Just b0) b1 = b0 == b1
+
 expectSolution :: Int -> [[Cell]] -> Expectation
 expectSolution n board = do
   let lengthMatches = LMatch.equalLength (replicate n ())
@@ -73,5 +81,7 @@ spec =
             sz `shouldSatisfy` (> 0)
             Just solved <- pure $ solveBoard sz bd
             expectSolution sz solved
+            -- verify that we do build the solution repecting input board.
+            (bd `areCompatible` solved) `shouldBe` True
     mkExample "example0" exampleRaw0
     mkExample "example1" exampleRaw1
