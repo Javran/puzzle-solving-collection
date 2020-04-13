@@ -21,6 +21,23 @@ library:
     - -threaded
     - -O2
 
+tests:
+  hspec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - utility-ht
+      - takuzu-solver
+      - hspec
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -O2
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -main-is Spec
+
 executables:
   demo:
     main: Main.hs

@@ -216,3 +216,17 @@ tryImprove bd = do
 -- if not, there might be some bug in the algorithm.
 trySolve :: Board V.Vector -> Board V.Vector
 trySolve bd = maybe bd trySolve (tryImprove bd)
+
+toSolution :: Board V.Vector -> Maybe [[Cell]]
+toSolution Board{bdLen, bdCells, bdToFlatInd} = do
+  let indices = [0 .. bdLen-1]
+      getCell coord = bdCells V.! bdToFlatInd coord
+  forM indices $ \row ->
+    forM indices $ \col ->
+      getCell (row, col)
+
+solveBoard :: Int -> [[Maybe Cell]] -> Maybe [[Cell]]
+solveBoard sz bdInpRaw = do
+  (halfL, 0) <- pure $ sz `quotRem` 2
+  bdInp <- mkBoard halfL bdInpRaw
+  toSolution $ trySolve bdInp
