@@ -68,8 +68,12 @@ expectSolution n board = do
   -- verify that resulting board is of n x n.
   board `shouldSatisfy` lengthMatches
   board `shouldSatisfy` all lengthMatches
+  let board' = transpose board
+      noDup xs = xs `LMatch.equalLength` nub xs
   mapM_ expectRow board
   mapM_ expectRow (transpose board)
+  board `shouldSatisfy` noDup
+  board' `shouldSatisfy` noDup
 
 spec :: Spec
 spec =
