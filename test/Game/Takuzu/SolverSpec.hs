@@ -1,5 +1,6 @@
 module Game.Takuzu.SolverSpec where
 
+import Control.Monad
 import Data.List
 import Data.Monoid
 import Test.Hspec
@@ -8,6 +9,7 @@ import qualified Data.List.Match as LMatch
 
 import Game.Takuzu.Parser
 import Game.Takuzu.Solver
+import Paths_takuzu_solver
 
 exampleRaw0 :: [] ([] Char)
 exampleRaw0 =
@@ -88,14 +90,22 @@ expectSolution n board = do
 spec :: Spec
 spec =
   describe "solveBoard" $ do
-    let mkExample name rawInp =
-          specify name $ do
-            Just (sz, bd) <- pure $ parseBoard (unlines rawInp)
+    let solveAndVerifyBoard sz bd = do
             sz `shouldSatisfy` even
             sz `shouldSatisfy` (> 0)
             Just solved <- pure $ solveBoard sz bd
             expectSolution sz solved
             -- verify that we do build the solution respecting input board.
             (bd `areCompatible` solved) `shouldBe` True
+        mkExample name rawInp =
+          specify name $ do
+            Just (sz, bd) <- pure $ parseBoard (unlines rawInp)
+            solveAndVerifyBoard sz bd
     mkExample "example0" exampleRaw0
     mkExample "example1" exampleRaw1
+    specify "data/puzzles.txt" $ do
+      puzzlesFilePath <- getDataFileName "data/puzzles.txt"
+      content <- readFile puzzlesFilePath
+      let parsed = parseBoards content
+      forM_ parsed $ \(sz, bd) ->
+        solveAndVerifyBoard sz bd
