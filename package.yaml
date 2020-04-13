@@ -14,11 +14,13 @@ dependencies:
 - terminfo
 - vector
 
+data-files:
+  data/puzzles.txt
+
 library:
   source-dirs: src
   ghc-options:
     - -Wall
-    - -threaded
     - -O2
 
 tests:

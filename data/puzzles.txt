@@ -1,0 +1,1792 @@
+br 12
+   b     bb 
+   b   b   r
+r r    b    
+ b      r   
+       rr   
+  b  b    r 
+ b rr    b  
+       rr b 
+ b r        
+   r  b     
+r   b   rr  
+r   b       
+====
+br 12
+      rb    
+            
+ b b b  b bb
+ b    r b bb
+    rr      
+   b        
+rr      r  r
+    r     bb
+  r rb b    
+       b   r
+b  b  r  b  
+ b b     r  
+====
+br 12
+   rr   r r 
+  b  r r b  
+ r    b b   
+  bb     r  
+        b   
+r        r r
+  r r r b b 
+ r  r rr   r
+          bb
+     r      
+  r    b   r
+    bb    bb
+====
+br 12
+b r r  r    
+ br   r  r  
+ r   rr   br
+  r     r   
+ r   r    r 
+ r bb r     
+   rr    brr
+     r    r 
+   r  b b  b
+b       bb  
+  rr        
+ r   bb  r  
+====
+br 12
+r br   r  r 
+  b bb   bb 
+   bb     r 
+  b  b  b   
+b     b r b 
+ b b    b rr
+   r b bb   
+br   b r  r 
+            
+r  r   b rr 
+        r rr
+  rrbr brr r
+====
+br 12
+   r        
+ b  bb  r  b
+r    rr r  r
+         b  
+       b    
+ r b  r     
+          r 
+   rr    rr 
+  b  br     
+ r      r  b
+ r  r    b  
+   b     b  
+====
+br 12
+ b        r 
+  r      b  
+      b  b  
+  bb r    r 
+     r  r   
+bb b   b b  
+   b      r 
+    b  rr   
+b   b       
+b  b     b  
+        r  r
+r  rr  r b b
+====
+br 12
+  r  b   rb 
+b  b b r   r
+ b b    r r 
+r        b  
+  b r      b
+  bb   r  r 
+        b   
+        b   
+b  rb  b  r 
+b     r  b  
+   r r    r 
+  r  b    b 
+====
+br 12
+ r r   b   b
+  b b b     
+ r   r r br 
+   b      r 
+  r  r  r  r
+ b b  b   r 
+       br  b
+   r        
+   b rr b  b
+rr      bb  
+    r       
+ r    b    b
+====
+br 12
+rbb  brbr  r
+  brr  bb  b
+b  b    r   
+ brb   b   r
+rrb  b b    
+  brb   b r 
+b   b     rr
+  rb   b   r
+ b  b    rrb
+   b   b  rb
+ b   r  b   
+  r r   rb r
+====
+br 12
+  b       br
+  b rr b    
+           b
+    b      b
+   r r  b   
+ b       r  
+r   r     b 
+  b        r
+r         r 
+    b       
+ rr    r bb 
+ rr  b   bb 
+====
+br 12
+ r   bb bb  
+b b        r
+  b b       
+b  b  b  r  
+ r     r r  
+b    rr     
+  bb r   r  
+       b  b 
+br  bb b b  
+    b       
+ r       b  
+b     br  br
+====
+br 12
+ b       bb 
+   rr   b   
+     b   rb 
+          bb
+b b  r  b   
+   r  b    r
+        b   
+  bb bb     
+rr b  b  b b
+        rr  
+bb  br      
+         r  
+====
+br 12
+   b        
+     br rr r
+b  r  br    
+   b   b  r 
+ b  r  b    
+        r   
+ r b    rr r
+b b b b   b 
+   b  bbr   
+ b    rb  r 
+   br b  r r
+ b    br b b
+====
+br 12
+  r r  bb  b
+b      bb r 
+ r  r       
+     b  b br
+ r rr       
+            
+ r     b bb 
+      b    r
+   b r b  b 
+ r       b r
+ rr b   r   
+  r b    b  
+====
+br 12
+   b b b    
+ b b     r r
+      bb bb 
+b     b     
+  b  b  r   
+ r        b 
+ r  r   r b 
+  b      b  
+ bb b r  bb 
+      bb    
+r  r        
+ b   b     r
+====
+br 12
+r   bb r  b 
+  b b r  br 
+       b r  
+    r  bb  b
+ r r      rr
+  b   r r  b
+ b  b b  b  
+br  r   b   
+rrb r r  br 
+  r br brr  
+b  b   r br 
+rbr   b  bb 
+====
+br 12
+  b  r  b rr
+   b    r   
+ r b b b    
+b   r r     
+   b     bb 
+b         b 
+  r b  r r  
+   r      r 
+     br b   
+ bb r     bb
+           b
+r r  r      
+====
+br 12
+rr   b      
+r  b   r   b
+  b     bb  
+   r  b  b b
+     rb    b
+ r b    r   
+ r   r    b 
+b     b  rb 
+  r b      r
+   r     r  
+b    r rb b 
+  r   b    r
+====
+br 12
+ br     b  r
+ rr  b  bb r
+rr       b  
+   b  r b   
+b   b       
+  r  b   r b
+r     r b  b
+   r    b   
+b          b
+  r   b    b
+r  rb   r r 
+r    rr     
+====
+br 12
+ b         r
+b r   b  bb 
+   r  b  r  
+    b       
+ r       r  
+b   r  b    
+    r r rbr 
+ brr      b 
+b   rb   r  
+        r   
+b br b  rr b
+b b   r    b
+====
+br 12
+ rb  r  b   
+  rr   bb   
+b   r b   b 
+   bb  r  b 
+ r     b b  
+b r br r    
+      b   r 
+rr  b   r   
+ b   b b b  
+brb      b  
+   rr  b    
+b     b     
+====
+br 12
+b   bb    b 
+       b    
+  bb        
+b    b      
+    bb b   r
+r b      b r
+ r  r       
+bb    b     
+b  r b  r br
+   rr b    r
+ r      b   
+ r      b   
+====
+br 12
+          bb
+  b  b      
+r   b  b b  
+rb    bb r  
+ b    b   b 
+r   b       
+  b b       
+r      bb  b
+   r       b
+  b     b   
+b b   r     
+    b  b   b
+====
+br 12
+ r b rr     
+  b b bb  b 
+           r
+b    r   b  
+  rr  br  r 
+b r r   b   
+    r      r
+           r
+ b b  rr  b 
+   bb r  r  
+           b
+    r     r 
+====
+br 12
+  b  bb  rb 
+r    b      
+  rr        
+b b  bb  r r
+ b  r   r  r
+ b r r   b  
+r   r b     
+            
+ r   b   r  
+ rr    b   r
+    bb    r 
+   rb b    b
+====
+br 12
+     b     b
+    b   r  b
+   r  bb  r 
+ b    b  b  
+           r
+  bb   r  r 
+  b   b b  b
+           r
+b  b  b     
+   b    r  r
+  b  r   b  
+b bb b r  rr
+====
+br 12
+brbb b b   r
+ bb r   b  b
+rb   r rr   
+   br bb b r
+rb          
+  r    brbr 
+ rb b    r r
+r    r  b  r
+b rb   b  r 
+b b   rb bb 
+ brrb r  r  
+brr  rbrb rb
+====
+br 12
+  b r  b  r 
+     r b    
+bb r  b b  b
+  r b    r r
+b           
+     b    b 
+ b   r  r bb
+ r    b rb  
+  b  b r  br
+ r r        
+r     b r  b
+r  b  rr  b 
+====
+br 12
+  b     r b 
+ bb   rb    
+     br   r 
+rb b   b    
+ r        b 
+     b r r  
+   br      b
+ r br   b   
+b     b r  r
+r rb r b  rr
+ rbr        
+  b     r rr
+====
+br 12
+    r r    b
+r       b  b
+   b     r  
+    r      r
+br b  rr b  
+ b     b bb 
+ rr         
+    bb  r  r
+bb        r 
+  b r    br 
+r   rb b   r
+r  r    r br
+====
+br 12
+    r rb  rr
+r rr r      
+  b r  bb  b
+b  r rb r   
+  br brb b  
+r b rb   rrb
+  rb rbr  r 
+r       r  b
+    b b  b  
+ rrb  b rr r
+      rrbbrb
+   b       r
+====
+br 12
+   r  r b   
+ bb   rr b  
+b           
+         b b
+rr  r      b
+r   r  rr   
+ b    b   rr
+    r  b  r 
+ b  r   r   
+       br   
+r r  rr    r
+rb b      b 
+====
+br 12
+  b  r   r  
+  r   r   rr
+r    br   r 
+     b r    
+b b    b    
+    bb b  rr
+ r r bb     
+ b    bb r  
+r       r   
+rr r      r 
+b       r   
+rb r   b rb 
+====
+br 12
+  r      r  
+   b  r   b 
+ r   r   r  
+ rr    r  b 
+        b  r
+ r     bb   
+ rr b     b 
+b       b b 
+       b    
+ r r    rr r
+ r   b   b  
+    r       
+====
+br 12
+   r   br  r
+  r       r 
+r rr     r  
+ r  bb b  bb
+  r   r     
+  r b   b  b
+b    b   r b
+  b  r rb   
+   r    b   
+  r       r 
+   b  rb    
+   b   b b b
+====
+br 12
+   r  r   r 
+  r r   rb  
+b    r b  b 
+b       r   
+  b    b  bb
+b  b r      
+    rr     b
+ b     bb b 
+  rr b b   r
+          b 
+          rr
+b  b  b b  r
+====
+br 12
+r   r   b r 
+ br r   bb  
+ b   r      
+  r  r r b  
+          r 
+b  b b     b
+ r     r    
+       rb r 
+  r   r     
+ b b   b    
+    r    r r
+       r   r
+====
+br 12
+r b    b    
+   r r      
+  br   r b b
+  b       r 
+b   r bb    
+        r   
+      r    b
+rb       r  
+r  bb  r  b 
+    b     b 
+   b bb  b b
+ r  br   r  
+====
+br 12
+r r b rrb r 
+  rbb b  rr 
+ b    rb b  
+   r rr    b
+ b   b   r  
+   bb     rb
+b       r bb
+       b   r
+b     b     
+  rr rr r   
+rb       r r
+   b  b r  r
+====
+br 12
+ b  b  bb   
+       bb   
+r  r r      
+   b bb     
+  r      r  
+  r b   b  b
+   r       b
+ r    rb b  
+  b b   r   
+  b       b 
+     r r   r
+r   b    r  
+====
+br 12
+ r  r r    r
+ r rr   r  r
+       r    
+  r    b    
+b     r   bb
+ r  r  bb   
+  r        b
+b        r r
+  r   bb    
+  b      b r
+ r      r r 
+   r  bb    
+====
+br 12
+b b r b b   
+brb  rr     
+      b b b 
+ rbbr b   r 
+br  b  b    
+     rr  r  
+rb b r r    
+          bb
+   rb r rr  
+b b         
+ brb       b
+r  bb  r r  
+====
+br 12
+ r r   b r  
+      rb   r
+      r     
+   r       r
+b b    rr   
+   rr       
+r           
+r r  r  b  r
+       b  r 
+     r      
+   r     rr 
+bb b  b  rb 
+====
+br 12
+   bb brb rb
+bb   r brrb 
+r bb brb br 
+ br br r brb
+   rb    r  
+b r r br   r
+   b br b   
+rr  br b  r 
+ b    r  rb 
+    r   bb b
+ r   b b r  
+b b  b  r br
+====
+br 12
+b           
+b   r       
+      b r  r
+r r r b b   
+ b  r       
+     b  r r 
+  b r    b  
+   b        
+b r     b   
+            
+   bb   bb  
+  b  r   b b
+====
+br 12
+ b   r  bb b
+   rr   b  b
+  rr  r     
+ b     rr rr
+    b       
+   b     r  
+ r   bb b   
+ r          
+b   r  r bb 
+ bb rb    r 
+       b    
+     b b br 
+====
+br 12
+r   b b     
+     r   rr 
+ b    b  r  
+b         b 
+  rr        
+b  r b  b rr
+          b 
+   rr b    b
+     r rr   
+  rr     r  
+       r    
+   r rb   b 
+====
+br 12
+b      r r b
+         r  
+    bb    r 
+ b r   r    
+ b        r 
+b   b r     
+   r   b  r 
+b     r  r  
+   r b r    
+   r   rr  b
+b    b     b
+     b   b  
+====
+br 12
+   r        
+   rr   r  r
+ r    r     
+b  b   b b  
+     b      
+  r   r bb  
+ b     rr   
+   r      b 
+ r      r b 
+   r        
+rr    r r  r
+ rb  rr     
+====
+br 12
+r b     r  r
+   rb     r 
+r   r brb r 
+r    b brbbr
+ rb brb     
+rb b bb  r b
+b   rbr    r
+ rb     rrbb
+    b r r rb
+ b  r   b   
+  r rb b b b
+ r bb b     
+====
+br 12
+  b  r r    
+ b      b   
+b  b b   r  
+b  b  b    b
+ r    b bb  
+   r      r 
+      br   r
+   b  b   b 
+  r     b   
+  r   b  r  
+ b      b b 
+  br    r  r
+====
+br 12
+ b   r rr rr
+           r
+rr  r r  b  
+ r b        
+       bb  b
+rb   r      
+    b  r  r 
+b  r r      
+ b          
+r   r bb  r 
+rb          
+      r rb  
+====
+br 12
+ r          
+ r  rb r b  
+   b      b 
+      r  r b
+r   bb   r  
+    b       
+ r r    r   
+      rr  r 
+r r      b  
+   b      b 
+  r  b  r  r
+rb  r  b   r
+====
+br 12
+ b       bb 
+b  b  r     
+   rb br r r
+b           
+  r       rb
+   r  b rr  
+b  r r    r 
+b      r r b
+  r r      b
+ b   rr     
+   r  r  r  
+  b  r    rb
+====
+br 12
+r    b  r b 
+         b  
+b  b    r   
+  r  b   r  
+b    b b    
+  r   r    r
+  r     r   
+    b  bb bb
+ r bb     r 
+       bb   
+r  b        
+    r  b    
+====
+br 12
+rr   rb   r 
+b    r r   b
+       r    
+ bb r   r b 
+       rr   
+   b        
+ b  rr  bb  
+ b          
+  r     r   
+    rr r br 
+ r    r   r 
+   r r  b   
+====
+br 12
+   b        
+ rr    b    
+r r  b    r 
+         b  
+     b r   r
+   b   r    
+  b rr    b 
+ r        br
+     b  b   
+b  b   b   b
+        r   
+    b rb b r
+====
+br 12
+   r  br   r
+  r    r  b 
+  r r   b   
+r   r  b    
+ r    r b  r
+     rrb   r
+b     br   b
+   rr  r br 
+r    rr r   
+brb  b  r   
+rb   b bb b 
+rbrrb    b b
+====
+br 12
+           b
+    rr b r  
+r b     r   
+ b       b r
+  r   b  b  
+b r r  r    
+     b      
+r r  b    rr
+ b    r     
+   b   bb  b
+        b  b
+r r         
+====
+br 12
+  b r   rb  
+       rr r 
+   b      b 
+  r     r   
+r  r   b    
+ r   b    b 
+    r   r  b
+b r   r     
+      r  bb 
+r b rr  r   
+  bb  r   b 
+           r
+====
+br 12
+ br    b    
+ b     b    
+     b  r b 
+ r   r      
+   r     r r
+   rb  bb   
+r         r 
+r r  rb    b
+    b b  b  
+  r       r 
+b    b  r b 
+ rr     r  r
+====
+br 12
+  r br  b r 
+  b   rbb bb
+     b  r   
+bb  r rr    
+b   b   brr 
+rb r rbb b r
+  bb  b    r
+b   rb b    
+  b  r rr   
+b  brrb rb b
+  r  br     
+  rb brbr rr
+====
+br 12
+   b r   rr 
+r    r    r 
+  b         
+ bb  b   b b
+      r  b  
+    b r    r
+       b   r
+      bb    
+ rr      r  
+r r b    r  
+     r      
+r          r
+====
+br 12
+   r b  rr  
+   rr       
+b     b  b b
+  r    b  r 
+b       r   
+   r        
+  b   b    r
+ r  r     r 
+   b b  rb b
+     b b   b
+  r      b  
+  b     b  b
+====
+br 12
+rbb r  b    
+   r rr    r
+r r      r r
+  b brb bb  
+            
+     rb     
+r  r   r  b 
+ r   b b r b
+b     b r  b
+  b br r  b 
+  r    b rr 
+r br  b     
+====
+br 12
+          r 
+ r r    b  r
+ b  r r   r 
+b       bb  
+  rr  b b   
+br       b  
+   br     r 
+  b r  r b  
+     b    r 
+b b         
+  b  rr  r  
+r   rr   r  
+====
+br 12
+   r b  rr  
+     b rr   
+ b         b
+rr    b b b 
+ r br       
+b  br b   r 
+   r r     b
+b      b  bb
+ r  r       
+   b   r  r 
+bb    b r   
+r r   b    r
+====
+br 12
+b r   r b r 
+    rbr b   
+  r    b bb 
+br r  b rr  
+b          b
+   bb       
+  r     br r
+     b   r  
+  b        b
+    bb r  r 
+ r  rr r r r
+         b  
+====
+br 12
+ r    r b   
+r   rb  b  b
+ r   r      
+ r  b   rr b
+b    b    b 
+ r  rr  r   
+b  b       r
+      bb b  
+    b rr    
+  r      r b
+  r     b  b
+b    b b bb 
+====
+br 12
+ b  br  bb  
+  b b   r   
+      rr r r
+   r  br    
+ br      rr 
+   b bb     
+b  r b  b  r
+      r  r  
+    b r    b
+b      r   b
+ r          
+ rb r    b  
+====
+br 12
+b  r  b     
+r       br  
+   bb     bb
+       rr  b
+     r  b   
+r r    r  r 
+        b  b
+ r b b      
+b b    b    
+   r        
+  b b b bb b
+      bb b  
+====
+br 12
+r r   b   r 
+b r r   r r 
+       b r  
+  b r  b rb 
+r     b     
+  r r      b
+    r   bb  
+     b r    
+  r  b     r
+   bb   r r 
+ b     b    
+          rr
+====
+br 12
+ b     rr   
+   b    rb b
+ rr  rb    b
+  b b  r    
+  r     r r 
+ r    b     
+  r r  r bb 
+ rr   r r  b
+     r   r  
+ r r b  rb  
+       b   b
+bb    r    b
+====
+br 12
+ r    r    r
+    b  r   b
+bb r      r 
+            
+r rr r bb   
+   r r   r  
+bb      b   
+ b r b r  b 
+        b   
+b  r b b bb 
+     b      
+  r     b b 
+====
+br 12
+ b bb   b   
+ b         r
+  r r   r   
+b r r rb   r
+      rb r  
+r  r       b
+     b r rr 
+     b      
+ b     rr   
+ r br b   bb
+b           
+ r  r b  r  
+====
+br 12
+   b  r  bb 
+b           
+ b b r  b rr
+ b b  b bb  
+    r       
+  r    r    
+r r      bb 
+    b     b 
+rr    b r   
+         r r
+r r rr  r   
+    br      
+====
+br 12
+  b r  br   
+    r   b   
+r  rbb b  r 
+rr        rb
+ r   r r   r
+r  r b  bbr 
+  b b    b b
+  b   b     
+r r rbr     
+ b     r rbb
+   r r  rbrr
+r    bbr r  
+====
+br 12
+  r  r rb b 
+ r  b    r  
+  b     r b 
+ rr   r  r  
+        b r 
+   b   r   b
+r r     b   
+  rr r br   
+   b  r r  b
+          b 
+b rr      r 
+ br   r    b
+====
+br 12
+ b rr r  r r
+   rb       
+ b        br
+bb         r
+   b   bb   
+ r  r r b r 
+b      r    
+            
+b  b  r     
+          b 
+  r r r  r  
+           r
+====
+br 12
+     b   b  
+ bb r   b   
+    r       
+ b r  b br  
+ b r       b
+        bb  
+    rr    rr
+ b     r    
+      b r  r
+r r  r  r r 
+    r b     
+r     br r  
+====
+br 12
+b rb b  b  b
+  r        b
+ b   br  r r
+r  r  rr    
+  rbr     bb
+r        b  
+    bb   r b
+ rr     r  b
+  bb b   b  
+ b          
+rr   b b  bb
+ rb r  b  b 
+====
+br 12
+ bb      b b
+bb r  r r   
+      r     
+            
+  rr     r  
+ r   rr    b
+        b r 
+b  r r    r 
+ b    bb    
+r  b        
+   bb   bb  
+       r    
+====
+br 12
+ r       b  
+     r   b b
+     rr     
+r b   rr  r 
+ b r        
+     rr     
+ b b   b b  
+  bb     b  
+r       r   
+ r  b       
+   r  r  r r
+b r         
+====
+br 12
+    b   r   
+   r     r  
+  rr b  r  b
+rr       bb 
+ r    b     
+       r r  
+  b       b 
+ r r  r    b
+    bb   rr 
+       b    
+ r          
+  b  r  rr  
+====
+br 12
+ b b       r
+r      r   r
+   rr r   r 
+  r   r b r 
+r   r  b b  
+r  r      r 
+ b   b  b  r
+bb    r   b 
+   b     r  
+ r  r b    r
+   b     b  
+r   r b  b  
+====
+br 12
+  b b b b bb
+    r  r  r 
+ r r    b  b
+ r  bb   r r
+       b    
+b    rr   r 
+            
+  r r r     
+b r       b 
+r     rr r  
+ b    br    
+  rr        
+====
+br 12
+  r  b    b 
+   r    b b 
+b     r bb  
+bb  bbr     
+  r      r  
+     b      
+r rr    r b 
+    rr b    
+rb          
+   bb    r  
+b b r rr r  
+b  br  r b r
+====
+br 12
+brr  rrbr bb
+ r r  r rbr 
+ b   b   b  
+b r  rb    r
+    b r    b
+ r b  bb r  
+  r     rb b
+ br bb   b  
+   b     r b
+   bb  b b b
+b      r   r
+r r         
+====
+br 12
+    r      b
+          r 
+ r rr      b
+rr  b r   r 
+b          r
+  rr    r   
+b    b     b
+     bb r   
+ b bb b   r 
+       r   r
+  b  r   r  
+r  r        
+====
+br 12
+rbb     bb  
+  b r b     
+ r    b  b r
+r rb        
+ r r     r b
+b   b  r  r 
+   b r  b   
+b   r    rr 
+ r br       
+        b   
+brr r  r br 
+  r         
+====
+br 12
+ b r bb  br 
+   r  r   r 
+       b    
+ b    b     
+r  b r  b   
+     b      
+ b b   bb   
+        rr b
+b b r       
+ bb r r     
+       r   b
+b b     rr  
+====
+br 12
+brr  b br  r
+r  r r   b  
+   rb      b
+b b  r      
+     rr b   
+ b r     rb 
+b  b        
+ br    b br 
+r rb  r   r 
+    br  b   
+        r b 
+   r bbr    
+====
+br 12
+ rr b  r    
+  r  rb b b 
+           b
+b     b br  
+b  b      r 
+    b rbb   
+ rb b      r
+   b      r 
+ b b  b  b  
+b    r   b  
+ b      r   
+b  r   bb b 
+====
+br 12
+     r r  r 
+ bb r  r  rr
+bb          
+   b   b    
+  r b    bb 
+    b r   r 
+  r         
+ r     r  rb
+ rb        b
+     b      
+  b bb  b   
+ rb   r    r
+====
+br 12
+rr    r b   
+b    b     r
+  b r     b 
+  b r b rr  
+b           
+b   b  b   b
+ b b     b  
+ b  b   b   
+  r  r r  r 
+ r  b     rb
+  b         
+    r    bb 
+====
+br 12
+ b   bb     
+r    r  rb b
+    r   rb  
+  bb b      
+rr     r  r 
+   r        
+r    b  r   
+ r        rr
+    bb   b  
+  br   b    
+r     r  b  
+ r r        
+====
+br 12
+   r     b  
+  b   br   b
+    r    r  
+rb b  b   b 
+  rr b  b b 
+     b  r   
+b  b  bbr   
+b    r b   b
+ r b  r   r 
+  bb     b  
+rb    r r   
+r  r        
+====
+br 12
+bb  r   b  b
+   r b   r  
+r r       r 
+b r  r   r b
+   r   bb   
+ rr   b     
+       r  r 
+r r  b      
+ r    r     
+b b  rr     
+         bb 
+    bb  r   
+====
+br 12
+rr  r  b   b
+r  b   b    
+ r   r   r  
+   r  b     
+  b       r 
+ b     rr   
+         rr 
+r  b bb     
+r r    r    
+ rr         
+r     b b b 
+  rb r r r  
+====
+br 12
+  r   r b b 
+r b r   b r 
+b    b      
+  b r  b  r 
+      r  r  
+r   b b   r 
+   bb  r  b 
+rb b   r    
+r    b    r 
+   r     r  
+ b      bb  
+      b   b 
+====
+br 12
+   r        
+bb   bb     
+b r      r b
+       b    
+   bb  b  rr
+        bb r
+ bb r  b    
+       b r b
+b    r      
+ b bb    b  
+  r     r   
+    b    r  
+====
+br 12
+        b r 
+  b  bb   bb
+ bb bb      
+ b      b   
+         r  
+      b  b  
+ r  r  r  r 
+b    r   b  
+  rr    r   
+r r      bb 
+    r r     
+          rr
+====
+br 12
+            
+  b  r     r
+   r      b 
+  b b  r    
+r r     b   
+ b   b  b b 
+            
+  r        r
+ b  b b   b 
+   r  b b  r
+ b      bb  
+  rr rr     
+====
+br 12
+b     bb  b 
+           b
+ rr  r  rr  
+b           
+     b b  r 
+bb  r bb b  
+            
+b   b b   b 
+  r b    r  
+b r      b b
+ r  bb b    
+      r     
+====
+br 12
+b      br   
+r rrb     r 
+ r   bbr    
+   b b    b 
+   b r    bb
+ b rr   b   
+       r   b
+rb r      r 
+   r  b     
+ rr  rr  r  
+b    b    r 
+  bb bb  rb 
+====
+br 12
+ bb   r  b  
+r      b  r 
+  r  r b   r
+   r r     r
+ r  b   r   
+      r r   
+          b 
+b b   bb    
+   r        
+ r r        
+  b  bb b  b
+        b r 
+====
+br 12
+b b     r  r
+          b 
+r  br     b 
+ b  r b     
+   b  b     
+  b       b 
+ r    b     
+ r   b   bb 
+  b r     b 
+ r    b     
+  b  bb    b
+  b     rr  
+====
+br 12
+     b      
+b   r   r  b
+      b   r 
+r rr        
+ rb b r rr  
+br     b    
+   r  r  b  
+ b  b      b
+r     b b b 
+  b  b      
+ r      r rr
+b     b  bb 
+====
+br 12
+b    r   b  
+ r  r   r   
+b   r   r br
+           b
+ br r br    
+ b b      rr
+     r  r   
+  b b  b rbb
+       r  b 
+ b r rb    b
+   r   r r  
+  r rbr  rbb
+====
+br 12
+ br   r     
+    b rr    
+ rr      r  
+   b    rr b
+ r   br     
+r        b b
+r b       r 
+    b bb    
+   r r  r   
+ r      br  
+      r   b 
+b  rr   r  r
+====
+br 12
+  b    r  b 
+     bb b   
+ rr   b   r 
+r         b 
+  r b  b    
+r rr   bb   
+     b   r  
+          b 
+ r          
+   b  rr  r 
+r   r       
+ bb  b    b 
+====
+br 12
+ r  br   b b
+  b b b   b 
+       r r  
+   b    b bb
+ r  bb      
+ r  r  r    
+     r   bb 
+    b     r 
+  r  r  b  r
+r r bb      
+       b  b 
+   b b  rr  
+====
+br 12
+rr    rr    
+b  r     r  
+    b  r  b 
+      r     
+ r b r b  b 
+ r  rr  r   
+  r        r
+       r  br
+ b b      b 
+r rb b      
+      rr  b 
+r  b      b 
+====
+br 12
+   b        
+  r   b  bb 
+  r br  r   
+b  b       b
+        rr b
+rb b b      
+     r  bb  
+  b        r
+rr  b      b
+   bb  r r  
+b b      b b
+    bb  b   
+====
+br 12
+bb b r r b r
+  r   r br  
+   r  b rr  
+  b   b r rr
+rbr b rb    
+      brb   
+b   r  r  br
+ b b b b brb
+bb r   b  b 
+ rb    rb br
+r rb    r   
+r  b      b 
+====
+br 12
+  r b       
+b    r     b
+ r r    rr  
+b  r        
+  r   b b   
+r r    r  bb
+    b     b 
+    r b     
+r b      r r
+r r   b b   
+   b r  b b 
+ b       r  
+====
+br 12
+ rr  b b    
+       r r  
+ r rr      r
+      b b   
+b   rr  r b 
+r      b    
+   r  b b  b
+   r       b
+    b  r  r 
+     b    b 
+ b b   rr   
+         bb 
+====
+br 12
+ b  rr     r
+   b      bb
+      r r  b
+ b   b b  b 
+ b  r b    b
+       rb   
+b  b  bb  b 
+rr  br    r 
+ r b   r r  
+     b b r  
+ r  r b   rb
+b b      rr 
+====
+br 12
+ r  r     b 
+    b  r rb 
+ b r        
+ b      b r 
+  bb r      
+     r  bb b
+   r      r 
+ r     r    
+  r b b   b 
+r    b      
+ bb    r    
+  b  b   r  
+====
+br 12
+    bb r  b 
+ bb b     br
+   br b     
+  rb  r  r b
+  b br   r  
+br          
+b  r r r   r
+ b       rb 
+r r r  bb   
+  b  brb br 
+r       r br
+rb  rb b r  
+====
+br 12
+  b     b b 
+  b    bb  r
+ r    r     
+  bb b   b b
+    b       
+   b   r b  
+  r  b   b  
+     b  r   
+      r    r
+    b     b 
+ bb    b    
+         b  
+====
+br 12
+ b   b     b
+  r  b  rr  
+ r       r r
+ r b       r
+   bb  b b  
+r   bb      
+ rr    b    
+    r b   b 
+        r   
+ rr r   r   
+  r    b    
+b       rb  
+====
+br 12
+   r  r   b 
+ b r  rr   b
+br          
+         b r
+   r        
+ b   bb b   
+bb     r  r 
+    r    b b
+bb          
+ b r rr b   
+   r   bb  b
+  r r     r 
+====
+br 12
+     r    bb
+        r  b
+   b   br b 
+br  b  b    
+rr   r     b
+  b         
+    b       
+b  r  r   r 
+  r    b    
+    r   rr  
+ r      r b 
+           r
+====
+br 12
+ b     bb   
+   r        
+b    r b    
+ rr  r      
+  rb   r r  
+            
+r  b  rr  r 
+ b b        
+      r  rr 
+ b b b  b  b
+            
+ bb   r     
+====
+br 12
+ r r rr  b  
+r    r r    
+r         rr
+   rr       
+b   r   b   
+   b    bb  
+          r 
+            
+ rr b      b
+b  rb    b  
+ b      b bb
+  r r  r b  
+====
+br 12
+ r   r    r 
+rr       r  
+       r    
+r  b   r  rr
+ b  r    b  
+   b        
+  r   b     
+     r    b 
+     r rb  r
+ r b  b b   
+    r    r  
+   b  b  r  
+====

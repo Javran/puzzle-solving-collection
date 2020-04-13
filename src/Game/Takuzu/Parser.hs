@@ -1,5 +1,6 @@
 module Game.Takuzu.Parser
   ( parseBoard
+  , parseBoards
   ) where
 
 import Control.Monad
@@ -38,7 +39,15 @@ fullBoard = do
   lns <- replicateM sz $ boardRow colors
   pure (sz, lns)
 
+inputSep :: ReadP ()
+inputSep = () <$ (munch (== '=') >> char '\n')
+
 parseBoard :: String -> Maybe (Int, [[Maybe Cell]])
 parseBoard raw = case readP_to_S (fullBoard <* eof) raw of
   [(v, "")] -> Just v
   _ -> Nothing
+
+parseBoards :: String -> [(Int, [[Maybe Cell]])]
+parseBoards raw = case readP_to_S (many1 (fullBoard <* inputSep) <* eof) raw of
+  [(v, "")] -> v
+  _ -> []
