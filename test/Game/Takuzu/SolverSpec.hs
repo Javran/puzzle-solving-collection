@@ -43,6 +43,11 @@ exampleRaw1 =
   , "r   b     r "
   ]
 
+-- check whether input board and output board are compatible,
+-- in other words, if one cell of the input board is known,
+-- it should never be changed in the output board.
+-- this function assumes that both input and output board are of the same size
+-- in every dimension.
 areCompatible :: [[Maybe Cell]] -> [[Cell]] -> Bool
 areCompatible inpBd outBd = and $ zipWith rowCompatible inpBd outBd
   where
@@ -56,8 +61,12 @@ expectSolution n board = do
   let lengthMatches = LMatch.equalLength (replicate n ())
       expectRow :: [Cell] -> Expectation
       expectRow row = do
+          -- "same # of red / blue cell" rule.
           blueCount `shouldBe` redCount
           (blueCount + redCount) `shouldBe` n
+          -- "no more than two consecutive of the same color" rule.
+          group row `shouldSatisfy`
+            all (`LMatch.lessOrEqualLength` [(), ()])
         where
           (Sum blueCount, Sum redCount) = foldMap go row
           go c
@@ -72,6 +81,7 @@ expectSolution n board = do
       noDup xs = xs `LMatch.equalLength` nub xs
   mapM_ expectRow board
   mapM_ expectRow (transpose board)
+  -- "no two row/cols are the same" rule.
   board `shouldSatisfy` noDup
   board' `shouldSatisfy` noDup
 
@@ -85,7 +95,7 @@ spec =
             sz `shouldSatisfy` (> 0)
             Just solved <- pure $ solveBoard sz bd
             expectSolution sz solved
-            -- verify that we do build the solution repecting input board.
+            -- verify that we do build the solution respecting input board.
             (bd `areCompatible` solved) `shouldBe` True
     mkExample "example0" exampleRaw0
     mkExample "example1" exampleRaw1
