@@ -49,12 +49,17 @@ getCell Board{bdLen, bdCells} coord = bdCells V.! toFlatInd coord
   where
     toFlatInd = index ((0,0), (bdLen-1,bdLen-1))
 
-mkEmptyBoard :: Int -> Board V.Vector
-mkEmptyBoard halfN = Board {..}
+allCoords :: Board V.Vector -> [Coord]
+allCoords Board{bdLen} = [(r,c) | r <- indices, c <- indices]
   where
-    bdLen = halfN * 2
     indices = [0..bdLen-1]
-    bdTodos = S.fromList [(r,c) | r <- indices, c <- indices]
+
+mkEmptyBoard :: Int -> Board V.Vector
+mkEmptyBoard halfN = bd
+  where
+    bd = Board {..}
+    bdLen = halfN * 2
+    bdTodos = S.fromList (allCoords bd)
     bdCells = V.fromListN (bdLen * bdLen) (repeat Nothing)
     tbl = S.fromList (mkTable halfN)
     bdRowCandidates = V.fromListN bdLen (repeat tbl)
@@ -147,13 +152,14 @@ summarizeLines ls = extractInd <$> [0 .. size-1]
 
 mkBoard :: Int -> [[Maybe Cell]] -> Maybe (Board V.Vector)
 mkBoard halfN rawMatPre =
-    foldM go (mkEmptyBoard halfN) (zip [(r,c) | r <- indices, c <- indices] (concat rawMat))
+    foldM go bdInit (zip coords (concat rawMat))
   where
+    bdInit = mkEmptyBoard halfN
+    coords = allCoords bdInit
     n = halfN * 2
     go bd (coord, mCell) = case mCell of
       Nothing -> pure bd
       Just cVal -> updateCell coord cVal bd
-    indices = [0..n-1]
     -- making it n x n, filling in Nothing.
     rawMat =
       take n $
