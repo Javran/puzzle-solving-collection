@@ -38,18 +38,21 @@ type Coord = (Int, Int) -- (row, col), 0-based
 data Board vec
   = Board
   { bdLen :: Int -- | n, total length of the board.
-  , bdToFlatInd :: Coord -> Int -- | function to convert from coordinate to to linear index
   , bdTodos :: S.Set Coord -- | coords of those not yet filled cells.
   , bdCells :: vec (Maybe Cell) -- | vector of size n * n, use Data.Ix for indexing.
   , bdRowCandidates :: vec (S.Set CompleteLine) -- | candidates that can be filled to that row, size=n
   , bdColCandidates :: vec (S.Set CompleteLine) -- | same as bdRowCandidates but for columns.
   }
 
+getCell :: Board V.Vector -> Coord -> Maybe Cell
+getCell Board{bdLen, bdCells} coord = bdCells V.! toFlatInd coord
+  where
+    toFlatInd = index ((0,0), (bdLen-1,bdLen-1))
+
 mkEmptyBoard :: Int -> Board V.Vector
 mkEmptyBoard halfN = Board {..}
   where
     bdLen = halfN * 2
-    bdToFlatInd = index ((0,0), (bdLen-1,bdLen-1))
     indices = [0..bdLen-1]
     bdTodos = S.fromList [(r,c) | r <- indices, c <- indices]
     bdCells = V.fromListN (bdLen * bdLen) (repeat Nothing)
@@ -62,7 +65,7 @@ mkEmptyBoard halfN = Board {..}
 -- Update a unknown cell in the board while still keep board fields valid.
 updateCell :: Coord -> Cell -> Board V.Vector -> Maybe (Board V.Vector)
 updateCell coord@(row,col) cVal bd@Board{..} = do
-  let ind = bdToFlatInd coord
+  let ind = index ((0,0), (bdLen-1,bdLen-1)) coord
       indices = [0 .. bdLen-1]
       rowCoords = [(row,c) | c <- indices]
       colCoords = [(r,col) | r <- indices]
@@ -73,8 +76,8 @@ updateCell coord@(row,col) cVal bd@Board{..} = do
       rowCandidate = S.filter (\ln -> ln VU.! col == cVal) (bdRowCandidates V.! row)
       colCandidate = S.filter (\ln -> ln VU.! row == cVal) (bdColCandidates V.! col)
       -- TODO: we can totally avoid vector creation by extracting CompleteLine from candidate.
-      rowComplete = getCompleteLine (fmap ((bdCells' V.!) . bdToFlatInd) rowCoords)
-      colComplete = getCompleteLine (fmap ((bdCells' V.!) . bdToFlatInd) colCoords)
+      rowComplete = getCompleteLine (fmap (getCell bd') rowCoords)
+      colComplete = getCompleteLine (fmap (getCell bd') colCoords)
       bdRowCandidates' = V.imap upd bdRowCandidates
         where
           upd r cs =
@@ -94,15 +97,16 @@ updateCell coord@(row,col) cVal bd@Board{..} = do
                 case colComplete of
                   Nothing -> cs
                   Just cl -> S.delete cl cs
+      bd' = bd
+        { bdTodos = S.delete coord bdTodos
+        , bdCells = bdCells'
+        , bdRowCandidates = bdRowCandidates'
+        , bdColCandidates = bdColCandidates'
+        }
   guard $ coord `S.member` bdTodos
   guard $ V.all (not . S.null) bdRowCandidates'
   guard $ V.all (not . S.null) bdColCandidates'
-  pure bd
-    { bdTodos = S.delete coord bdTodos
-    , bdCells = bdCells'
-    , bdRowCandidates = bdRowCandidates'
-    , bdColCandidates = bdColCandidates'
-    }
+  pure bd'
 
 
 {-
@@ -218,12 +222,11 @@ trySolve :: Board V.Vector -> Board V.Vector
 trySolve bd = maybe bd trySolve (tryImprove bd)
 
 toSolution :: Board V.Vector -> Maybe [[Cell]]
-toSolution Board{bdLen, bdCells, bdToFlatInd} = do
+toSolution bd@Board{bdLen} = do
   let indices = [0 .. bdLen-1]
-      getCell coord = bdCells V.! bdToFlatInd coord
   forM indices $ \row ->
     forM indices $ \col ->
-      getCell (row, col)
+      getCell bd (row, col)
 
 solveBoard :: Int -> [[Maybe Cell]] -> Maybe [[Cell]]
 solveBoard sz bdInpRaw = do

@@ -68,7 +68,7 @@ example = v
     Just v = parseBoard (unlines exampleRaw)
 
 pprBoard :: Terminal -> Board V.Vector -> IO ()
-pprBoard term Board{..} = do
+pprBoard term bd@Board{..} = do
   putStrLn $ "Side length: " <> show bdLen
   putStrLn $ "Pending cells: " <> show (S.size bdTodos)
   putStrLn $ "Row candidate counts: " <> show (V.map S.size bdRowCandidates)
@@ -76,7 +76,7 @@ pprBoard term Board{..} = do
   putStrLn "++++ Board Begin ++++"
   forM_ [0..bdLen-1] $ \r -> do
     forM_ [0..bdLen-1] $ \c -> do
-      let cell = bdCells V.! bdToFlatInd (r,c)
+      let cell = getCell bd (r,c)
       case cell of
         Nothing -> putStr " "
         Just b ->
