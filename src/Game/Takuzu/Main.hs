@@ -67,7 +67,7 @@ example = v
   where
     Just v = parseBoard (unlines exampleRaw)
 
-pprBoard :: Terminal -> Board V.Vector -> IO ()
+pprBoard :: Terminal -> Board -> IO ()
 pprBoard term bd@Board{..} = do
   putStrLn $ "Side length: " <> show bdLen
   putStrLn $ "Pending cells: " <> show (S.size bdTodos)

@@ -35,26 +35,26 @@ type Coord = (Int, Int) -- (row, col), 0-based
   also we should also update bdXXXCandidates when a line is fully completed - candidates other that that row/col
   now needs to exclude that specific CompleteLine following game rule.
  -}
-data Board vec
+data Board
   = Board
   { bdLen :: Int -- | n, total length of the board.
   , bdTodos :: S.Set Coord -- | coords of those not yet filled cells.
-  , bdCells :: vec (Maybe Cell) -- | vector of size n * n, use Data.Ix for indexing.
-  , bdRowCandidates :: vec (S.Set CompleteLine) -- | candidates that can be filled to that row, size=n
-  , bdColCandidates :: vec (S.Set CompleteLine) -- | same as bdRowCandidates but for columns.
+  , bdCells :: V.Vector (Maybe Cell) -- | vector of size n * n, use Data.Ix for indexing.
+  , bdRowCandidates :: V.Vector (S.Set CompleteLine) -- | candidates that can be filled to that row, size=n
+  , bdColCandidates :: V.Vector (S.Set CompleteLine) -- | same as bdRowCandidates but for columns.
   }
 
-getCell :: Board V.Vector -> Coord -> Maybe Cell
+getCell :: Board -> Coord -> Maybe Cell
 getCell Board{bdLen, bdCells} coord = bdCells V.! toFlatInd coord
   where
     toFlatInd = index ((0,0), (bdLen-1,bdLen-1))
 
-allCoords :: Board V.Vector -> [Coord]
+allCoords :: Board -> [Coord]
 allCoords Board{bdLen} = [(r,c) | r <- indices, c <- indices]
   where
     indices = [0..bdLen-1]
 
-mkEmptyBoard :: Int -> Board V.Vector
+mkEmptyBoard :: Int -> Board
 mkEmptyBoard halfN = bd
   where
     bd = Board {..}
@@ -68,7 +68,7 @@ mkEmptyBoard halfN = bd
 -- TODO: reduce duplication
 
 -- Update a unknown cell in the board while still keep board fields valid.
-updateCell :: Coord -> Cell -> Board V.Vector -> Maybe (Board V.Vector)
+updateCell :: Coord -> Cell -> Board -> Maybe Board
 updateCell coord@(row,col) cVal bd@Board{..} = do
   let ind = index ((0,0), (bdLen-1,bdLen-1)) coord
       indices = [0 .. bdLen-1]
@@ -150,7 +150,7 @@ summarizeLines ls = extractInd <$> [0 .. size-1]
     extractInd i = S.fromList ((VU.! i) <$> ls)
     size = VU.length (head ls)
 
-mkBoard :: Int -> [[Maybe Cell]] -> Maybe (Board V.Vector)
+mkBoard :: Int -> [[Maybe Cell]] -> Maybe Board
 mkBoard halfN rawMatPre =
     foldM go bdInit (zip coords (concat rawMat))
   where
@@ -167,7 +167,7 @@ mkBoard halfN rawMatPre =
         <> repeat (replicate n Nothing)
 
 -- Improve a specific row by applying summarizeLines on it.
-improveRowAux :: Int -> Board V.Vector -> Board V.Vector
+improveRowAux :: Int -> Board -> Board
 improveRowAux row bd@Board{..} = bd'
   where
     summarized :: [] (Coord, S.Set Cell)
@@ -177,12 +177,12 @@ improveRowAux row bd@Board{..} = bd'
           summarizeLines $ S.toList $ bdRowCandidates V.! row
     bd' = foldl go bd summarized
       where
-        go :: Board V.Vector -> (Coord, S.Set Cell) -> Board V.Vector
+        go :: Board -> (Coord, S.Set Cell) -> Board
         go curBd (coord, cs)
           | [val] <- S.elems cs = fromMaybe curBd (updateCell coord val curBd)
           | otherwise = curBd
 
-improveColAux :: Int -> Board V.Vector -> Board V.Vector
+improveColAux :: Int -> Board -> Board
 improveColAux col bd@Board{..} = bd'
   where
     summarized :: [] (Coord, S.Set Cell)
@@ -192,14 +192,14 @@ improveColAux col bd@Board{..} = bd'
           summarizeLines $ S.toList $ bdColCandidates V.! col
     bd' = foldl go bd summarized
       where
-        go :: Board V.Vector -> (Coord, S.Set Cell) -> Board V.Vector
+        go :: Board -> (Coord, S.Set Cell) -> Board
         go curBd (coord, cs)
           | [val] <- S.elems cs = fromMaybe curBd (updateCell coord val curBd)
           | otherwise = curBd
 
 -- as the candidate can only be eliminated but never added, we can tell whether
 -- a Board is actually be updated by looking at whether candidateCount changes.
-candidateCount :: Board V.Vector -> Int
+candidateCount :: Board -> Int
 candidateCount Board{..} =
     getSum $ collect bdRowCandidates <> collect bdColCandidates
   where
@@ -210,7 +210,7 @@ candidateCount Board{..} =
 -- for now update order is not very specific and only guarantees completeness.
 -- in other words, if there's a line that can be updated, a single round of tryImprove
 -- should at least reduce the amount of candidates.
-tryImprove :: Board V.Vector -> Maybe (Board V.Vector)
+tryImprove :: Board -> Maybe Board
 tryImprove bd = do
   let todoRows = S.toList $ S.map fst (bdTodos bd)
       todoCols = S.toList $ S.map snd (bdTodos bd)
@@ -224,10 +224,10 @@ tryImprove bd = do
 -- improve a Board repeated until it cannot be improved further
 -- For a board that has single solution, we should be able to find the solution this way,
 -- if not, there might be some bug in the algorithm.
-trySolve :: Board V.Vector -> Board V.Vector
+trySolve :: Board -> Board
 trySolve bd = maybe bd trySolve (tryImprove bd)
 
-toSolution :: Board V.Vector -> Maybe [[Cell]]
+toSolution :: Board -> Maybe [[Cell]]
 toSolution bd@Board{bdLen} = do
   let indices = [0 .. bdLen-1]
   forM indices $ \row ->
