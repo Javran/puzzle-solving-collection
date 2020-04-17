@@ -1,2 +1,3 @@
-# takuzu-solver
-A solver for https://en.wikipedia.org/wiki/Takuzu
+# Puzzle Solving Collection
+
+A set of packages for solving puzzles.
