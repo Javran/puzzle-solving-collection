@@ -1,6 +1,6 @@
 name: takuzu-solver
 version: 0.1.0.0
-github: Javran/takuzu-solver
+github: Javran/puzzle-solving-collection
 license: BSD3
 author: Javran Cheng
 maintainer: javran.c@gmail.com

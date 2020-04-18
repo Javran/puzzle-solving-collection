@@ -239,3 +239,23 @@ solveBoard sz bdInpRaw = do
   (halfL, 0) <- pure $ sz `quotRem` 2
   bdInp <- mkBoard halfL bdInpRaw
   toSolution $ trySolve bdInp
+
+genMoves :: Board -> Board -> [(Coord, Cell)]
+genMoves bdOrig bdAfter = concatMap toMove [(r,c) | r <- [0..l-1], c <- [0..l-1]]
+  where
+    l = bdLen bdOrig
+    toMove coord = case (getCell bdOrig coord, getCell bdAfter coord) of
+      (Just _, _) -> []
+      (Nothing, Just b) -> [(coord, b)]
+      _ -> []
+
+boardToInput :: Board -> [String]
+boardToInput bd =
+    "br 12" : bdLines
+  where
+    -- since we are only dealing with 12x12 puzzles.
+    bdLines = map mkBdLine [0..11]
+    mkBdLine row = map (\col -> tr $ getCell bd (row,col)) [0..11]
+      where
+        tr Nothing = ' '
+        tr (Just b) = if b == cRed then 'r' else 'b'
