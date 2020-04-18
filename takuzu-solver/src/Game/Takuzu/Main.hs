@@ -67,30 +67,6 @@ example = v
   where
     Just v = parseBoard (unlines exampleRaw)
 
-pprBoard :: Terminal -> Board -> IO ()
-pprBoard term bd@Board{..} = do
-  putStrLn $ "Side length: " <> show bdLen
-  putStrLn $ "Pending cells: " <> show (S.size bdTodos)
-  putStrLn $ "Row candidate counts: " <> show (V.map S.size bdRowCandidates)
-  putStrLn $ "Col candidate counts: " <> show (V.map S.size bdColCandidates)
-  putStrLn "++++ Board Begin ++++"
-  forM_ [0..bdLen-1] $ \r -> do
-    forM_ [0..bdLen-1] $ \c -> do
-      let cell = getCell bd (r,c)
-      case cell of
-        Nothing -> putStr " "
-        Just b ->
-          -- NOTE: the fancy, colorful output can be disabled by setting "TERM="
-          -- e.g. "TERM= stack exec -- demo" (note the space after TERM=)
-          case getCapability term withForegroundColor of
-            Nothing -> putStr $ if b then "1" else "0"
-            Just useColor ->
-              let color = if b then Red else Blue
-                  rendered = termText "█"
-              in runTermOutput term (useColor color rendered)
-    putStrLn ""
-  putStrLn "---- Board End ----"
-
 
 main :: IO ()
 main = do
