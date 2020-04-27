@@ -1,3 +1,4 @@
 resolver: lts-14.27
 packages:
+- kuromasu-solver
 - takuzu-solver

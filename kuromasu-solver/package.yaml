@@ -1,0 +1,33 @@
+name: kuromasu-solver
+version: 0.1.0.0
+github: Javran/kuromasu-solver
+license: BSD3
+author: Javran Cheng
+maintainer: javran.c@gmail.com
+copyright: "Copyright: (c) 2020 Javran Cheng"
+
+description: A solver for A solver for https://en.wikipedia.org/wiki/Kuromasu
+
+dependencies:
+- base
+- containers
+- terminfo
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+
+executables:
+  demo:
+    main: Main.hs
+    source-dirs: exe
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -O2
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - kuromasu-solver
