@@ -1,7 +1,9 @@
-{-# LANGUAGE NamedFieldPuns, TypeApplications #-}
+{-# LANGUAGE
+    NamedFieldPuns
+  , TypeApplications
+  #-}
 module Game.Kuromasu.Solver where
 
-import Control.Applicative
 import Control.Monad
 import Data.Maybe
 import Data.List
@@ -52,7 +54,8 @@ data Board
 
   also note that there's another way of eliminating an candidate: if it's dimension is too long
   to be fit in a board (e.g. a 9x9 board can have maximum number of 16,
-  but a 1x17 Placement is simply impossible to fit). This kind of elimination can be done when building up the blueprint.
+  but a 1x17 Placement is simply impossible to fit). This kind of elimination
+  can be done when building up the blueprint.
 
  -}
 data Placement =
@@ -87,6 +90,12 @@ mkBoard bdDims@(rows, cols) clues = Board
     mkCandidate cCoord@(row,col) count =
         (cCoord, mapMaybe placementToCandidate ps)
       where
+        mods =
+          [ \(Placement u r d l) -> Placement (u+1) r d l
+          , \(Placement u r d l) -> Placement u (r+1) d l
+          , \(Placement u r d l) -> Placement u r (d+1) l
+          , \(Placement u r d l) -> Placement u r d (l+1)
+          ]
         -- generate initial possible placements
         -- without knowing the location of the center coord
         ps = gen bdDims mods count (Placement 0 0 0 0)
@@ -116,13 +125,6 @@ mkBoard bdDims@(rows, cols) clues = Board
                 color == cRed || isInRange coord'
           guard $ all checkPair pairs
           pure $ M.fromList (filter (isInRange . fst) pairs)
-
-mods =
-  [ \(Placement u r d l) -> Placement (u+1) r d l
-  , \(Placement u r d l) -> Placement u (r+1) d l
-  , \(Placement u r d l) -> Placement u r (d+1) l
-  , \(Placement u r d l) -> Placement u r d (l+1)
-  ]
 
 pprBoard :: Terminal -> [(Coord, Int)] -> Board -> IO ()
 pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
@@ -163,10 +165,8 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
   putStrLn $ "Todos: " <> show (length bdTodos)
   unless (M.null bdCandidates) $ do
     putStrLn "Candidates:"
-    forM_ (M.toAscList bdCandidates) $ \(coord, xs) -> do
+    forM_ (M.toAscList bdCandidates) $ \(coord, xs) ->
       putStrLn $ "- " <> show coord <> ": " <> show (length xs)
-      -- the following output is noisy. only enable when debugging.
-      -- forM_ xs $ \cs -> pprCandidate "  " cs
 
 pprCandidate :: String -> Candidate -> IO ()
 pprCandidate padding cs =
