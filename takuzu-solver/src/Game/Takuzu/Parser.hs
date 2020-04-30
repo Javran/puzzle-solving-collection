@@ -9,6 +9,21 @@ import Text.ParserCombinators.ReadP
 
 import Game.Takuzu.Solver
 
+{-
+  Puzzle input file syntax:
+
+  - first line: <c0><c1> <num>, in which c0 and c1 are single character
+    for the different colors we are working with, and the board is of size num x num.
+
+  - for the following <num> lines, ' ' indicates an empty cell, and <c1> and <c2>
+    indicate two different cells.
+
+  - last line consists of an arbitrary number of '=' (or can simply leave this line empty).
+
+  - The input file can contain multiple records, all following the same syntax.
+
+ -}
+
 firstLine :: ReadP ((Char,Char), Int)
 firstLine = do
   {-
