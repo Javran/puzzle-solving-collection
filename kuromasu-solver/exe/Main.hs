@@ -6,6 +6,7 @@ module Main
 import System.Console.Terminfo
 
 import Game.Kuromasu.Solver
+import Game.Kuromasu.Parser
 
 -- TODO: specify rows and cols, and colors
 exampleRaw1 :: [String]
@@ -50,5 +51,6 @@ exampleRaw2 =
 main :: IO ()
 main = do
   term <- setupTermFromEnv
+  print (parseBoard $ unlines $ "9 9" : exampleRaw <> ["===="])
   solveAndShow term exampleRaw2
 
