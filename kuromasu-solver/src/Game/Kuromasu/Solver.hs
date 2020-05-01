@@ -273,7 +273,11 @@ solve bd = case improveStep bd of
   Just bd' -> if bd == bd' then finalStep bd else solve bd'
   Nothing -> finalStep bd
 
-loadExample :: [String] -> ([(Coord, Cell)], [(Coord, Int)])
+type ColorMap = [(Coord, Cell)]
+type HintMap = [(Coord, Int)]
+type InputPair = (ColorMap, HintMap)
+
+loadExample :: [String] -> InputPair
 loadExample exampleRaw =
     ( mapMaybe validCellOnly rawWithCoords
     , mapMaybe validHintOnly rawWithCoords
@@ -297,5 +301,9 @@ solveAndShow term exampleRaw = do
       bd = mkBoard (9,9) hints
       Just bd' =
         foldM (\curBd (coord, cell) -> updateCell coord cell curBd) bd (fst example)
-  pprBoard term hints bd'
-  pprBoard term hints (solve bd')
+  solveAndShow' term bd' hints
+
+solveAndShow' :: Terminal -> Board -> HintMap -> IO ()
+solveAndShow' term bd hints = do
+  pprBoard term hints bd
+  pprBoard term hints (solve bd)

@@ -1,5 +1,7 @@
+{-# LANGUAGE TupleSections #-}
 module Game.Kuromasu.Parser
   ( parseBoard
+  , mkBoardFromRep
   ) where
 
 import Control.Monad
@@ -9,8 +11,6 @@ import Text.ParserCombinators.ReadP
 import Game.Kuromasu.Solver
 
 {-
-  TODO: input syntax.
-
   - first line: <rows> <cols> (two numbers)
   - the next <rows> lines are all space separated.
     + a number indicates a blue cell with that number on it
@@ -20,7 +20,6 @@ import Game.Kuromasu.Solver
 
   - last line consists of an arbitrary number of '=' (or can simply leave this line empty).
   - The input file can contain multiple records, all following the same syntax.
-
  -}
 
 firstLine :: ReadP (Int, Int)
@@ -44,10 +43,10 @@ cell =
   <++ (Just . Right <$> (read <$> munch1 isDigit))
 
 row :: Int -> ReadP [CellRep]
-row cols = do
+row colCount = do
   cs <- cell `sepBy` char ' '
   _ <- char '\n'
-  guard $ length cs == cols
+  guard $ length cs == colCount
   pure cs
 
 endLine :: ReadP ()
@@ -62,7 +61,35 @@ board = do
   endLine
   pure (dims, bd)
 
+{-
+  It is guaranteed that a successful parsing produces consistent shape of data.
+  (i.e. expected rows and cols).
+ -}
 parseBoard :: String -> Maybe [BoardRep]
 parseBoard raw = case readP_to_S (many board <* eof) raw of
   [(v, "")] -> Just v
   _ -> Nothing
+
+mkBoardFromRep :: BoardRep -> Maybe (Board, HintMap)
+mkBoardFromRep (dims@(rows, cols), cellReps) =
+    (,hints) <$>
+      foldM
+        (\curBd (coord, color) -> updateCell coord color curBd)
+        initBoard
+        colors
+  where
+    initBoard = mkBoard dims hints
+    coords = [ (r,c) | r <- [0..rows-1], c <- [0..cols-1]]
+    hints :: HintMap
+    hints = concatMap (uncurry tr) $ zip coords (concat cellReps)
+      where
+        tr _ Nothing = []
+        tr _ (Just (Left _)) = []
+        tr coord (Just (Right n)) = [(coord, n)]
+    colors :: ColorMap
+    colors = concatMap (uncurry tr) $ zip coords (concat cellReps)
+      where
+        tr _ Nothing = []
+        tr coord (Just m) = case m of
+          Left color -> [(coord, color)]
+          Right _ -> [(coord, cBlue)]
