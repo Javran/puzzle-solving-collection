@@ -1,17 +1,17 @@
-{-# LANGUAGE NamedFieldPuns #-}
 module Main
   ( main
   ) where
 
+import Control.Monad
 import System.Console.Terminfo
 
-import Game.Kuromasu.Solver
 import Game.Kuromasu.Parser
+import Game.Kuromasu.Solver
 
--- TODO: specify rows and cols, and colors
-exampleRaw1 :: [String]
-exampleRaw1 =
-  [ "? ? 3 2 ? ? r 1 1"
+exampleRaw0 :: [String]
+exampleRaw0 =
+  [ "9 9"
+  , "? ? 3 2 ? ? r 1 1"
   , "r 4 ? r ? ? ? ? ?"
   , "? ? ? ? ? ? 7 ? ?"
   , "? ? ? ? 8 8 ? 9 8"
@@ -22,9 +22,10 @@ exampleRaw1 =
   , "? ? ? 3 ? 5 ? 3 ?"
   ]
 
-exampleRaw :: [String]
-exampleRaw =
-  [ "1 ? 3 ? ? ? ? 3 ?"
+exampleRaw1 :: [String]
+exampleRaw1 =
+  [ "9 9"
+  , "1 ? 3 ? ? ? ? 3 ?"
   , "? ? ? ? 4 4 ? ? r"
   , "? 9 8 ? 8 ? ? ? ?"
   , "2 ? ? ? ? ? ? ? 2"
@@ -37,7 +38,8 @@ exampleRaw =
 
 exampleRaw2 :: [String]
 exampleRaw2 =
-  [ "? r 2 r ? r ? 6 2"
+  [ "9 9"
+  , "? r 2 r ? r ? 6 2"
   , "r 4 ? 6 4 ? 2 ? ?"
   , "r ? ? 7 ? ? r 5 ?"
   , "? ? ? ? ? ? ? ? 7"
@@ -51,6 +53,11 @@ exampleRaw2 =
 main :: IO ()
 main = do
   term <- setupTermFromEnv
-  print (parseBoard $ unlines $ "9 9" : exampleRaw <> ["===="])
-  solveAndShow term exampleRaw2
-
+  let Just boards =
+        parseBoard
+        . unlines
+        . concatMap (<> ["===="])
+        $ [exampleRaw0, exampleRaw1, exampleRaw2]
+  forM_ boards $ \bdRep -> do
+    let Just (bd, hints) = mkBoardFromRep bdRep
+    solveAndShow' term bd hints
