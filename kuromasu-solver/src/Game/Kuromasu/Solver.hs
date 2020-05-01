@@ -2,19 +2,27 @@
     NamedFieldPuns
   , TypeApplications
   #-}
-module Game.Kuromasu.Solver where
+module Game.Kuromasu.Solver
+  ( Cell, Coord, HintMap, ColorMap
+  , cBlue, cRed
+  , Board(..)
+  , bdGet
+  , mkBoard
+  , updateCell
+  , solve
+  , solveAndShow
+  , pprBoard
+  ) where
 
 import Control.Monad
-import Data.Maybe
-import Data.List
-import Data.Char
-import Data.Semigroup
-import System.Console.Terminfo
 import Data.Ix
+import Data.List
+import Data.Maybe
+import System.Console.Terminfo
 
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import qualified Data.List.NonEmpty as NE
+
 type Cell = Bool
 
 cBlue, cRed :: Cell
@@ -68,6 +76,7 @@ data Placement =
 pickInOrder' :: [a] -> [] (a,[a])
 pickInOrder' = fmap (\(x:xs) -> (x,x:xs)) . init . tails
 
+gen :: (Int, Int) -> [Placement -> Placement] -> Int -> Placement -> [Placement]
 gen _ _ 0 cur = [cur]
 gen (rows, cols) mods todoCount cur = do
   (f, mods') <- pickInOrder' mods
@@ -168,21 +177,6 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
     forM_ (M.toAscList bdCandidates) $ \(coord, xs) ->
       putStrLn $ "- " <> show coord <> ": " <> show (length xs)
 
-pprCandidate :: String -> Candidate -> IO ()
-pprCandidate padding cs =
-  case NE.nonEmpty (M.keys cs) of
-    Nothing -> putStrLn $ padding <> "<empty>"
-    Just cs' -> do
-      let getMinMax getter = sconcat $ fmap (((,) <$> Min <*> Max) . getter) cs'
-          (Min rMin, Max rMax) = getMinMax fst
-          (Min cMin, Max cMax) = getMinMax snd
-          cGet coord = case cs M.!? coord of
-            Nothing -> ' '
-            Just c -> if c == cBlue then 'B' else 'R'
-      putStrLn $ padding <> "Range: " <> show (rMin, cMin) <> " - " <> show (rMax, cMax)
-      forM_ [rMin .. rMax] $ \r ->
-        putStrLn $ padding <> [ cGet (r,c) | c <- [cMin..cMax] ]
-
 {-
   Basic operation on a board that fills one cell,
   simplifies candidates, and remove contradiction candidates.
@@ -275,35 +269,8 @@ solve bd = case improveStep bd of
 
 type ColorMap = [(Coord, Cell)]
 type HintMap = [(Coord, Int)]
-type InputPair = (ColorMap, HintMap)
 
-loadExample :: [String] -> InputPair
-loadExample exampleRaw =
-    ( mapMaybe validCellOnly rawWithCoords
-    , mapMaybe validHintOnly rawWithCoords
-    )
-  where
-    coords = [(r,c) | r <- [0..8], c <- [0..8]]
-    rawWithCoords = zip coords (concatMap words exampleRaw)
-    validCellOnly (_, "?") = Nothing
-    validCellOnly (coord, "r") = Just (coord, cRed)
-    validCellOnly (coord, xs)
-      | all isDigit xs = Just (coord, cBlue)
-      | otherwise = error "unreachable (for now)"
-    validHintOnly (coord, xs)
-      | all isDigit xs = Just (coord, read xs)
-      | otherwise = Nothing
-
-solveAndShow :: Terminal -> [String] -> IO ()
-solveAndShow term exampleRaw = do
-  let example = loadExample exampleRaw
-      hints = snd example
-      bd = mkBoard (9,9) hints
-      Just bd' =
-        foldM (\curBd (coord, cell) -> updateCell coord cell curBd) bd (fst example)
-  solveAndShow' term bd' hints
-
-solveAndShow' :: Terminal -> Board -> HintMap -> IO ()
-solveAndShow' term bd hints = do
+solveAndShow :: Terminal -> Board -> HintMap -> IO ()
+solveAndShow term bd hints = do
   pprBoard term hints bd
   pprBoard term hints (solve bd)

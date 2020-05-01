@@ -60,4 +60,4 @@ main = do
         $ [exampleRaw0, exampleRaw1, exampleRaw2]
   forM_ boards $ \bdRep -> do
     let Just (bd, hints) = mkBoardFromRep bdRep
-    solveAndShow' term bd hints
+    solveAndShow term bd hints
