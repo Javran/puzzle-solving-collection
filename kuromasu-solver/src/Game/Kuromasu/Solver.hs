@@ -173,9 +173,12 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
   putStrLn "---- Board End"
   putStrLn $ "Todos: " <> show (length bdTodos)
   unless (M.null bdCandidates) $ do
-    putStrLn "Candidates:"
-    forM_ (M.toAscList bdCandidates) $ \(coord, xs) ->
-      putStrLn $ "- " <> show coord <> ": " <> show (length xs)
+    putStr "Candidates: "
+    let candidatesDisplay =
+          intercalate ", "
+          . fmap (\(coord,xs) -> show coord <> ":" <> show (length xs))
+          $ M.toAscList bdCandidates
+    putStrLn candidatesDisplay
 
 {-
   Basic operation on a board that fills one cell,
