@@ -28,6 +28,7 @@ tests:
     source-dirs:
       - test
     dependencies:
+      - utility-ht
       - kuromasu-solver
       - hspec
     ghc-options:
