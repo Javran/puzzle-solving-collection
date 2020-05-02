@@ -12,6 +12,7 @@ module Game.Kuromasu.Solver
   , solve
   , solveAndShow
   , pprBoard
+  , extractAnswer
   ) where
 
 import Control.Monad
@@ -277,3 +278,20 @@ solveAndShow :: Terminal -> Board -> HintMap -> IO ()
 solveAndShow term bd hints = do
   pprBoard term hints bd
   pprBoard term hints (solve bd)
+
+{-
+  Extracts answer from current board.
+  This will only succeed when the board is solved.
+  Note that this function only checks input board for shape:
+  the way our algorithm works should guarantee that
+  all coloring are done following game rules.
+
+  (TODO) We rely on unit tests to make sure that all outputs
+  are indeed following game rules.
+ -}
+extractAnswer :: Board -> Maybe [[Cell]]
+extractAnswer bd@Board{bdDims, bdTodos} = do
+  guard $ S.null bdTodos
+  let (rows, cols) = bdDims
+      coords = [ [ (r,c) | c <- [0..cols-1] ] | r <- [0 .. rows-1] ]
+  (mapM . mapM) (bdGet bd) coords
