@@ -13,11 +13,30 @@ dependencies:
 - containers
 - terminfo
 
+data-files:
+  data/puzzles.txt
+
 library:
   source-dirs: src
   ghc-options:
     - -Wall
     - -O2
+
+tests:
+  hspec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - kuromasu-solver
+      - hspec
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -O2
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -main-is Spec
 
 executables:
   demo:

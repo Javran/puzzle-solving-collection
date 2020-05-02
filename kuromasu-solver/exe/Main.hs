@@ -53,8 +53,8 @@ exampleRaw2 =
 main :: IO ()
 main = do
   term <- setupTermFromEnv
-  let Just boards =
-        parseBoard
+  let boards =
+        parseBoards
         . unlines
         . concatMap (<> ["===="])
         $ [exampleRaw0, exampleRaw1, exampleRaw2]

@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 module Game.Kuromasu.Parser
-  ( parseBoard
+  ( parseBoards
   , mkBoardFromRep
   ) where
 
@@ -65,10 +65,10 @@ board = do
   It is guaranteed that a successful parsing produces consistent shape of data.
   (i.e. expected rows and cols).
  -}
-parseBoard :: String -> Maybe [BoardRep]
-parseBoard raw = case readP_to_S (many board <* eof) raw of
-  [(v, "")] -> Just v
-  _ -> Nothing
+parseBoards :: String -> [BoardRep]
+parseBoards raw = case readP_to_S (many board <* eof) raw of
+  [(vs, "")] -> vs
+  _ -> []
 
 mkBoardFromRep :: BoardRep -> Maybe (Board, HintMap)
 mkBoardFromRep (dims@(rows, cols), cellReps) =
