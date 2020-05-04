@@ -2,13 +2,16 @@ module Game.Kuromasu.SolverSpec where
 
 import Test.Hspec
 
-import Control.Monad.IO.Class
-import Game.Kuromasu.Parser
 import Control.Monad
+import Data.Maybe
+import Data.Monoid
+
+import qualified Data.Map.Strict as M
+
+import Game.Kuromasu.Parser
 import Game.Kuromasu.Solver
 import Paths_kuromasu_solver
-import Data.Maybe
-import qualified Data.List.Match as LMatch
+
 
 {-
   TODO: it turns out 0hn0 does not exactly
@@ -65,6 +68,21 @@ exampleRaw2 =
   , "4 5 ? 7 ? ? ? ? ?"
   ]
 
+countBlues :: M.Map Coord Cell -> Coord -> Int
+countBlues m coord =
+    getSum $ foldMap countInDir
+      [ \(r,c) -> (r-1,c)
+      , \(r,c) -> (r+1,c)
+      , \(r,c) -> (r,c-1)
+      , \(r,c) -> (r,c+1)
+      ]
+  where
+    countInDir next =
+      Sum
+      . length
+      . takeWhile ((== cBlue) . fromMaybe cRed . (m M.!?))
+      . tail -- exclude that cell itself.
+      $ iterate next coord
 
 {-
   TODO: rules are (according to 0hn0 rather than the original game
@@ -84,15 +102,30 @@ spec =
           -- Verify that outout has the same rows and cols as input.
           length solved `shouldBe` rows
           all ((== cols) . length) solved `shouldBe` True
+          let coords = [(r,c) | r <- [0 .. rows-1], c <- [0 .. cols-1]]
+              toMap xs = M.fromList $ zip coords (concat xs)
+              inputBoard = toMap parsedBoard
+              solvedBoard = toMap solved
           -- Verify that output and input are "compatible",
           -- meaning that the solution should preserve all colored dots from its input.
-          forM_ [(r,c) | r <- [0 .. rows-1], c <- [0 .. cols-1]] $ \(r,c) ->
-            case (parsedBoard !! r !! c, solved !! r !! c) of
+          forM_ coords $ \coord ->
+            case (inputBoard M.! coord, solvedBoard M.! coord) of
               (Nothing, _) -> pure ()
               (Just (Left cInp), cOut) -> cOut `shouldBe` cInp
               (Just (Right _), cOut) -> cOut `shouldBe` cBlue
-          -- TODO: verify blue dots (both with and without hints)
-          -- pending
+          -- Verify all blue dots.
+          forM_ coords $ \coord ->
+            when (solvedBoard M.! coord == cBlue) $ do
+              let blueCount = countBlues solvedBoard coord
+              case lookup coord hints of
+                Nothing ->
+                  -- if this blue dot does not belong to the original hint set,
+                  -- we just verify that it has at least one neighbooring blue dots.
+                  blueCount `shouldSatisfy` (>= 1)
+                Just count ->
+                  -- if this blue dot is attached with a number,
+                  -- we can do a stronger verification to confirm that the count matches.
+                  blueCount `shouldBe` count
         mkExample name rawInp =
           specify name $ do
             Just bdRep <- pure $ parseBoard (unlines rawInp)
