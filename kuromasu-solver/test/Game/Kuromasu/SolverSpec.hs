@@ -78,13 +78,21 @@ exampleRaw2 =
 spec :: Spec
 spec =
   describe "solve" $ do
-    let solveAndVerifyBoard bdRep = do
+    let solveAndVerifyBoard bdRep@((rows,cols), parsedBoard) = do
           Just (bd, hints) <- pure $ mkBoardFromRep bdRep
           Just solved <- pure $ extractAnswer (solve bd)
-          -- TODO: verify dimensions match
-          -- TODO: verify compatibility
-          -- TODO: blue dots number verify
-          pending
+          -- Verify that outout has the same rows and cols as input.
+          length solved `shouldBe` rows
+          all ((== cols) . length) solved `shouldBe` True
+          -- Verify that output and input are "compatible",
+          -- meaning that the solution should preserve all colored dots from its input.
+          forM_ [(r,c) | r <- [0 .. rows-1], c <- [0 .. cols-1]] $ \(r,c) ->
+            case (parsedBoard !! r !! c, solved !! r !! c) of
+              (Nothing, _) -> pure ()
+              (Just (Left cInp), cOut) -> cOut `shouldBe` cInp
+              (Just (Right _), cOut) -> cOut `shouldBe` cBlue
+          -- TODO: verify blue dots (both with and without hints)
+          -- pending
         mkExample name rawInp =
           specify name $ do
             Just bdRep <- pure $ parseBoard (unlines rawInp)
