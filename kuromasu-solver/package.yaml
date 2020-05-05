@@ -12,6 +12,7 @@ dependencies:
 - base
 - containers
 - terminfo
+- MemoTrie
 
 data-files:
   data/puzzles.txt

@@ -19,6 +19,7 @@ import Control.Monad
 import Data.Ix
 import Data.List
 import Data.Maybe
+import Data.MemoTrie
 import System.Console.Terminfo
 
 import qualified Data.Map.Merge.Strict as M
@@ -97,19 +98,20 @@ mkBoard bdDims@(rows, cols) clues = Board
     , bdCandidates = M.fromList $ uncurry mkCandidate <$> clues
     }
   where
+    mods =
+      [ \(Placement u r d l) -> Placement (u+1) r d l
+      , \(Placement u r d l) -> Placement u (r+1) d l
+      , \(Placement u r d l) -> Placement u r (d+1) l
+      , \(Placement u r d l) -> Placement u r d (l+1)
+      ]
+    genMemoed = memo $ \cnt -> gen bdDims mods cnt (Placement 0 0 0 0)
     mkCandidate :: Coord -> Int -> (Coord, [M.Map Coord Cell])
     mkCandidate cCoord@(row,col) count =
         (cCoord, mapMaybe placementToCandidate ps)
       where
-        mods =
-          [ \(Placement u r d l) -> Placement (u+1) r d l
-          , \(Placement u r d l) -> Placement u (r+1) d l
-          , \(Placement u r d l) -> Placement u r (d+1) l
-          , \(Placement u r d l) -> Placement u r d (l+1)
-          ]
         -- generate initial possible placements
         -- without knowing the location of the center coord
-        ps = gen bdDims mods count (Placement 0 0 0 0)
+        ps = genMemoed count -- gen bdDims mods count (Placement 0 0 0 0)
         placementToCandidate :: Placement -> Maybe (M.Map Coord Cell)
         placementToCandidate (Placement u r d l) = do
           let centerPair = (cCoord, cBlue)
