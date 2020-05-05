@@ -21,6 +21,7 @@ import Data.List
 import Data.Maybe
 import System.Console.Terminfo
 
+import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
@@ -219,7 +220,13 @@ updateCell coord color Board{bdDims, bdTodos, bdCells, bdCandidates} = do
 improve :: Coord -> Board -> Maybe Board
 improve coord bd@Board{bdCandidates} = do
   cs <- bdCandidates M.!? coord
-  let commons =
+  let doMerge =
+        M.merge
+          M.dropMissing
+          M.dropMissing
+          (M.zipWithMaybeAMatched $
+           \_k l r -> pure $ if l == r then Just l else Nothing)
+      commons =
         concatMap (\(k, mv) -> case mv of
                       Nothing -> []
                       Just v -> [(k,v)]
@@ -227,16 +234,9 @@ improve coord bd@Board{bdCandidates} = do
         . M.toList
         -- note that cs shouldn't be empty if the result comes from "updateCell",
         -- therefore the use of foldl1 is safe.
-        -- TODO: good time to explore Data.Map.Merge
-        . foldl1 (M.intersectionWith compareMerge)
+        . foldl1 doMerge
         . (fmap . M.map) Just
         $ cs
-        where
-          compareMerge lm rm = do
-            l <- lm
-            r <- rm
-            guard $ l == r
-            lm
   guard $ not . null $ commons
   foldM (\curBd (coord',cell) -> updateCell coord' cell curBd) bd commons
 
