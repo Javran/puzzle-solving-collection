@@ -86,7 +86,7 @@ gen (rows, cols) mods todoCount cur = do
   gen (rows, cols) mods' (todoCount-1) cur'
 
 {-
-  Create an empty board with candidates populate by clues.
+  Create an empty board with candidates populated by clues.
  -}
 mkBoard :: (Int, Int) -> [(Coord, Int)] -> Board
 mkBoard bdDims@(rows, cols) clues = Board
@@ -212,6 +212,10 @@ updateCell coord color Board{bdDims, bdTodos, bdCells, bdCandidates} = do
     , bdCandidates = bdCandidates'
     }
 
+{-
+  Try to improve current board by eliminating candidates based on a specific hint.
+  Hints are indexed by their coordinates.
+ -}
 improve :: Coord -> Board -> Maybe Board
 improve coord bd@Board{bdCandidates} = do
   cs <- bdCandidates M.!? coord
@@ -244,12 +248,10 @@ improveStep bd@Board{bdCandidates} = do
   pure bd'
 
 bdGet :: Board -> Coord -> Maybe Cell
-bdGet Board{bdCells, bdDims} coord =
-    if inRange ((0,0), (rows-1,cols-1)) coord
-      then bdCells M.!? coord
-      else Just cRed
-  where
-    (rows, cols) = bdDims
+bdGet Board{bdCells, bdDims = (rows, cols)} coord =
+  if inRange ((0,0), (rows-1,cols-1)) coord
+    then bdCells M.!? coord
+    else Just cRed
 
 {-
   The final step is to fill in red if that cell is surrounded by red.
@@ -267,9 +269,10 @@ finalStep bd@Board{bdTodos} =
       all (\coord' -> bdGet curBd coord' == Just cRed) [(r-1,c), (r+1,c), (r,c-1), (r,c+1)]
 
 solve :: Board -> Board
-solve bd = case improveStep bd of
-  Just bd' -> if bd == bd' then finalStep bd else solve bd'
-  Nothing -> finalStep bd
+solve bd =
+  case improveStep bd of
+    Just bd' -> solve bd'
+    Nothing -> finalStep bd
 
 type ColorMap = [(Coord, Cell)]
 type HintMap = [(Coord, Int)]
@@ -286,7 +289,7 @@ solveAndShow term bd hints = do
   the way our algorithm works should guarantee that
   all coloring are done following game rules.
 
-  (TODO) We rely on unit tests to make sure that all outputs
+  We rely on unit tests to make sure that all outputs
   are indeed following game rules.
  -}
 extractAnswer :: Board -> Maybe [[Cell]]
