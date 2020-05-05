@@ -36,14 +36,14 @@ type Candidate = M.Map Coord Cell
 data Board
   = Board
     { bdDims :: (Int, Int) -- (rows, cols)
-    , bdTodos :: S.Set Coord -- not yet filled cells
-    , bdCells :: M.Map Coord Cell -- known cells
+    , bdTodos :: !(S.Set Coord) -- not yet filled cells
+    , bdCells :: !(M.Map Coord Cell) -- known cells
       -- Every unsolved number cell is listed here.
       -- each of the value is a list of possible "overlaps"
       -- with the board. This allows us to:
       -- - answer the question of what's common in all possible candidates
       -- - eliminate candidates that are not possible.
-    , bdCandidates :: M.Map Coord [M.Map Coord Cell]
+    , bdCandidates :: !(M.Map Coord [M.Map Coord Cell])
     } deriving (Show, Eq)
 
 {-
@@ -68,8 +68,7 @@ data Board
 
  -}
 data Placement =
-  Placement Int Int Int Int {- up, right, down, left. in this order -}
-  deriving Show
+  Placement !Int !Int !Int !Int {- up, right, down, left. in this order -}
 
 {-
   pick up items in that order. one item can be pick up multiple times.
@@ -82,6 +81,7 @@ gen _ _ 0 cur = [cur]
 gen (rows, cols) mods todoCount cur = do
   (f, mods') <- pickInOrder' mods
   let cur'@(Placement u r d l) = f cur
+  -- TODO: knowing the max number will help reducing the amount of unnecessary processing.
   guard $ u + d < rows && l + r < cols
   gen (rows, cols) mods' (todoCount-1) cur'
 
@@ -130,7 +130,7 @@ mkBoard bdDims@(rows, cols) clues = Board
                     ]
                 ]
               pairs = centerPair : concat [pUpCells, pRightCells, pDownCells, pLeftCells, pRedCells]
-          let isInRange = inRange ((0,0), (rows-1,cols-1))
+              isInRange = inRange ((0,0), (rows-1,cols-1))
               checkPair (coord', color) =
                 color == cRed || isInRange coord'
           guard $ all checkPair pairs
