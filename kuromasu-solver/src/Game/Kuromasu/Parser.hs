@@ -79,7 +79,7 @@ mkBoardFromRep :: BoardRep -> Maybe (Board, HintMap)
 mkBoardFromRep (dims@(rows, cols), cellReps) =
     (,hints) <$>
       foldM
-        (\curBd (coord, color) -> updateCell coord color curBd)
+        (\curBd (coord, color) -> updateCell curBd coord color)
         initBoard
         colors
   where

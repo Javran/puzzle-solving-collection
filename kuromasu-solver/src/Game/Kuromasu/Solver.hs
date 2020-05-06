@@ -104,6 +104,9 @@ mkBoard bdDims@(rows, cols) clues = Board
       , \(Placement u r d l) -> Placement u r (d+1) l
       , \(Placement u r d l) -> Placement u r d (l+1)
       ]
+    -- memoize by count.
+    -- every different count can share the initial list of candidates
+    -- and eliminate some based on position and other information as the board improves.3
     genMemoed = memo $ \cnt -> gen bdDims mods cnt (Placement 0 0 0 0)
     mkCandidate :: Coord -> Int -> (Coord, [M.Map Coord Cell])
     mkCandidate cCoord@(row,col) count =
@@ -188,8 +191,8 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
   Basic operation on a board that fills one cell,
   simplifies candidates, and remove contradiction candidates.
  -}
-updateCell :: Coord -> Cell -> Board -> Maybe Board
-updateCell coord color Board{bdDims, bdTodos, bdCells, bdCandidates} = do
+updateCell :: Board -> Coord -> Cell -> Maybe Board
+updateCell Board{bdDims, bdTodos, bdCells, bdCandidates} coord color = do
   guard $ coord `S.member` bdTodos
   let bdTodos' = S.delete coord bdTodos
       bdCells' = M.insert coord color bdCells
@@ -219,8 +222,8 @@ updateCell coord color Board{bdDims, bdTodos, bdCells, bdCandidates} = do
   Try to improve current board by eliminating candidates based on a specific hint.
   Hints are indexed by their coordinates.
  -}
-improve :: Coord -> Board -> Maybe Board
-improve coord bd@Board{bdCandidates} = do
+improve :: Board -> Coord -> Maybe Board
+improve bd@Board{bdCandidates} coord = do
   cs <- bdCandidates M.!? coord
   let doMerge =
         M.merge
@@ -240,11 +243,11 @@ improve coord bd@Board{bdCandidates} = do
         . (fmap . M.map) Just
         $ cs
   guard $ not . null $ commons
-  foldM (\curBd (coord',cell) -> updateCell coord' cell curBd) bd commons
+  foldM (\curBd (coord',cell) -> updateCell curBd coord' cell) bd commons
 
 improveStep :: Board -> Maybe Board
 improveStep bd@Board{bdCandidates} = do
-  let bds = mapMaybe (\c -> improve c bd) $ M.keys bdCandidates
+  let bds = mapMaybe (improve bd) $ M.keys bdCandidates
   -- choose first successful improvement
   (bd':_) <- pure bds
   pure bd'
@@ -265,10 +268,12 @@ finalStep bd@Board{bdTodos} =
   where
     go coord curBd =
       if surroundedByRed curBd coord
-        then fromMaybe curBd (updateCell coord cRed curBd)
+        then fromMaybe curBd (updateCell curBd coord cRed)
         else curBd
     surroundedByRed curBd (r,c) =
-      all (\coord' -> bdGet curBd coord' == Just cRed) [(r-1,c), (r+1,c), (r,c-1), (r,c+1)]
+      all
+        (\coord' -> bdGet curBd coord' == Just cRed)
+        [(r-1,c), (r+1,c), (r,c-1), (r,c+1)]
 
 solve :: Board -> Board
 solve bd =
