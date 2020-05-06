@@ -11,38 +11,12 @@
   e.g. "101 " will result in the exact same input representation as "rbr ".
  -}
 
-{-# LANGUAGE
-    RecordWildCards
-  #-}
 module Main (main) where
 
-import Control.Monad
 import System.Console.Terminfo
 
-import qualified Data.Set as S
-import qualified Data.Vector as V
-
-import Game.Takuzu.Solver
 import Game.Takuzu.Parser
-
-{-
-  TODO: those examples should be moved to tests.
- -}
-exampleRaw0 :: [] ([] Char)
-exampleRaw0 =
-  [ "    rr  br  "
-  , "      r  b b"
-  , "  br    r  b"
-  , " r r        "
-  , "b     r b b "
-  , "  b b     b "
-  , " r  br  r   "
-  , "r    r      "
-  , "r   r   bb  "
-  , "  r     b   "
-  , "      r   rb"
-  , "  r  r      "
-  ]
+import Game.Takuzu.Solver
 
 exampleRaw :: [] ([] Char)
 exampleRaw =
@@ -65,7 +39,6 @@ example :: (Int, [[Maybe Cell]])
 example = v
   where
     Just v = parseBoard (unlines exampleRaw)
-
 
 main :: IO ()
 main = do
