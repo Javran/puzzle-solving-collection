@@ -21,6 +21,10 @@ import Data.List
 import Data.Maybe
 import Data.MemoTrie
 import System.Console.Terminfo
+  ( Terminal, TermStr, Color(..), TermOutput
+  , getCapability, withForegroundColor, withBackgroundColor
+  , termText, runTermOutput
+  )
 
 import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
@@ -97,6 +101,33 @@ precomputePlacements (rows, cols) count =
       guard $ u + d < rows && l + r < cols
       gen mods' (todoCount-1) cur'
 
+
+placementToCandidate :: (Int, Int) -> Coord -> Placement -> Maybe (M.Map Coord Cell)
+placementToCandidate (rows, cols) cCoord@(row,col) (Placement u r d l) = do
+  let centerPair = (cCoord, cBlue)
+      colors = cRed : repeat cBlue
+      pUpCells =
+        zip [ (row', col) | row' <- [row-u-1 .. row-1]] colors
+      pRightCells =
+        zip [ (row, col') | col' <- [col+r+1, col+r .. col+1]] colors
+      pDownCells =
+        zip [ (row', col) | row' <- [row+d+1, row+d .. row+1]] colors
+      pLeftCells =
+        zip [ (row, col') | col' <- [col-l-1 .. col-1]] colors
+      isInRange = inRange ((0,0), (rows-1,cols-1))
+      checkPair v@(coord', color)
+        | isInRange coord' = Just (v:)
+        | color == cRed = Just id
+        | otherwise = Nothing
+      checkAndTransform =
+        fmap (foldr (.) id) . mapM checkPair
+  pairsk <-
+    foldM
+      (\acc ps -> (acc .) <$> checkAndTransform ps)
+      id
+      [pUpCells, pRightCells, pDownCells, pLeftCells]
+  pure $ M.fromList $ centerPair : pairsk []
+
 {-
   Create an empty board with candidates populated by clues.
  -}
@@ -113,40 +144,12 @@ mkBoard bdDims@(rows, cols) clues = Board
     -- and eliminate some based on position and other information as the board improves.
     genMemoed = memo $ precomputePlacements (rows,cols)
     mkCandidate :: Coord -> Int -> (Coord, [M.Map Coord Cell])
-    mkCandidate cCoord@(row,col) count =
-        (cCoord, mapMaybe placementToCandidate ps)
+    mkCandidate cCoord count =
+        (cCoord, mapMaybe (placementToCandidate bdDims cCoord) ps)
       where
         -- generate initial possible placements
         -- without knowing the location of the center coord
         ps = genMemoed count -- gen bdDims mods count (Placement 0 0 0 0)
-        placementToCandidate :: Placement -> Maybe (M.Map Coord Cell)
-        placementToCandidate (Placement u r d l) = do
-          let centerPair = (cCoord, cBlue)
-              pUpCells =
-                [ ((row-df, col), cBlue) | df <- [1..u]]
-              pRightCells =
-                [ ((row, col+df), cBlue) | df <- [1..r]]
-              pDownCells =
-                [ ((row+df, col), cBlue) | df <- [1..d]]
-              pLeftCells =
-                [ ((row, col-df), cBlue) | df <- [1..l]]
-              pRedCells =
-                [ (c, cRed)
-                | c <-
-                    [ (row-u-1, col)
-                    , (row, col+r+1)
-                    , (row+d+1, col)
-                    , (row, col-l-1)
-                    ]
-                ]
-              pairs = centerPair : concat [pUpCells, pRightCells, pDownCells, pLeftCells, pRedCells]
-              isInRange = inRange ((0,0), (rows-1,cols-1))
-              checkPair v@(coord', color)
-                | isInRange coord' = Just (v:)
-                | color == cRed = Just id
-                | otherwise = Nothing
-          Just pairk <- pure $ mapM checkPair pairs
-          pure $ M.fromList $ foldr (.) id pairk []
 
 pprBoard :: Terminal -> [(Coord, Int)] -> Board -> IO ()
 pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
