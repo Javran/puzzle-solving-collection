@@ -253,7 +253,8 @@ improve bd@Board{bdCandidates} coord = do
 
 improveStep :: Board -> Maybe Board
 improveStep bd@Board{bdCandidates} = do
-  let bds = mapMaybe (improve bd) $ M.keys bdCandidates
+  let candidateCounts = sortOn (length . snd) $ M.toList bdCandidates
+      bds = mapMaybe (improve bd . fst) candidateCounts
   -- choose first successful improvement
   (bd':_) <- pure bds
   pure bd'
