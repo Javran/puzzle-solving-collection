@@ -141,10 +141,12 @@ mkBoard bdDims@(rows, cols) clues = Board
                 ]
               pairs = centerPair : concat [pUpCells, pRightCells, pDownCells, pLeftCells, pRedCells]
               isInRange = inRange ((0,0), (rows-1,cols-1))
-              checkPair (coord', color) =
-                color == cRed || isInRange coord'
-          guard $ all checkPair pairs
-          pure $ M.fromList (filter (isInRange . fst) pairs)
+              checkPair v@(coord', color)
+                | isInRange coord' = Just (v:)
+                | color == cRed = Just id
+                | otherwise = Nothing
+          Just pairk <- pure $ mapM checkPair pairs
+          pure $ M.fromList $ foldr (.) id pairk []
 
 pprBoard :: Terminal -> [(Coord, Int)] -> Board -> IO ()
 pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
