@@ -46,7 +46,7 @@ data Board
       -- - answer the question of what's common in all possible candidates
       -- - eliminate candidates that are not possible.
     , bdCandidates :: !(M.Map Coord [M.Map Coord Cell])
-    } deriving (Show, Eq)
+    }
 
 {-
   The following type defines a building block for building "blueprint"s given a number
@@ -78,14 +78,24 @@ data Placement =
 pickInOrder' :: [a] -> [] (a,[a])
 pickInOrder' = fmap (\(x:xs) -> (x,x:xs)) . init . tails
 
-gen :: (Int, Int) -> [Placement -> Placement] -> Int -> Placement -> [Placement]
-gen _ _ 0 cur = [cur]
-gen (rows, cols) mods todoCount cur = do
-  (f, mods') <- pickInOrder' mods
-  let cur'@(Placement u r d l) = f cur
-  -- TODO: knowing the max number will help reducing the amount of unnecessary processing.
-  guard $ u + d < rows && l + r < cols
-  gen (rows, cols) mods' (todoCount-1) cur'
+precomputePlacements :: (Int, Int) -> Int -> [Placement]
+precomputePlacements (rows, cols) count =
+    gen initMods count (Placement 0 0 0 0)
+  where
+    initMods =
+      [ \(Placement u r d l) -> Placement (u+1) r d l
+      , \(Placement u r d l) -> Placement u (r+1) d l
+      , \(Placement u r d l) -> Placement u r (d+1) l
+      , \(Placement u r d l) -> Placement u r d (l+1)
+      ]
+    gen :: [Placement -> Placement] -> Int -> Placement -> [Placement]
+    gen _ 0 cur = [cur]
+    gen mods todoCount cur = do
+      (f, mods') <- pickInOrder' mods
+      let cur'@(Placement u r d l) = f cur
+      -- TODO: knowing the max number will help reducing the amount of unnecessary processing.
+      guard $ u + d < rows && l + r < cols
+      gen mods' (todoCount-1) cur'
 
 {-
   Create an empty board with candidates populated by clues.
@@ -98,16 +108,10 @@ mkBoard bdDims@(rows, cols) clues = Board
     , bdCandidates = M.fromList $ uncurry mkCandidate <$> clues
     }
   where
-    mods =
-      [ \(Placement u r d l) -> Placement (u+1) r d l
-      , \(Placement u r d l) -> Placement u (r+1) d l
-      , \(Placement u r d l) -> Placement u r (d+1) l
-      , \(Placement u r d l) -> Placement u r d (l+1)
-      ]
     -- memoize by count.
     -- every different count can share the initial list of candidates
-    -- and eliminate some based on position and other information as the board improves.3
-    genMemoed = memo $ \cnt -> gen bdDims mods cnt (Placement 0 0 0 0)
+    -- and eliminate some based on position and other information as the board improves.
+    genMemoed = memo $ precomputePlacements (rows,cols)
     mkCandidate :: Coord -> Int -> (Coord, [M.Map Coord Cell])
     mkCandidate cCoord@(row,col) count =
         (cCoord, mapMaybe placementToCandidate ps)
@@ -205,7 +209,7 @@ updateCell Board{bdDims, bdTodos, bdCells, bdCandidates} coord color = do
           guard $ c == color
           -- remove this coord from candidate list.
           -- this removal is not necessary but it reduces the amount of cells we need to visit for each update.
-          pure $ M.delete coord cs
+          pure $! M.delete coord cs
       bdCandidates' =
         M.filter (not . all M.null)
         . M.map (mapMaybe checkAndElim)
