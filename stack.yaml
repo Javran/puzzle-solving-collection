@@ -2,3 +2,4 @@ resolver: lts-15.12
 packages:
 - kuromasu-solver
 - takuzu-solver
+- minesweeper-solver
