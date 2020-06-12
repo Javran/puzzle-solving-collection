@@ -14,6 +14,8 @@ type Offset = (Int, Int)
 
 type MinePlacement = S.Set Offset
 
+type MineCoords = S.Set Coord
+
 {- ORMOLU_DISABLE -}
 -- 2d offset of 8 surrounding tiles.
 -- sorted so that we can use efficient ways of Set construction.
@@ -37,7 +39,7 @@ pickInOrder xs = do
 {-# INLINEABLE pickInOrder #-}
 
 genPlacement :: Int -> [MinePlacement]
-genPlacement n0 = fmap S.fromDistinctDescList $ genAux n0 [] surroundings
+genPlacement n0 = S.fromDistinctDescList <$> genAux n0 [] surroundings
   where
     genAux 0 selected _ = pure selected
     genAux n selected candidates = do
@@ -47,6 +49,13 @@ genPlacement n0 = fmap S.fromDistinctDescList $ genAux n0 [] surroundings
 -- every number tile will be initialized with a list of MinePlacements from here.
 placementTable :: V.Vector [MinePlacement]
 placementTable = V.fromList $ fmap genPlacement [0 .. 8]
+
+data Board = Board
+  { bdDims :: (Int, Int), -- rows, cols
+    bdMines :: M.Map Coord Bool, -- tiles that are confirmed mine (True) or not mine (False). note that this includes number tiles as False.
+    bdNums :: M.Map Coord Int, -- number tiles.
+    bdCandidates :: M.Map Coord [MineCoords] -- possible ways of arranging mines so that the number tile (key) is satisfied.
+  }
 
 main :: IO ()
 main = do
