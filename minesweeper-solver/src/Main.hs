@@ -1,10 +1,14 @@
+{-# LANGUAGE TupleSections #-}
+
 module Main
   ( main,
   )
 where
 
+import Control.Monad
 import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
 
@@ -61,6 +65,8 @@ type MineMap = M.Map Coord Bool
 data Board = Board
   { -- rows, cols
     bdDims :: (Int, Int),
+    -- TODO: we might not want to query mines directly,
+    -- as we want to be able to say that everything out of bound is False rather that not found.
     bdMines :: MineMap,
     bdNums :: M.Map Coord Int, -- number tiles.
     -- possible ways of arranging mines so that the number tile (key) is satisfied.
@@ -68,6 +74,7 @@ data Board = Board
     bdCandidates :: M.Map Coord [MineCoords]
   }
 
+-- check a candidate against current board to ensure consistency
 checkCandidate :: MineMap -> Coord -> MineCoords -> Bool
 checkCandidate mines (x, y) cs =
   -- note that it is unnecessary to check whether current tile is a mine.
@@ -83,10 +90,25 @@ checkCandidate mines (x, y) cs =
         (_, Nothing) -> True
         (Just actual, Just expect) -> actual == expect
 
--- TODO: an elimination function :: [MineCoords] -> ([(Coord,Bool)], [MineCoords])
--- that discharges common mine placements from the list.
+eliminateCommon :: [MineCoords] -> ([(Coord, Bool)], [MineCoords])
+eliminateCommon [] = ([], [])
+eliminateCommon ms@(x : xs) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
+  where
+    commons = mapMaybe (\c -> (c,) <$> isCommon c) surroundings
+    commonKeys = S.fromList $ fmap fst commons
+    isCommon :: Coord -> Maybe Bool
+    isCommon c = do
+      val <- x M.!? c
+      vals <- mapM (M.!? c) xs
+      guard $ all (== val) vals
+      pure val
 
 main :: IO ()
 main = do
   print surroundings
-  print (genPlacement 7)
+  -- manual testing pretending Offsets are Coords.
+  let xs = take 3 $ genPlacement 7
+  mapM_ print xs
+  let (es, ys) = eliminateCommon xs
+  print es
+  mapM_ print ys
