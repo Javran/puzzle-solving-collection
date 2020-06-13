@@ -15,7 +15,6 @@ import Data.Ix
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
-import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Parser
@@ -105,16 +104,16 @@ checkCandidate bd (x, y) cs =
         (_, Nothing) -> True
         (Just actual, Just expect) -> actual == expect
 
-eliminateCommon :: [MineCoords] -> ([(Coord, Bool)], [MineCoords])
-eliminateCommon [] = ([], [])
-eliminateCommon ms@(x : xs) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
+eliminateCommon :: Coord -> [MineCoords] -> ([(Coord, Bool)], [MineCoords])
+eliminateCommon _ [] = ([], [])
+eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
   where
-    commons = mapMaybe (\c -> (c,) <$> isCommon c) surroundings
+    commons = mapMaybe (\c -> (c,) <$> isCommon c) $ fmap (\(dx, dy) -> (x + dx, y + dy)) surroundings
     commonKeys = S.fromList $ fmap fst commons
     isCommon :: Coord -> Maybe Bool
     isCommon c = do
-      val <- x M.!? c
-      vals <- mapM (M.!? c) xs
+      val <- t M.!? c
+      vals <- mapM (M.!? c) ts
       guard $ all (== val) vals
       pure val
 
@@ -140,8 +139,8 @@ tidyBoard bd@Board {bdCandidates} coord = do
             where
               alt Nothing = pure Nothing
               alt (Just ms) = do
-                let (xs, ms') = eliminateCommon ms
-                tell (DL.fromList xs)
+                let (xs, ms') = eliminateCommon coord' ms
+                tell $ (DL.fromList xs)
                 pure (Just ms')
   pure (ks, bd {bdCandidates = M.union aoiCandidates' bdCandidates})
   where
@@ -188,12 +187,19 @@ improveBoard bdPre xsPre =
     xs = DL.toList xsPre
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
-solveBoard bd xs = case improveBoard bd xs of
-  Nothing -> Just bd
-  Just (xs', bd') ->
-    if null (DL.toList xs')
-      then Just bd'
-      else solveBoard bd' xs'
+solveBoard bd@Board {bdDims = (rows, cols)} xs =
+  case improveBoard bd xs of
+    Nothing -> Nothing
+    Just (xs', bd') ->
+      let xs'' = DL.toList xs'
+       in if progress bd bd' || not (null xs'')
+            then solveBoard bd' xs'
+            else Just bd'
+  where
+    progress :: Board -> Board -> Bool
+    progress before after =
+      bdCandidates before /= bdCandidates after
+        || bdMines before /= bdMines after
 
 pprBoard :: Board -> IO ()
 pprBoard bd@Board {bdDims = (rows, cols), bdNums} = do
