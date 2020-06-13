@@ -10,6 +10,7 @@ where
 
 import Control.Monad
 import Control.Monad.Writer.Strict
+import qualified Data.DList as DL
 import Data.Ix
 import Data.List
 import qualified Data.Map.Strict as M
@@ -77,9 +78,10 @@ data Board = Board
     bdMines :: MineMap,
     bdNums :: M.Map Coord Int, -- number tiles.
     -- possible ways of arranging mines so that the number tile (key) is satisfied.
-    -- note that
+    -- note that satisfied MineCoords would have some common coords discharged.
     bdCandidates :: M.Map Coord [MineCoords]
   }
+  deriving (Show)
 
 getTile :: Board -> Coord -> Maybe Bool
 getTile Board {bdDims = (rows, cols), bdMines} coord =
@@ -119,7 +121,7 @@ eliminateCommon ms@(x : xs) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
 -- try to make bdCandidates "smaller" by looking at a particular tile,
 -- and eliminate inconsistent candidates.
 -- fails if the resulting board is obviously unsolvable (run out of candidates)
-tidyBoard :: Board -> Coord -> Maybe ([(Coord, Bool)], Board)
+tidyBoard :: Board -> Coord -> Maybe (DL.DList (Coord, Bool), Board)
 tidyBoard bd@Board {bdCandidates} coord = do
   let -- aoi for "area of interest"
       aoiCandidates =
@@ -130,15 +132,18 @@ tidyBoard bd@Board {bdCandidates} coord = do
   guard $ not (any null aoiCandidates)
   let (aoiCandidates', ks) = runWriter (foldM upd aoiCandidates (M.keys aoiCandidates))
         where
-          upd :: M.Map Coord [MineCoords] -> Coord -> Writer (Endo [(Coord, Bool)]) (M.Map Coord [MineCoords])
+          upd ::
+            M.Map Coord [MineCoords] ->
+            Coord ->
+            Writer (DL.DList (Coord, Bool)) (M.Map Coord [MineCoords])
           upd m coord' = M.alterF alt coord' m
             where
               alt Nothing = pure Nothing
               alt (Just ms) = do
                 let (xs, ms') = eliminateCommon ms
-                tell (Endo (xs ++))
+                tell (DL.fromList xs)
                 pure (Just ms')
-  pure (appEndo ks [], bd {bdCandidates = M.union aoiCandidates' bdCandidates})
+  pure (ks, bd {bdCandidates = M.union aoiCandidates' bdCandidates})
   where
     isClose :: Coord -> Coord -> Bool
     isClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
@@ -146,14 +151,30 @@ tidyBoard bd@Board {bdCandidates} coord = do
 -- TODO: the plan is to use "tidyBoard" for all known tiles and borders,
 -- after which is done, we'll end up with a list of more (Coord, Bool)s that
 -- we can update and improve further.
+mkBoard :: TmpBoard -> Maybe (DL.DList (Coord, Bool), Board)
+mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
+  let initCandidates :: M.Map Coord [MineCoords]
+      initCandidates =
+        M.mapWithKey
+          ( \(cX, cY) v ->
+              let placement = placementTable V.! v
+               in fmap (M.mapKeysMonotonic (\(offX, offY) -> (cX + offX, cY + offY))) placement
+          )
+          bdNums
+      bd0 = Board {bdDims, bdNums, bdMines, bdCandidates = initCandidates}
+      edgeCoords =
+        [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
+          <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
+      tidyCoords = edgeCoords <> M.keys bdMines
+  foldM
+    ( \(xs0, curBd) coord -> do
+        (xs1, bd') <- tidyBoard curBd coord
+        pure (xs0 <> xs1, bd')
+    )
+    (DL.empty, bd0)
+    tidyCoords
 
 main :: IO ()
 main = do
-  print surroundings
-  -- manual testing pretending Offsets are Coords.
-  let xs = take 3 $ genPlacement 7
-  mapM_ print xs
-  let (es, ys) = eliminateCommon xs
-  print es
-  mapM_ print ys
-  print sampleBoard
+  let Just (xs, bd) = mkBoard sampleBoard
+  print bd

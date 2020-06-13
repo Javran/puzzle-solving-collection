@@ -14,6 +14,7 @@ dependencies:
 - containers
 - unordered-containers
 - mtl
+- dlist
 
 executables:
   minesweeper-demo:
