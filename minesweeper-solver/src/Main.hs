@@ -174,7 +174,29 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
     (DL.empty, bd0)
     tidyCoords
 
+improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
+improveBoard bdPre xsPre =
+  foldM
+    ( \(xs0, curBd) coord -> do
+        (xs1, bd') <- tidyBoard curBd coord
+        pure (xs0 <> xs1, bd')
+    )
+    (DL.empty, bd)
+    (fmap fst xs)
+  where
+    bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
+    xs = DL.toList xsPre
+
+solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
+solveBoard bd xs = case improveBoard bd xs of
+  Nothing -> Just bd
+  Just (xs', bd') ->
+    if null (DL.toList xs')
+      then Just bd'
+      else solveBoard bd' xs'
+
 main :: IO ()
 main = do
   let Just (xs, bd) = mkBoard sampleBoard
-  print bd
+      bdFin = solveBoard bd xs
+  print bdFin
