@@ -195,8 +195,26 @@ solveBoard bd xs = case improveBoard bd xs of
       then Just bd'
       else solveBoard bd' xs'
 
+pprBoard :: Board -> IO ()
+pprBoard bd@Board {bdDims = (rows, cols), bdNums} = do
+  forM_ [0 .. rows -1] $ \r -> do
+    forM_ [0 .. cols -1] $ \c -> do
+      let coord = (r, c)
+          s =
+            case getTile bd coord of
+              Nothing -> "?"
+              Just b ->
+                if b
+                  then "*"
+                  else case bdNums M.!? coord of
+                    Nothing -> " "
+                    Just v -> show v
+      putStr s
+    putStrLn ""
+
 main :: IO ()
 main = do
   let Just (xs, bd) = mkBoard sampleBoard
-      bdFin = solveBoard bd xs
-  print bdFin
+      Just bdFin = solveBoard bd xs
+  print (DL.toList xs)
+  pprBoard bdFin
