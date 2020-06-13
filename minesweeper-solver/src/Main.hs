@@ -1,5 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Main
   ( main,
@@ -7,10 +9,12 @@ module Main
 where
 
 import Control.Monad
+import Control.Monad.Writer.Strict
 import Data.Ix
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Parser
@@ -111,6 +115,37 @@ eliminateCommon ms@(x : xs) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
       vals <- mapM (M.!? c) xs
       guard $ all (== val) vals
       pure val
+
+-- try to make bdCandidates "smaller" by looking at a particular tile,
+-- and eliminate inconsistent candidates.
+-- fails if the resulting board is obviously unsolvable (run out of candidates)
+tidyBoard :: Board -> Coord -> Maybe ([(Coord, Bool)], Board)
+tidyBoard bd@Board {bdCandidates} coord = do
+  let -- aoi for "area of interest"
+      aoiCandidates =
+        M.map (filter (checkCandidate bd coord))
+          -- we only need to look at those affected by coord.
+          . M.filterWithKey (\k _ -> isClose k coord)
+          $ bdCandidates
+  guard $ all (not . null) aoiCandidates
+  let (aoiCandidates', ks) = runWriter (foldM upd aoiCandidates (M.keys aoiCandidates))
+        where
+          upd :: M.Map Coord [MineCoords] -> Coord -> Writer (Endo [(Coord, Bool)]) (M.Map Coord [MineCoords])
+          upd m coord = M.alterF alt coord m
+            where
+              alt Nothing = pure Nothing
+              alt (Just ms) = do
+                let (xs, ms') = eliminateCommon ms
+                tell (Endo (xs ++))
+                pure (Just ms')
+  pure (appEndo ks [], bd {bdCandidates = M.union aoiCandidates' bdCandidates})
+  where
+    isClose :: Coord -> Coord -> Bool
+    isClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
+
+-- TODO: the plan is to use "tidyBoard" for all known tiles and borders,
+-- after which is done, we'll end up with a list of more (Coord, Bool)s that
+-- we can update and improve further.
 
 main :: IO ()
 main = do

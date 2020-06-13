@@ -13,6 +13,7 @@ dependencies:
 - vector
 - containers
 - unordered-containers
+- mtl
 
 executables:
   minesweeper-demo:
