@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
 module Main
@@ -6,6 +7,7 @@ module Main
 where
 
 import Control.Monad
+import Data.Ix
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -65,8 +67,8 @@ type MineMap = M.Map Coord Bool
 data Board = Board
   { -- rows, cols
     bdDims :: (Int, Int),
-    -- TODO: we might not want to query mines directly,
-    -- as we want to be able to say that everything out of bound is False rather that not found.
+    -- note that one should avoid querying on this directly,
+    -- use getTile to handle out-of-bound coords properly.
     bdMines :: MineMap,
     bdNums :: M.Map Coord Int, -- number tiles.
     -- possible ways of arranging mines so that the number tile (key) is satisfied.
@@ -74,9 +76,15 @@ data Board = Board
     bdCandidates :: M.Map Coord [MineCoords]
   }
 
+getTile :: Board -> Coord -> Maybe Bool
+getTile Board {bdDims = (rows, cols), bdMines} coord =
+  if inRange ((0, 0), (rows -1, cols -1)) coord
+    then bdMines M.!? coord
+    else Just False
+
 -- check a candidate against current board to ensure consistency
-checkCandidate :: MineMap -> Coord -> MineCoords -> Bool
-checkCandidate mines (x, y) cs =
+checkCandidate :: Board -> Coord -> MineCoords -> Bool
+checkCandidate bd (x, y) cs =
   -- note that it is unnecessary to check whether current tile is a mine.
   -- this is because number tiles are (will be) explicitly marked as non-mine
   -- during Board construction.
@@ -85,7 +93,7 @@ checkCandidate mines (x, y) cs =
     coords = (\(dx, dy) -> (x + dx, y + dy)) <$> surroundings
     check :: Coord -> Bool
     check curCoord =
-      case (mines M.!? curCoord, cs M.!? curCoord) of
+      case (getTile bd curCoord, cs M.!? curCoord) of
         (Nothing, _) -> True
         (_, Nothing) -> True
         (Just actual, Just expect) -> actual == expect
