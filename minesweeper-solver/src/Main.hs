@@ -12,6 +12,8 @@ type Coord = (Int, Int)
 
 type Offset = (Int, Int)
 
+-- a mine placement has no more than 8 elements,
+-- while all present offset indicates mine, a missing offset indicates not mine.
 type MinePlacement = S.Set Offset
 
 type MineCoords = S.Set Coord
@@ -50,12 +52,31 @@ genPlacement n0 = S.fromDistinctDescList <$> genAux n0 [] surroundings
 placementTable :: V.Vector [MinePlacement]
 placementTable = V.fromList $ fmap genPlacement [0 .. 8]
 
+-- tiles that are confirmed mine (True) or not mine (False).
+-- note that this includes number tiles as False.
+type MineMap = M.Map Coord Bool
+
 data Board = Board
-  { bdDims :: (Int, Int), -- rows, cols
-    bdMines :: M.Map Coord Bool, -- tiles that are confirmed mine (True) or not mine (False). note that this includes number tiles as False.
+  { -- rows, cols
+    bdDims :: (Int, Int),
+    bdMines :: MineMap,
     bdNums :: M.Map Coord Int, -- number tiles.
-    bdCandidates :: M.Map Coord [MineCoords] -- possible ways of arranging mines so that the number tile (key) is satisfied.
+    -- possible ways of arranging mines so that the number tile (key) is satisfied.
+    -- note that
+    bdCandidates :: M.Map Coord [MineCoords]
   }
+
+checkCandidate :: MineMap -> Coord -> MineCoords -> Bool
+checkCandidate mines (x, y) cs = all check coords
+  where
+    coords = (\(dx, dy) -> (x + dx, y + dy)) <$> surroundings
+    check :: Coord -> Bool
+    check curCoord =
+      case mines M.!? curCoord of
+        Nothing -> True
+        Just actual -> expectMine == actual
+      where
+        expectMine = curCoord `elem` cs
 
 main :: IO ()
 main = do
