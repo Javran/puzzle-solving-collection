@@ -9,10 +9,11 @@ where
 import Control.Monad
 import Data.Ix
 import Data.List
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
+import Parser
 
 type Coord = (Int, Int)
 
@@ -120,3 +121,4 @@ main = do
   let (es, ys) = eliminateCommon xs
   print es
   mapM_ print ys
+  print sampleBoard
