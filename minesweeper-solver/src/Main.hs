@@ -67,7 +67,11 @@ data Board = Board
   }
 
 checkCandidate :: MineMap -> Coord -> MineCoords -> Bool
-checkCandidate mines (x, y) cs = all check coords
+checkCandidate mines (x, y) cs =
+  -- note that it is unnecessary to check whether current tile is a mine.
+  -- this is because number tiles are (will be) explicitly marked as non-mine
+  -- during Board construction.
+  all check coords
   where
     coords = (\(dx, dy) -> (x + dx, y + dy)) <$> surroundings
     check :: Coord -> Bool
@@ -77,6 +81,9 @@ checkCandidate mines (x, y) cs = all check coords
         Just actual -> expectMine == actual
       where
         expectMine = curCoord `elem` cs
+
+-- TODO: an elimination function :: [MineCoords] -> ([(Coord,Bool)], [MineCoords])
+-- that discharges common mine placements from the list.
 
 main :: IO ()
 main = do
