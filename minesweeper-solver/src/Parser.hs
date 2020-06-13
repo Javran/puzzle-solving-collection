@@ -28,6 +28,7 @@ type TmpBoard =
     M.Map (Int, Int) Bool
   )
 
+{-
 sampleRaw :: String
 sampleRaw =
   unlines
@@ -40,6 +41,12 @@ sampleRaw =
       "?1122??",
       "???????"
     ]
+ -}
+
+sampleRaw :: String
+sampleRaw =
+  unlines
+    ["3 3", "   ", "?2 ", " ? "]
 
 sampleBoard :: TmpBoard
 sampleBoard = case readP_to_S (boardP <* eof) sampleRaw of
