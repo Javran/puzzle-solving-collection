@@ -127,11 +127,11 @@ tidyBoard bd@Board {bdCandidates} coord = do
           -- we only need to look at those affected by coord.
           . M.filterWithKey (\k _ -> isClose k coord)
           $ bdCandidates
-  guard $ all (not . null) aoiCandidates
+  guard $ not (any null aoiCandidates)
   let (aoiCandidates', ks) = runWriter (foldM upd aoiCandidates (M.keys aoiCandidates))
         where
           upd :: M.Map Coord [MineCoords] -> Coord -> Writer (Endo [(Coord, Bool)]) (M.Map Coord [MineCoords])
-          upd m coord = M.alterF alt coord m
+          upd m coord' = M.alterF alt coord' m
             where
               alt Nothing = pure Nothing
               alt (Just ms) = do

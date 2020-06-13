@@ -69,9 +69,11 @@ boardP = do
   dims@(rows, cols) <- rowsAndColsP <* newlineP
   (results :: [((Int, Int), (Maybe Int, Maybe Bool))]) <-
     concat
-      <$> ( forM [0 .. rows -1] $ \row -> do
-              (forM [0 .. cols -1] $ \col -> ((row, col),) <$> tileP) <* newlineP
-          )
+      <$> forM
+        [0 .. rows -1]
+        ( \row ->
+            forM [0 .. cols -1] (\col -> ((row, col),) <$> tileP) <* newlineP
+        )
   let numMap = M.fromList $ mapMaybe (\(c, (m, _)) -> (c,) <$> m) results
       tileMap = M.fromList $ mapMaybe (\(c, (_, m)) -> (c,) <$> m) results
   pure (dims, numMap, tileMap)
