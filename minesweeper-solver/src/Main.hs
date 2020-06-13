@@ -13,16 +13,15 @@ type Coord = (Int, Int)
 type Offset = (Int, Int)
 
 -- a mine placement has no more than 8 elements,
--- while all present offset indicates mine, a missing offset indicates not mine.
-type MinePlacement = S.Set Offset
+-- mines are indicated by True, non-mines False.
+type MinePlacement = M.Map Offset Bool
 
-type MineCoords = S.Set Coord
+type MineCoords = M.Map Coord Bool
 
 {- ORMOLU_DISABLE -}
 -- 2d offset of 8 surrounding tiles.
--- sorted so that we can use efficient ways of Set construction.
-surroundings ::  [Offset]
-surroundings = sort
+surroundings :: [Offset]
+surroundings =
   [ (-1, -1), (-1, 0), (-1, 1)
   , (0, -1), (0, 1)
   , (1, -1), (1, 0), (1, 1)
@@ -41,12 +40,15 @@ pickInOrder xs = do
 {-# INLINEABLE pickInOrder #-}
 
 genPlacement :: Int -> [MinePlacement]
-genPlacement n0 = S.fromDistinctDescList <$> genAux n0 [] surroundings
+genPlacement n0 = convert <$> genAux n0 [] surroundings
   where
     genAux 0 selected _ = pure selected
     genAux n selected candidates = do
       (s, candidates') <- pickInOrder candidates
       genAux (n -1) (s : selected) candidates'
+    -- TODO: let's not worry about performance for now.
+    convert :: [Offset] -> MinePlacement
+    convert ms = M.fromList $ fmap (\c -> (c, c `elem` ms)) surroundings
 
 -- every number tile will be initialized with a list of MinePlacements from here.
 placementTable :: V.Vector [MinePlacement]
@@ -76,11 +78,10 @@ checkCandidate mines (x, y) cs =
     coords = (\(dx, dy) -> (x + dx, y + dy)) <$> surroundings
     check :: Coord -> Bool
     check curCoord =
-      case mines M.!? curCoord of
-        Nothing -> True
-        Just actual -> expectMine == actual
-      where
-        expectMine = curCoord `elem` cs
+      case (mines M.!? curCoord, cs M.!? curCoord) of
+        (Nothing, _) -> True
+        (_, Nothing) -> True
+        (Just actual, Just expect) -> actual == expect
 
 -- TODO: an elimination function :: [MineCoords] -> ([(Coord,Bool)], [MineCoords])
 -- that discharges common mine placements from the list.

@@ -15,7 +15,7 @@ dependencies:
 - unordered-containers
 
 executables:
-  demo:
+  minesweeper-demo:
     main: Main.hs
     source-dirs: src
     ghc-options:
