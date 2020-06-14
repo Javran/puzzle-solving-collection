@@ -16,10 +16,18 @@ dependencies:
 - mtl
 - dlist
 
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+  
+
 executables:
   minesweeper-demo:
     main: Main.hs
-    source-dirs: src
+    source-dirs: exe
+    dependencies:
+      - minesweeper-solver
     ghc-options:
       - -Wall
       - -O2

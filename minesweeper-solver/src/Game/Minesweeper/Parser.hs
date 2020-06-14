@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module Parser where
+module Game.Minesweeper.Parser where
 
 import Control.Monad
 import Data.Char

@@ -2,7 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Main
+module Game.Minesweeper.Main
   ( main,
   )
 where
@@ -16,7 +16,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
-import Parser
+import Game.Minesweeper.Parser
 import System.Environment
 
 type Coord = (Int, Int)
