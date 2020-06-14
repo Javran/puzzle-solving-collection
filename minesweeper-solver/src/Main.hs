@@ -209,21 +209,22 @@ pprBoard bd@Board {bdDims = (rows, cols), bdNums} = do
   forM_ [0 .. rows -1] $ \r -> do
     forM_ [0 .. cols -1] $ \c -> do
       let coord = (r, c)
-          s =
-            case getTile bd coord of
-              Nothing -> "?"
-              Just b ->
-                if b
-                  then "*"
-                  else case bdNums M.!? coord of
-                    Nothing -> " "
-                    Just v -> show v
-      putStr s
+      putStr $ case getTile bd coord of
+        Nothing -> "?"
+        Just b ->
+          if b
+            then "*"
+            else maybe "" show (bdNums M.!? coord)
+
     putStrLn ""
 
 main :: IO ()
 main = do
-  let Just (xs, bd) = mkBoard sampleBoard
+  args <- getArgs
+  raw <- case args of
+    [fs] -> readFile fs
+    _ -> pure sampleRaw
+  let tmpBd = parseBoard raw
+      Just (xs, bd) = mkBoard tmpBd
       Just bdFin = solveBoard bd xs
-  print (DL.toList xs)
   pprBoard bdFin

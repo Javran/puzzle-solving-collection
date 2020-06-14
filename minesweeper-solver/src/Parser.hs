@@ -41,14 +41,8 @@ sampleRaw =
       "???????"
     ]
 
-{-
-sampleRaw :: String
-sampleRaw =
-  unlines
-    ["3 3", "   ", "?2 ", " ? "]
- -}
-sampleBoard :: TmpBoard
-sampleBoard = case readP_to_S (boardP <* eof) sampleRaw of
+parseBoard :: String -> TmpBoard
+parseBoard raw = case readP_to_S (boardP <* eof) raw of
   [(v, "")] -> v
   _ -> error "parse error"
 
