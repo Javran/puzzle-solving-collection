@@ -124,15 +124,14 @@ eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys)
 -- and eliminate inconsistent candidates.
 -- fails if the resulting board is obviously unsolvable (run out of candidates)
 tidyBoard :: Board -> Coord -> Maybe (DL.DList (Coord, Bool), Board)
-tidyBoard bd@Board {bdCandidates} coord = do
-  let -- aoi for "area of interest"
-      aoiCandidates =
-        M.map (filter (checkCandidate bd coord))
-          -- we only need to look at those affected by coord.
-          . M.filterWithKey (\k _ -> isClose k coord)
-          $ bdCandidates
-  guard $ not (any null aoiCandidates)
-  let (aoiCandidates', ks) = runWriter (foldM upd aoiCandidates (M.keys aoiCandidates))
+tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
+  -- aoi for "area of interest"
+  let (aoiCandidates1, bdCandidates1) =
+        M.partitionWithKey (\k _ -> isClose k coord) bdCandidates0
+      aoiCandidates2 = M.map (filter (checkCandidate bd coord)) aoiCandidates1
+  guard $ not (any null aoiCandidates2)
+  let (aoiCandidates3, ks) =
+        runWriter (foldM upd aoiCandidates2 (M.keys aoiCandidates2))
         where
           upd ::
             M.Map Coord [MineCoords] ->
@@ -145,7 +144,11 @@ tidyBoard bd@Board {bdCandidates} coord = do
                 let (xs, ms') = eliminateCommon coord' ms
                 tell (DL.fromList xs)
                 pure (Just ms')
-  pure (ks, bd {bdCandidates = M.union aoiCandidates' bdCandidates})
+      aoiCandidates4 = M.filter (not . canDischarge) aoiCandidates3
+        where
+          canDischarge [x] = M.null x
+          canDischarge _ = False
+  pure (ks, bd {bdCandidates = M.union aoiCandidates4 bdCandidates1})
   where
     isClose :: Coord -> Coord -> Bool
     isClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
@@ -205,7 +208,8 @@ solveBoard bd xs =
         || bdMines before /= bdMines after
 
 pprBoard :: Board -> IO ()
-pprBoard bd@Board {bdDims = (rows, cols), bdNums} = do
+pprBoard bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
+  putStrLn "===="
   forM_ [0 .. rows -1] $ \r -> do
     forM_ [0 .. cols -1] $ \c -> do
       let coord = (r, c)
@@ -217,6 +221,14 @@ pprBoard bd@Board {bdDims = (rows, cols), bdNums} = do
             else maybe "" show (bdNums M.!? coord)
 
     putStrLn ""
+  putStrLn "===="
+  unless (M.null bdCandidates) $ do
+    putStrLn "Candidates:"
+    forM_ (M.toAscList bdCandidates) $
+      \(coord, cs) -> do
+        let n = bdNums M.! coord
+        putStrLn $ show n <> " on " <> show coord <> ":"
+        mapM_ (putStrLn . ("  " ++) . show) cs
 
 main :: IO ()
 main = do
