@@ -1,0 +1,57 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ee908738a2709d5287611cf7ba58f6214e2d909a3f9b12c311fe3f91d2b2a273
+
+name:           minesweeper-solver
+version:        0.1.0.0
+description:    description
+homepage:       https://github.com/Javran/minesweeper-solver#readme
+bug-reports:    https://github.com/Javran/minesweeper-solver/issues
+author:         Javran Cheng
+maintainer:     javran.c@gmail.com
+copyright:      Copyright: (c) 2019 Javran Cheng
+license:        BSD3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/Javran/minesweeper-solver
+
+library
+  exposed-modules:
+      Game.Minesweeper.Main
+      Game.Minesweeper.Parser
+  other-modules:
+      Paths_minesweeper_solver
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base
+    , containers
+    , dlist
+    , mtl
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+executable minesweeper-demo
+  main-is: Main.hs
+  other-modules:
+      Paths_minesweeper_solver
+  hs-source-dirs:
+      exe
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , containers
+    , dlist
+    , minesweeper-solver
+    , mtl
+    , unordered-containers
+    , vector
+  default-language: Haskell2010

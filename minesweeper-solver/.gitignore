@@ -1,5 +1,4 @@
 .stack-work/
-minesweeper-solver.cabal
 stack.yaml.lock
 *~
 
