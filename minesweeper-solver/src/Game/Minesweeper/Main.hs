@@ -2,10 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Game.Minesweeper.Main
-  ( main,
-  )
-where
+module Game.Minesweeper.Main where
 
 import Control.Monad
 import Control.Monad.Writer.Strict
