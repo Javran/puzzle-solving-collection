@@ -18,6 +18,7 @@ import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Parser
+import System.Environment
 
 type Coord = (Int, Int)
 
@@ -108,7 +109,9 @@ eliminateCommon :: Coord -> [MineCoords] -> ([(Coord, Bool)], [MineCoords])
 eliminateCommon _ [] = ([], [])
 eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
   where
-    commons = mapMaybe (\c -> (c,) <$> isCommon c) $ fmap (\(dx, dy) -> (x + dx, y + dy)) surroundings
+    commons = mapMaybe ((\c -> (c,) <$> isCommon c) . anchor) surroundings
+      where
+        anchor (dx, dy) = (x + dx, y + dy)
     commonKeys = S.fromList $ fmap fst commons
     isCommon :: Coord -> Maybe Bool
     isCommon c = do
@@ -140,7 +143,7 @@ tidyBoard bd@Board {bdCandidates} coord = do
               alt Nothing = pure Nothing
               alt (Just ms) = do
                 let (xs, ms') = eliminateCommon coord' ms
-                tell $ (DL.fromList xs)
+                tell (DL.fromList xs)
                 pure (Just ms')
   pure (ks, bd {bdCandidates = M.union aoiCandidates' bdCandidates})
   where
@@ -187,7 +190,7 @@ improveBoard bdPre xsPre =
     xs = DL.toList xsPre
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
-solveBoard bd@Board {bdDims = (rows, cols)} xs =
+solveBoard bd xs =
   case improveBoard bd xs of
     Nothing -> Nothing
     Just (xs', bd') ->
