@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE ViewPatterns #-}
 
 module Main
   ( main,
@@ -146,6 +145,9 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
                 pure (Just ms')
       aoiCandidates4 = M.filter (not . canDischarge) aoiCandidates3
         where
+          -- a candidate (a number hint with all possible MineCoords) can be discharged when:
+          -- (1) there is only one possibility in it
+          -- (2) the single possibility no longer has any coord left.
           canDischarge [x] = M.null x
           canDischarge _ = False
   pure (ks, bd {bdCandidates = M.union aoiCandidates4 bdCandidates1})
@@ -180,7 +182,11 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
     tidyCoords
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
-improveBoard bdPre xsPre =
+improveBoard bdPre xsPre = do
+  let bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
+      xs = DL.toList xsPre
+  -- make sure that union doesn't merge conflicting results.
+  guard $ and $ M.elems $ M.intersectionWith (==) (M.fromList xs) (bdMines bdPre)
   foldM
     ( \(xs0, curBd) coord -> do
         (xs1, bd') <- tidyBoard curBd coord
@@ -188,24 +194,60 @@ improveBoard bdPre xsPre =
     )
     (DL.empty, bd)
     (fmap fst xs)
-  where
-    bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
-    xs = DL.toList xsPre
+
+-- fully apply a MineCoords, the idea here is to see if we can find contradictions this way.
+applyMineCoords :: Board -> MineCoords -> Maybe (DL.DList (Coord, Bool), Board)
+applyMineCoords bd0 mc = do
+  bd1 <- solveBoardStage0 bd0 (DL.fromList (M.toList mc))
+  pure (DL.empty, bd1)
+
+makingProgress :: Board -> Board -> Bool
+makingProgress before after =
+  bdCandidates before /= bdCandidates after
+    || bdMines before /= bdMines after
+
+solveBoardStage0 :: Board -> DL.DList (Coord, Bool) -> Maybe Board
+solveBoardStage0 bd xs = do
+  (xs', bd') <- improveBoard bd xs
+  -- note that if there's no change of candidate or mines between bd and bd'
+  -- xs' will not contain anything.
+  -- therefore checking whether xs' is empty is not necessary.
+  if makingProgress bd bd'
+    then solveBoardStage0 bd' xs'
+    else Just bd'
+
+-- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
+solveBoardStage1 :: Board -> Maybe Board
+solveBoardStage1 bd@Board {bdCandidates} = do
+  let failedAttempts :: [(Coord, MineCoords)]
+      failedAttempts =
+        filter (isNothing . applyMineCoords bd . snd)
+          . concatMap (\(k, vs) -> fmap (k,) vs)
+          -- start trying on least amount of alternatives, reducing branching factor.
+          . sortOn (length . snd)
+          $ M.toList bdCandidates
+  case failedAttempts of
+    [] -> Just bd
+    (k, mc) : _ -> do
+      -- TODO: this is messy, consider simplifying it.
+      let bdInit = bd {bdCandidates = M.adjust (delete mc) k bdCandidates}
+      (xs, bd') <-
+        foldM
+          ( \(curXs, curBd) c -> do
+              (ys, nextBd) <- tidyBoard curBd c
+              pure (curXs <> ys, nextBd)
+          )
+          (DL.empty, bdInit)
+          (M.keys mc)
+      solveBoardStage0 bd' xs
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
-solveBoard bd xs =
-  case improveBoard bd xs of
-    Nothing -> Nothing
-    Just (xs', bd') ->
-      let xs'' = DL.toList xs'
-       in if progress bd bd' || not (null xs'')
-            then solveBoard bd' xs'
-            else Just bd'
-  where
-    progress :: Board -> Board -> Bool
-    progress before after =
-      bdCandidates before /= bdCandidates after
-        || bdMines before /= bdMines after
+solveBoard bd0 xs = do
+  bd1 <- solveBoardStage0 bd0 xs
+  bd2 <- solveBoardStage1 bd1
+  if makingProgress bd1 bd2
+    then solveBoardStage0 bd2 DL.empty
+    else Just bd2
 
 pprBoard :: Board -> IO ()
 pprBoard bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
@@ -218,7 +260,7 @@ pprBoard bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
         Just b ->
           if b
             then "*"
-            else maybe "" show (bdNums M.!? coord)
+            else maybe " " show (bdNums M.!? coord)
 
     putStrLn ""
   putStrLn "===="

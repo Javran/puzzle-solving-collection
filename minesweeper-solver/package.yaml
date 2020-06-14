@@ -22,6 +22,7 @@ executables:
     source-dirs: src
     ghc-options:
       - -Wall
+      - -O2
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
