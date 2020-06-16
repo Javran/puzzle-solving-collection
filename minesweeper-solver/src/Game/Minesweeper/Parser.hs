@@ -3,6 +3,7 @@
 
 module Game.Minesweeper.Parser where
 
+import Control.Applicative
 import Control.Monad
 import Data.Char
 import qualified Data.Map.Strict as M
@@ -14,7 +15,12 @@ import Text.ParserCombinators.ReadP
   <rows> <cols>
   followed by mine presentation.
 
-  valid chars: '?', '1'..'8' and ' '
+  valid chars:
+  - '?' for unknown
+  - '1'..'8' for number tiles
+  - ' ' or '_' for empty space
+  - '*' for mines
+
   all lines end with newline.
 
  -}
@@ -34,9 +40,9 @@ sampleRaw =
     [ "7 7",
       "???????",
       "??1122?",
-      "??1  1?",
-      "?21 13?",
-      "?1  1??",
+      "??1__1?",
+      "?21_13?",
+      "?1__1??",
       "?1122??",
       "???????"
     ]
@@ -56,12 +62,13 @@ rowsAndColsP = do
 tileP :: ReadP (Maybe Int, Maybe Bool)
 tileP =
   ((Nothing, Nothing) <$ char '?')
-    <++ ((Nothing, Just False) <$ char ' ')
+    <++ ((Nothing, Just False) <$ (char ' ' <|> char '_'))
     <++ ( do
             c <- satisfy (\c -> c >= '1' && c <= '8')
             let n = ord c - ord '0'
             pure (Just n, Just False)
         )
+    <++ ((Nothing, Just True) <$ char '*')
 
 boardP :: ReadP TmpBoard
 boardP = do
