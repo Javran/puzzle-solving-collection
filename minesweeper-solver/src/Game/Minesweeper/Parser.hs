@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -19,6 +20,7 @@ import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Text.ParserCombinators.ReadP
+import Text.RawString.QQ
 
 {-
   Input file format:
@@ -46,16 +48,15 @@ type TmpBoard =
 
 sampleRaw :: String
 sampleRaw =
-  unlines
-    [ "7 7",
-      "???????",
-      "??1122?",
-      "??1__1?",
-      "?21_13?",
-      "?1__1??",
-      "?1122??",
-      "???????"
-    ]
+  [r|7 7
+???????
+??1122?
+??1__1?
+?21_13?
+?1__1??
+?1122??
+???????
+|]
 
 parseBoard :: String -> Maybe TmpBoard
 parseBoard raw = do

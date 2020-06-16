@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ee908738a2709d5287611cf7ba58f6214e2d909a3f9b12c311fe3f91d2b2a273
+-- hash: 5224d2936f08dbfb894a9b115223da0c92bf3dd32059e6d47329bfdf41dec076
 
 name:           minesweeper-solver
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
     , containers
     , dlist
     , mtl
+    , raw-strings-qq
     , unordered-containers
     , vector
   default-language: Haskell2010
@@ -52,6 +53,7 @@ executable minesweeper-demo
     , dlist
     , minesweeper-solver
     , mtl
+    , raw-strings-qq
     , unordered-containers
     , vector
   default-language: Haskell2010

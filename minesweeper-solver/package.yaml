@@ -15,6 +15,7 @@ dependencies:
 - unordered-containers
 - mtl
 - dlist
+- raw-strings-qq
 
 library:
   source-dirs: src
