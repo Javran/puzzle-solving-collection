@@ -1,7 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module Game.Minesweeper.Parser where
+module Game.Minesweeper.Parser
+  ( TmpBoard,
+    sampleRaw,
+    parseBoard,
+    newlineP,
+    rowsAndColsP,
+    tileP,
+    boardP,
+    fullBoardP,
+  )
+where
 
 import Control.Applicative
 import Control.Monad
@@ -49,8 +59,11 @@ sampleRaw =
 
 parseBoard :: String -> Maybe TmpBoard
 parseBoard raw = do
-  [(v, "")] <- pure $ readP_to_S (boardP <* eof) raw
+  [(v, "")] <- pure $ readP_to_S (fullBoardP <* eof) raw
   pure v
+
+newlineP :: ReadP ()
+newlineP = void $ char '\n'
 
 rowsAndColsP :: ReadP (Int, Int)
 rowsAndColsP = do
@@ -70,10 +83,8 @@ tileP =
         )
     <++ ((Nothing, Just True) <$ char '*')
 
-boardP :: ReadP TmpBoard
-boardP = do
-  let newlineP = void $ char '\n'
-  dims@(rows, cols) <- rowsAndColsP <* newlineP
+boardP :: (Int, Int) -> ReadP TmpBoard
+boardP dims@(rows, cols) = do
   (results :: [((Int, Int), (Maybe Int, Maybe Bool))]) <-
     concat
       <$> forM
@@ -84,3 +95,6 @@ boardP = do
   let numMap = M.fromList $ mapMaybe (\(c, (m, _)) -> (c,) <$> m) results
       tileMap = M.fromList $ mapMaybe (\(c, (_, m)) -> (c,) <$> m) results
   pure (dims, numMap, tileMap)
+
+fullBoardP :: ReadP TmpBoard
+fullBoardP = (rowsAndColsP <* newlineP) >>= boardP
