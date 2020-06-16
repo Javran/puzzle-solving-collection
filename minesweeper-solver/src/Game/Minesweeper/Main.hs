@@ -275,7 +275,7 @@ main = do
   raw <- case args of
     [fs] -> readFile fs
     _ -> pure sampleRaw
-  let tmpBd = parseBoard raw
+  let Just tmpBd = parseBoard raw
       Just (xs, bd) = mkBoard tmpBd
       Just bdFin = solveBoard bd xs
   pprBoard bdFin

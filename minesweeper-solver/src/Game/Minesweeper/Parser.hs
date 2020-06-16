@@ -47,10 +47,10 @@ sampleRaw =
       "???????"
     ]
 
-parseBoard :: String -> TmpBoard
-parseBoard raw = case readP_to_S (boardP <* eof) raw of
-  [(v, "")] -> v
-  _ -> error "parse error"
+parseBoard :: String -> Maybe TmpBoard
+parseBoard raw = do
+  [(v, "")] <- pure $ readP_to_S (boardP <* eof) raw
+  pure v
 
 rowsAndColsP :: ReadP (Int, Int)
 rowsAndColsP = do
