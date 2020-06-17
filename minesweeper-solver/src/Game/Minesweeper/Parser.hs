@@ -19,6 +19,7 @@ import Control.Monad
 import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Game.Minesweeper.Types
 import Text.ParserCombinators.ReadP
 import Text.RawString.QQ
 
@@ -36,15 +37,6 @@ import Text.RawString.QQ
   all lines end with newline.
 
  -}
-
-type TmpBoard =
-  ( -- rows, cols
-    (Int, Int),
-    -- num map
-    M.Map (Int, Int) Int,
-    -- mine map
-    M.Map (Int, Int) Bool
-  )
 
 sampleRaw :: String
 sampleRaw =

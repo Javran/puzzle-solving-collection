@@ -14,17 +14,8 @@ import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Minesweeper.Parser
+import Game.Minesweeper.Types
 import System.Environment
-
-type Coord = (Int, Int)
-
-type Offset = (Int, Int)
-
--- a mine placement has no more than 8 elements,
--- mines are indicated by True, non-mines False.
-type MinePlacement = M.Map Offset Bool
-
-type MineCoords = M.Map Coord Bool
 
 {- ORMOLU_DISABLE -}
 -- 2d offset of 8 surrounding tiles.
@@ -61,23 +52,6 @@ genPlacement n0 = convert <$> genAux n0 [] surroundings
 -- every number tile will be initialized with a list of MinePlacements from here.
 placementTable :: V.Vector [MinePlacement]
 placementTable = V.fromList $ fmap genPlacement [0 .. 8]
-
--- tiles that are confirmed mine (True) or not mine (False).
--- note that this includes number tiles as False.
-type MineMap = M.Map Coord Bool
-
-data Board = Board
-  { -- rows, cols
-    bdDims :: (Int, Int),
-    -- note that one should avoid querying on this directly,
-    -- use getTile to handle out-of-bound coords properly.
-    bdMines :: MineMap,
-    bdNums :: M.Map Coord Int, -- number tiles.
-    -- possible ways of arranging mines so that the number tile (key) is satisfied.
-    -- note that satisfied MineCoords would have some common coords discharged.
-    bdCandidates :: M.Map Coord [MineCoords]
-  }
-  deriving (Show)
 
 getTile :: Board -> Coord -> Maybe Bool
 getTile Board {bdDims = (rows, cols), bdMines} coord =
