@@ -65,6 +65,7 @@ getTile Board {bdDims = (rows, cols), bdMines} coord =
     else Just False
 
 -- check a candidate against current board to ensure consistency
+-- the argument given as Coord must be one of those number tiles.
 checkCandidate :: Board -> Coord -> MineCoords -> Bool
 checkCandidate bd (x, y) cs =
   -- note that it is unnecessary to check whether current tile is a mine.
@@ -88,6 +89,8 @@ eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys)
       where
         anchor (dx, dy) = (x + dx, y + dy)
     commonKeys = S.fromList $ fmap fst commons
+    -- a coordinate is common when all candidates have the same value
+    -- in this particular coordinate.
     isCommon :: Coord -> Maybe Bool
     isCommon c = do
       val <- t M.!? c
@@ -98,27 +101,43 @@ eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys)
 -- try to make bdCandidates "smaller" by looking at a particular tile,
 -- and eliminate inconsistent candidates.
 -- fails if the resulting board is obviously unsolvable (run out of candidates)
+-- note that this step might generate out-of-bound future updates.
 tidyBoard :: Board -> Coord -> Maybe (DL.DList (Coord, Bool), Board)
 tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
-  -- aoi for "area of interest"
-  let (aoiCandidates1, bdCandidates1) =
+  let {-
+        aoi for "area of interest"
+        here we want to extract the affected part out,
+        make modification on it and then put it back.
+      -}
+      (aoiCandidates1, bdCandidates1) =
         M.partitionWithKey (\k _ -> isClose k coord) bdCandidates0
-      aoiCandidates2 = M.map (filter (checkCandidate bd coord)) aoiCandidates1
+      -- invalid candidates are eliminated here.
+      aoiCandidates2 =
+        M.map (filter (checkCandidate bd coord)) aoiCandidates1
+  -- if any of those number tiles end up having no candidate
+  -- to pick from, that means the current solution is not possible.
   guard $ not (any null aoiCandidates2)
+  -- at this point elimination is done,
+  -- following steps are all about reducing candidates.
   let (aoiCandidates3, ks) =
-        runWriter (foldM upd aoiCandidates2 (M.keys aoiCandidates2))
+        -- this step is to reduce # of tiles need to be considered within a candidate.
+        -- the idea is to simply look for things in common across all possibilities
+        -- and extract those out.
+        runWriter (foldM go aoiCandidates2 (M.keys aoiCandidates2))
         where
-          upd ::
+          go ::
             M.Map Coord [MineCoords] ->
             Coord ->
             Writer (DL.DList (Coord, Bool)) (M.Map Coord [MineCoords])
-          upd m coord' = M.alterF alt coord' m
+          go m coord' = M.alterF alt coord' m
             where
               alt Nothing = pure Nothing
               alt (Just ms) = do
                 let (xs, ms') = eliminateCommon coord' ms
                 tell (DL.fromList xs)
                 pure (Just ms')
+      -- this step removes a number tile from candidate mapping if
+      -- it is no longer necessary to keep.
       aoiCandidates4 = M.filter (not . canDischarge) aoiCandidates3
         where
           -- a candidate (a number hint with all possible MineCoords) can be discharged when:
@@ -134,9 +153,18 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
 -- TODO: the plan is to use "tidyBoard" for all known tiles and borders,
 -- after which is done, we'll end up with a list of more (Coord, Bool)s that
 -- we can update and improve further.
+
+{-
+  Create Board from TmpBoard. This only sets up everything other than bdCandidates.
+  This is because setting bdCandidates can trigger a chain reaction that will end up
+  other fields as well. So here I figure it's best to separate out future updates
+  by having a difflist.
+ -}
 mkBoard :: TmpBoard -> Maybe (DL.DList (Coord, Bool), Board)
 mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
   let initCandidates :: M.Map Coord [MineCoords]
+      -- initial candidates are just blindly copied from precomputed data,
+      -- invalid candidates are to be eliminated by tidyBoard.
       initCandidates =
         M.mapWithKey
           ( \(cX, cY) v ->
@@ -145,6 +173,8 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
           )
           bdNums
       bd0 = Board {bdDims, bdNums, bdMines, bdCandidates = initCandidates}
+      -- those are "just-out-of-bound" coordinates that we intend to perform "tidyBoard" on.
+      -- this way we'll eliminate candidates that doesn't fit into the board.
       edgeCoords =
         [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
           <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
@@ -159,6 +189,7 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
 improveBoard bdPre xsPre = do
+  -- TODO: set mine one step at a time, and eliminate invalid ones.
   let bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
       xs = DL.toList xsPre
   -- make sure that union doesn't merge conflicting results.
