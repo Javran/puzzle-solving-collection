@@ -15,7 +15,6 @@ import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
-import System.Environment
 
 {- ORMOLU_DISABLE -}
 -- 2d offset of 8 surrounding tiles.
@@ -255,3 +254,9 @@ solveBoard bd0 xs = do
   if makingProgress bd1 bd2
     then solveBoardStage0 bd2 DL.empty
     else Just bd2
+
+solveBoardFromRaw :: String -> Maybe Board
+solveBoardFromRaw raw = do
+  tmpBd <- parseBoard raw
+  (xs, bd) <- mkBoard tmpBd
+  solveBoard bd xs
