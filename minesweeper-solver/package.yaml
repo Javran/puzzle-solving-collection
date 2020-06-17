@@ -21,7 +21,6 @@ library:
   source-dirs: src
   ghc-options:
     - -Wall
-  
 
 executables:
   minesweeper-demo:
