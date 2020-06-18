@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 49d2ef590e724ed96631234bf19e17a1d5354f6ed8f164a93ff34e3eb07b95b2
+-- hash: a0911e85bd036d8763055740b63c1ca28ee6ccbb1dbf947e01bd2641f8dffb88
 
 name:           minesweeper-solver
 version:        0.1.0.0
@@ -65,6 +65,7 @@ test-suite hspec
   main-is: Spec.hs
   other-modules:
       Game.Minesweeper.ParserSpec
+      Game.Minesweeper.SolverSpec
       Paths_minesweeper_solver
   hs-source-dirs:
       test
