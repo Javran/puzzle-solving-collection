@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d8b3e4438085e2a3aa03181cc88fa011e35413f3ce857808b91e3dc586e52a2a
+-- hash: 49d2ef590e724ed96631234bf19e17a1d5354f6ed8f164a93ff34e3eb07b95b2
 
 name:           minesweeper-solver
 version:        0.1.0.0
@@ -53,6 +53,27 @@ executable minesweeper-demo
       base
     , containers
     , dlist
+    , minesweeper-solver
+    , mtl
+    , raw-strings-qq
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+test-suite hspec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Game.Minesweeper.ParserSpec
+      Paths_minesweeper_solver
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
+  build-depends:
+      base
+    , containers
+    , dlist
+    , hspec
     , minesweeper-solver
     , mtl
     , raw-strings-qq

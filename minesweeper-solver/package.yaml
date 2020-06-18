@@ -22,6 +22,22 @@ library:
   ghc-options:
     - -Wall
 
+tests:
+  hspec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - minesweeper-solver
+      - hspec
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -O2
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -main-is Spec
+
 executables:
   minesweeper-demo:
     main: Main.hs
