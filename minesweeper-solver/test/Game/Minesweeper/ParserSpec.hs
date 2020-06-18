@@ -2,14 +2,23 @@
 
 module Game.Minesweeper.ParserSpec where
 
-import Data.Maybe
+import Data.Monoid
 import Game.Minesweeper.Parser
 import Test.Hspec
+import Text.ParserCombinators.ReadP
 import Text.RawString.QQ
 
-examples :: [String]
+parseAllBoards :: ReadP [TmpBoard]
+parseAllBoards = many1 (sepP *> fullBoardP)
+  where
+    sepP = munch (/= '\n') *> char '\n'
+
+-- the number of "===="s should exactly match
+-- number of test cases.
+examples :: String
 examples =
-  [ [r|7 7
+  [r|====
+7 7
 ???????
 ??1122?
 ??1  1?
@@ -17,23 +26,31 @@ examples =
 ?1  1??
 ?1122??
 ???????
-|],
-    [r|3 4
+====
+3 4
 ????
 *13?
 __2?
-|],
-    [r|2 8
+====
+2 8
 ?4???5?*
 ??? ???_
-|],
-    [r|1 12
+====
+1 12
 12345678_ *?
 |]
-  ]
 
 spec :: Spec
 spec =
   describe "parseBoard"
     $ specify "examples"
-    $ fmap parseBoard examples `shouldSatisfy` all isJust
+    $ do
+      let expectedLen =
+            getSum
+              $ foldMap
+                (\xs -> if xs == "====" then 1 else 0)
+              $ lines examples
+      [(xs, [])] <-
+        pure $
+          readP_to_S (parseAllBoards <* eof) examples
+      length xs `shouldBe` expectedLen
