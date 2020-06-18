@@ -2,19 +2,23 @@
 
 module Game.Minesweeper.SolverSpec where
 
+import Control.Applicative
 import Control.Monad
 import Data.List
+import qualified Data.Map.Strict as M
+import Data.Maybe
 import Data.Monoid
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Solver
+import Game.Minesweeper.Types
 import Test.Hspec
-import Text.ParserCombinators.ReadP
-import Text.RawString.QQ
+import Text.ParserCombinators.ReadP hiding (many)
+import qualified Text.RawString.QQ as Q
 
 rawTests :: String
 rawTests =
-  -- TODO: we can actually make more progress on Test #0
-  [r|= #0
+  -- TODO: potential improvement on #0 and #2
+  [Q.r|= #0
 7 7
 ???????
 ??1122?
@@ -31,6 +35,26 @@ _*1__1_
 ?1__1**
 ?1122_?
 ???????
+= #1
+3 5
+?????
+12221
+_____
+----
+??*??
+12221
+_____
+= #2
+4 5
+?????
+?42?2
+?3111
+?2___
+----
+*????
+*42*2
+*3111
+*2___
 |]
 
 expectedTestCount :: Int
@@ -72,6 +96,23 @@ fullTestCaseP = do
   bdAfter <- boardP dims
   pure (label, (bdBefore, bdAfter))
 
+{-
+  a tile could be:
+  - '?' <==> Nothing
+  - '_' <==> Just (Left False)
+  - '*' <==> Just (Left True)
+  - <num> <==> Just (Right <num>)
+ -}
+type Tile = Maybe (Either Bool Int)
+
+isSameOrImproved :: Tile -> Tile -> Bool
+isSameOrImproved x y = x == y || isNothing x
+
+getTile' :: Board -> Coord -> Tile
+getTile' bd coord =
+  (Right <$> bdNums bd M.!? coord)
+    <|> (Left <$> bdMines bd M.!? coord)
+
 spec :: Spec
 spec =
   describe "mkBoard & solveBoard" $ forM_ tests $
@@ -80,8 +121,16 @@ spec =
         let Just bdSolved = do
               (xs, bd) <- mkBoard bdBeforeTmp
               solveBoard bd xs
-            Just bdAfter =
+            Just bdAfter@Board {bdDims = (rows, cols)} =
               -- as we only care about the parsed board,
               -- we don't need to do anything with bdCandidates.
               snd <$> mkBoard bdAfterTmp
-        pending
+            allCoords =
+              [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+        bdDims bdSolved `shouldBe` bdDims bdAfter
+        forM_ allCoords $ \coord -> do
+          let tSolved = getTile' bdSolved coord
+              tAfter = getTile' bdAfter coord
+          -- verify that solver does come up with a solution that is
+          -- at least as good as the one given in this test case.
+          (tSolved, tAfter) `shouldSatisfy` uncurry isSameOrImproved
