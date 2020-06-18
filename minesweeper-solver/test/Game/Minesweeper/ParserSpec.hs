@@ -11,7 +11,7 @@ import Text.RawString.QQ
 parseAllBoards :: ReadP [TmpBoard]
 parseAllBoards = many1 (sepP *> fullBoardP)
   where
-    sepP = munch (/= '\n') *> char '\n'
+    sepP = string "====\n"
 
 -- the number of "===="s should exactly match
 -- number of test cases.
