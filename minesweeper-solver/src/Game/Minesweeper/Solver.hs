@@ -7,7 +7,6 @@ module Game.Minesweeper.Solver where
 import Control.Monad
 import Control.Monad.Writer.Strict
 import qualified Data.DList as DL
-import Data.Ix
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -57,11 +56,21 @@ genPlacement n0 = convert <$> genAux n0 [] surroundings
 placementTable :: V.Vector [MinePlacement]
 placementTable = V.fromList $ fmap genPlacement [0 .. 8]
 
+isCoordInRange :: Board -> Coord -> Bool
+isCoordInRange Board {bdDims = (rows, cols)} (r, c) =
+  r >= 0 && r < rows && c >= 0 && c < cols
+
 getTile :: Board -> Coord -> Maybe Bool
-getTile Board {bdDims = (rows, cols), bdMines} coord =
-  if inRange ((0, 0), (rows -1, cols -1)) coord
+getTile bd@Board {bdMines} coord =
+  if isCoordInRange bd coord
     then bdMines M.!? coord
     else Just False
+
+setMineMap :: Board -> Coord -> Bool -> Maybe Board
+setMineMap bd coord m =
+  if isCoordInRange bd coord
+    then pure $ bd {bdMines = M.insert coord m (bdMines bd)}
+    else bd <$ guard (m == False)
 
 -- check a candidate against current board to ensure consistency
 -- the argument given as Coord must be one of those number tiles.
@@ -188,7 +197,7 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
 improveBoard bdPre xsPre = do
-  -- TODO: set mine one step at a time, and eliminate invalid ones.
+  -- TODO: use setMineMap here.
   let bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
       xs = DL.toList xsPre
   -- make sure that union doesn't merge conflicting results.
