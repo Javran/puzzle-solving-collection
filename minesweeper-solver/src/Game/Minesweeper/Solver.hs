@@ -118,7 +118,7 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
         make modification on it and then put it back.
       -}
       (aoiCandidates1, bdCandidates1) =
-        M.partitionWithKey (\k _ -> isClose k coord) bdCandidates0
+        M.partitionWithKey (\k _ -> isCoordClose k coord) bdCandidates0
       -- invalid candidates are eliminated here.
       aoiCandidates2 =
         M.map (filter (checkCandidate bd coord)) aoiCandidates1
@@ -154,9 +154,9 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
           canDischarge [x] = M.null x
           canDischarge _ = False
   pure (ks, bd {bdCandidates = M.union aoiCandidates4 bdCandidates1})
-  where
-    isClose :: Coord -> Coord -> Bool
-    isClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
+
+isCoordClose :: Coord -> Coord -> Bool
+isCoordClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
 
 -- TODO: the plan is to use "tidyBoard" for all known tiles and borders,
 -- after which is done, we'll end up with a list of more (Coord, Bool)s that
@@ -204,7 +204,7 @@ improveBoard bdPre xsPre = do
     - out-of-bound assignments are ignored
       (but in order for this assignment to be valid, the value must be False)
    -}
-  bd <- foldM (\curBd (k,v) -> setMineMap curBd k v) bdPre xs
+  bd <- foldM (\curBd (k, v) -> setMineMap curBd k v) bdPre xs
   foldM
     ( \(xs0, curBd) coord -> do
         (xs1, bd') <- tidyBoard curBd coord
@@ -224,6 +224,30 @@ applyMineCoords :: Board -> MineCoords -> Maybe (DL.DList (Coord, Bool), Board)
 applyMineCoords bd0 mc = do
   bd1 <- solveBoardStage0 bd0 (DL.fromList (M.toList mc))
   pure (DL.empty, bd1)
+
+{-
+  applyMineCoordsDeep bd coord coverage:
+
+  - non-deterministically apply a candidate `c` indexed by `coord` onto `board`
+  - then expand `coverage` to `coverage` + coords in `c`
+  - repeat this process until `coverage` cannot be extended further.
+ -}
+applyMineCoordsDeep :: Board -> Coord -> S.Set Coord -> [Board]
+applyMineCoordsDeep bd coord coverage = do
+  Just candidates <- pure $ bdCandidates bd M.!? coord
+  mcs <- candidates
+  Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
+  let coverage' = S.union coverage (M.keysSet mcs)
+      nextCoords =
+        fmap fst
+          . sortOn (length . snd)
+          . M.toList
+          . M.filterWithKey (\k _ -> k `elem` coverage')
+          $ bdCandidates bd'
+  case nextCoords of
+    nextCoord:_ ->
+      applyMineCoordsDeep bd' nextCoord coverage'
+    [] -> pure bd'
 
 makingProgress :: Board -> Board -> Bool
 makingProgress before after =
