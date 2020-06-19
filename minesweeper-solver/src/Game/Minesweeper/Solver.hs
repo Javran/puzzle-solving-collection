@@ -197,11 +197,14 @@ mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
 improveBoard bdPre xsPre = do
-  -- TODO: use setMineMap here.
-  let bd = bdPre {bdMines = M.union (M.fromList xs) (bdMines bdPre)}
-      xs = DL.toList xsPre
-  -- make sure that union doesn't merge conflicting results.
-  guard $ and $ M.elems $ M.intersectionWith (==) (M.fromList xs) (bdMines bdPre)
+  let xs = DL.toList xsPre
+  {-
+    merge pairs in xs into MineMap of the board.
+    - invalid assignments result in failure
+    - out-of-bound assignments are ignored
+      (but in order for this assignment to be valid, the value must be False)
+   -}
+  bd <- foldM (\curBd (k,v) -> setMineMap curBd k v) bdPre xs
   foldM
     ( \(xs0, curBd) coord -> do
         (xs1, bd') <- tidyBoard curBd coord

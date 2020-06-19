@@ -128,6 +128,11 @@ spec =
             allCoords =
               [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         bdDims bdSolved `shouldBe` bdDims bdAfter
+        do
+          -- verify that solver doesn't add out-of-range assignments
+          -- into the MineMap.
+          let assignedCoords = M.keys (bdMines bdSolved)
+          assignedCoords `shouldSatisfy` all (isCoordInRange bdSolved)
         forM_ allCoords $ \coord -> do
           let tSolved = getTile' bdSolved coord
               tAfter = getTile' bdAfter coord
