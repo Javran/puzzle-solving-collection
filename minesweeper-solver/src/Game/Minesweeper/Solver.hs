@@ -245,7 +245,7 @@ applyMineCoordsDeep bd coord coverage = do
           . M.filterWithKey (\k _ -> k `elem` coverage')
           $ bdCandidates bd'
   case nextCoords of
-    nextCoord:_ ->
+    nextCoord : _ ->
       applyMineCoordsDeep bd' nextCoord coverage'
     [] -> pure bd'
 
@@ -268,27 +268,32 @@ solveBoardStage0 bd xs = do
 -- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
 solveBoardStage1 :: Board -> Maybe Board
 solveBoardStage1 bd@Board {bdCandidates} = do
-  let failedAttempts :: [(Coord, MineCoords)]
-      failedAttempts =
-        filter (isNothing . applyMineCoords bd . snd)
-          . concatMap (\(k, vs) -> fmap (k,) vs)
-          -- start trying on least amount of alternatives, reducing branching factor.
+  let coords =
+        fmap fst
           . sortOn (length . snd)
-          $ M.toList bdCandidates
-  case failedAttempts of
-    [] -> Just bd
-    (k, mc) : _ -> do
-      -- TODO: this is messy, consider simplifying it.
-      let bdInit = bd {bdCandidates = M.adjust (delete mc) k bdCandidates}
-      (xs, bd') <-
-        foldM
-          ( \(curXs, curBd) c -> do
-              (ys, nextBd) <- tidyBoard curBd c
-              pure (curXs <> ys, nextBd)
-          )
-          (DL.empty, bdInit)
-          (M.keys mc)
-      solveBoardStage0 bd' xs
+          . M.toList
+          $ bdCandidates
+  case coords of
+    [] -> Nothing
+    coord : _ -> do
+      let boardsMissing :: [M.Map Coord Bool]
+          boardsMissing =
+            -- only keep those missing from bd (current input board)
+            fmap (\curBd -> M.difference (bdMines curBd) (bdMines bd)) $
+              applyMineCoordsDeep bd coord S.empty
+          intersectAux :: M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
+          intersectAux xs ys =
+            M.fromList
+              $ mapMaybe (\(k, mv) -> (k,) <$> mv)
+              $ M.toList result
+            where
+              compatible x y = x <$ guard (x == y)
+              result = M.intersectionWith compatible xs ys
+      case boardsMissing of
+        [] -> Nothing
+        _:_ -> do
+          let common = foldr1 intersectAux boardsMissing
+          improveBoardFix bd (DL.fromList (M.toList common))
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 solveBoard bd0 xs = do
