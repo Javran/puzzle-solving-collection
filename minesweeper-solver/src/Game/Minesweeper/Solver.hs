@@ -7,7 +7,6 @@ module Game.Minesweeper.Solver where
 import Control.Monad
 import Control.Monad.Writer.Strict
 import qualified Data.DList as DL
-import Data.Function
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -70,7 +69,12 @@ getTile bd@Board {bdMines} coord =
 setMineMap :: Board -> Coord -> Bool -> Maybe Board
 setMineMap bd coord m =
   if isCoordInRange bd coord
-    then pure $ bd {bdMines = M.insert coord m (bdMines bd)}
+    then case bdMines bd M.!? coord of
+      Nothing -> do
+        let bd' = bd {bdMines = M.insert coord m (bdMines bd)}
+        improveBoardFix bd' (DL.singleton (coord, m))
+      Just m' ->
+        bd <$ guard (m' == m)
     else bd <$ guard (m == False)
 
 -- check a candidate against current board to ensure consistency
@@ -238,12 +242,14 @@ applyMineCoordsDeep bd coord coverage = do
   Just candidates <- pure $ bdCandidates bd M.!? coord
   mcs <- candidates
   Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
-  let coverage' = S.union coverage (M.keysSet mcs)
+  let mCoords = M.keysSet mcs
+      coverage' = S.union coverage mCoords
+      extended = S.difference mCoords coverage
       nextCoords =
         fmap fst
           . sortOn (length . snd)
           . M.toList
-          . M.filterWithKey (\k _ -> k `elem` coverage')
+          . M.filterWithKey (\k _ -> any (isCoordClose k) extended)
           $ bdCandidates bd'
   case nextCoords of
     nextCoord : _ ->
@@ -274,6 +280,8 @@ solveBoardStage1 bd@Board {bdCandidates} = do
           . sortOn (length . snd)
           . M.toList
           $ bdCandidates
+  -- TODO: the size of initCoords
+  -- can be further reduced by clustering.
   fix
     ( \tryNext coords -> do
         case coords of
@@ -296,7 +304,9 @@ solveBoardStage1 bd@Board {bdCandidates} = do
               [] -> tryNext coords'
               _ : _ -> do
                 let common = foldr1 intersectAux boardsMissing
-                improveBoardFix bd (DL.fromList (M.toList common))
+                if M.null common
+                  then tryNext coords'
+                  else improveBoardFix bd (DL.fromList (M.toList common))
     )
     initCoords
 
@@ -305,7 +315,7 @@ solveBoard bd0 xs = do
   bd1 <- solveBoardStage0 bd0 xs
   bd2 <- solveBoardStage1 bd1
   if makingProgress bd1 bd2
-    then solveBoardStage0 bd2 DL.empty
+    then solveBoard bd2 DL.empty
     else Just bd2
 
 solveBoardFromRaw :: String -> Maybe Board
