@@ -30,7 +30,7 @@ rawTests =
 ----
 ?___**_
 ?_1122_
-_*1__1_
+?*1__1_
 ?21_13*
 ?1__1**
 ?1122_?
@@ -46,12 +46,12 @@ _____
 _____
 = #2
 4 5
-?????
+*????
 ?42?2
 ?3111
 ?2___
 ----
-*????
+*??_?
 *42*2
 *3111
 *2___
@@ -128,6 +128,17 @@ spec =
             allCoords =
               [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         bdDims bdSolved `shouldBe` bdDims bdAfter
+
+        when (bdMines bdSolved /= bdMines bdAfter) $ do
+          putStrLn "Solver founds a better solution:"
+          forM_ [0 .. rows -1] $ \r -> do
+            let f c = case getTile' bdSolved (r, c) of
+                  Nothing -> "?"
+                  Just (Left False) -> "_"
+                  Just (Left True) -> "*"
+                  Just (Right v) -> show v
+            putStrLn $ concatMap f [0 .. cols -1]
+
         do
           -- verify that solver doesn't add out-of-range assignments
           -- into the MineMap.
@@ -138,4 +149,4 @@ spec =
               tAfter = getTile' bdAfter coord
           -- verify that solver does come up with a solution that is
           -- at least as good as the one given in this test case.
-          (tSolved, tAfter) `shouldSatisfy` uncurry isSameOrImproved
+          (tAfter, tSolved) `shouldSatisfy` uncurry isSameOrImproved
