@@ -213,6 +213,12 @@ improveBoard bdPre xsPre = do
     (DL.empty, bd)
     (fmap fst xs)
 
+-- keep improving until there is nothing to do.
+improveBoardFix :: Board -> DL.DList (Coord, Bool) -> Maybe Board
+improveBoardFix bd xs = do
+  (ys, bd') <- improveBoard bd xs
+  DL.list (pure bd') (\_ _ -> improveBoardFix bd' ys) ys
+
 -- fully apply a MineCoords, the idea here is to see if we can find contradictions this way.
 applyMineCoords :: Board -> MineCoords -> Maybe (DL.DList (Coord, Bool), Board)
 applyMineCoords bd0 mc = do
@@ -226,12 +232,13 @@ makingProgress before after =
 
 solveBoardStage0 :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 solveBoardStage0 bd xs = do
-  (xs', bd') <- improveBoard bd xs
+  bd' <- improveBoardFix bd xs
+  -- (xs', bd') <- improveBoard bd xs
   -- note that if there's no change of candidate or mines between bd and bd'
   -- xs' will not contain anything.
   -- therefore checking whether xs' is empty is not necessary.
   if makingProgress bd bd'
-    then solveBoardStage0 bd' xs'
+    then solveBoardStage0 bd' DL.empty
     else Just bd'
 
 -- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
