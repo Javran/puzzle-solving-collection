@@ -17,7 +17,6 @@ import qualified Text.RawString.QQ as Q
 
 rawTests :: String
 rawTests =
-  -- TODO: potential improvement on #0 and #2
   [Q.r|= #0
 7 7
 ???????
