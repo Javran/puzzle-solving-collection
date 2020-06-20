@@ -109,15 +109,6 @@ _**__
 ?___*_
 |]
 
-expectedTestCount :: Int
-expectedTestCount =
-  getSum
-    . foldMap
-      ( \xs ->
-          if "=" `isPrefixOf` xs then 1 else 0
-      )
-    $ lines rawTests
-
 tests :: [(String, (TmpBoard, TmpBoard))]
 tests = case readP_to_S (many fullTestCaseP <* eof) rawTests of
   [(xs, "")] ->
@@ -131,6 +122,15 @@ tests = case readP_to_S (many fullTestCaseP <* eof) rawTests of
                 <> " tests but getting "
                 <> show len
   _ -> error "Parse error."
+  where
+    expectedTestCount :: Int
+    expectedTestCount =
+      getSum
+        . foldMap
+          ( \xs ->
+              if "=" `isPrefixOf` xs then 1 else 0
+          )
+        $ lines rawTests
 
 {-
   the format for a full test case is:
