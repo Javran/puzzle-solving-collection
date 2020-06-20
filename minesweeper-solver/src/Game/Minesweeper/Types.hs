@@ -40,3 +40,4 @@ data BoardRep = BoardRep
     -- if this field is non-empty, that indicates a partial board representation.
     brMissing :: S.Set Coord
   }
+  deriving (Show)

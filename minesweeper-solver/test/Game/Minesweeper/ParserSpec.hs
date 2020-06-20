@@ -2,7 +2,9 @@
 
 module Game.Minesweeper.ParserSpec where
 
+import Data.Maybe
 import Data.Monoid
+import qualified Data.Set as S
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
 import Test.Hspec
@@ -39,13 +41,17 @@ __2?
 ====
 1 12
 12345678_ *?
+====
+3 4
+E___
+1*__
+EEE_
 |]
 
 spec :: Spec
 spec =
-  describe "parseBoard"
-    $ specify "examples"
-    $ do
+  describe "parseBoard" $ do
+    specify "examples" $ do
       let expectedLen =
             getSum
               $ foldMap
@@ -55,3 +61,7 @@ spec =
         pure $
           readP_to_S (parseAllBoards <* eof) examples
       length xs `shouldBe` expectedLen
+    specify "board with missing tiles" $ do
+      let result = parseBoard $ unlines ["3 4", "EE__", "1*_E", "__EE"]
+      result `shouldSatisfy` isJust
+      S.size (brMissing (fromJust result)) `shouldBe` 5

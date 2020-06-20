@@ -19,9 +19,10 @@ import Control.Monad
 import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import qualified Data.Set as S
 import Game.Minesweeper.Types
 import Text.ParserCombinators.ReadP
-import Text.RawString.QQ
+import qualified Text.RawString.QQ as Q
 
 {-
   Input file format:
@@ -33,6 +34,7 @@ import Text.RawString.QQ
   - '1'..'8' for number tiles
   - ' ' or '_' for empty space
   - '*' for mines
+  - 'E' for missing tiles
 
   all lines end with newline.
 
@@ -40,7 +42,7 @@ import Text.RawString.QQ
 
 sampleRaw :: String
 sampleRaw =
-  [r|7 7
+  [Q.r|7 7
 ???????
 ??1122?
 ??1__1?
@@ -65,8 +67,8 @@ rowsAndColsP = do
   colsRaw <- munch1 isDigit
   pure (read rowsRaw, read colsRaw)
 
-tileP :: ReadP (Maybe Int, Maybe Bool)
-tileP =
+goodTileP :: ReadP (Maybe Int, Maybe Bool)
+goodTileP =
   ((Nothing, Nothing) <$ char '?')
     <++ ((Nothing, Just False) <$ (char ' ' <|> char '_'))
     <++ ( do
@@ -76,18 +78,44 @@ tileP =
         )
     <++ ((Nothing, Just True) <$ char '*')
 
+-- Either <error> <good tile>
+tileP :: ReadP (Either () (Maybe Int, Maybe Bool))
+tileP =
+  (Right <$> goodTileP)
+    <++ (Left () <$ char 'E')
+
 boardP :: (Int, Int) -> ReadP BoardRep
 boardP brDims@(rows, cols) = do
-  (results :: [((Int, Int), (Maybe Int, Maybe Bool))]) <-
+  (results :: [((Int, Int), Either () (Maybe Int, Maybe Bool))]) <-
     concat
       <$> forM
         [0 .. rows -1]
         ( \row ->
             forM [0 .. cols -1] (\col -> ((row, col),) <$> tileP) <* newlineP
         )
-  let brNums = M.fromList $ mapMaybe (\(c, (m, _)) -> (c,) <$> m) results
-      brMines = M.fromList $ mapMaybe (\(c, (_, m)) -> (c,) <$> m) results
-  pure $ BoardRep {brDims, brNums, brMines, brMissing = mempty}
+  let extractFromResults extract = mapMaybe extract results
+      brNums =
+        M.fromList $
+          extractFromResults
+            ( \(c, r) -> do
+                Right (m, _) <- pure r
+                (c,) <$> m
+            )
+      brMines =
+        M.fromList $
+          extractFromResults
+            ( \(c, r) -> do
+                Right (_, m) <- pure r
+                (c,) <$> m
+            )
+      brMissing =
+        S.fromList $
+          extractFromResults
+            ( \(c, r) -> do
+                Left () <- pure r
+                Just c
+            )
+  pure $ BoardRep {brDims, brNums, brMines, brMissing}
 
 fullBoardP :: ReadP BoardRep
 fullBoardP = (rowsAndColsP <* newlineP) >>= boardP
