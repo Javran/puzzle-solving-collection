@@ -32,6 +32,7 @@ data Board = Board
 
 -- visual representation of the board which, unlike Board,
 -- doesn't keep track of any internal states like candidates.
+-- invariant: brNums, brMines and brMissing should never contain conflicting info.
 data BoardRep = BoardRep
   { brDims :: (Int, Int),
     brNums :: M.Map Coord Int, -- num tiles
