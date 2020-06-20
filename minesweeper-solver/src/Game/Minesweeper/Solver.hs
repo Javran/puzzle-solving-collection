@@ -234,22 +234,23 @@ applyMineCoords bd0 mc = do
   applyMineCoordsDeep bd coord coverage:
 
   - non-deterministically apply a candidate `c` indexed by `coord` onto `board`
-  - then expand `coverage` to `coverage` + coords in `c`
-  - repeat this process until `coverage` cannot be extended further.
+  - then expand candidate coverage from `coverage` to `coverage` + `coord`
+  - repeat this process until fixpoint
  -}
 applyMineCoordsDeep :: Board -> Coord -> S.Set Coord -> [Board]
 applyMineCoordsDeep bd coord coverage = do
   Just candidates <- pure $ bdCandidates bd M.!? coord
   mcs <- candidates
   Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
-  let mCoords = M.keysSet mcs
-      coverage' = S.union coverage mCoords
-      extended = S.difference mCoords coverage
+  let coverage' = S.insert coord coverage
       nextCoords =
         fmap fst
           . sortOn (length . snd)
           . M.toList
-          . M.filterWithKey (\k _ -> any (isCoordClose k) extended)
+          . M.filterWithKey
+            ( \k _ ->
+                (k `notElem` coverage') && isCoordClose k coord
+            )
           $ bdCandidates bd'
   case nextCoords of
     nextCoord : _ ->
