@@ -2,6 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Game.Minesweeper.Parser
   ( sampleRaw,
@@ -17,8 +18,8 @@ where
 import Control.Applicative
 import Control.Monad
 import Data.Char
+import qualified Data.DList as DL
 import qualified Data.Map.Strict as M
-import Data.Maybe
 import qualified Data.Set as S
 import Game.Minesweeper.Types
 import Text.ParserCombinators.ReadP
@@ -93,28 +94,26 @@ boardP brDims@(rows, cols) = do
         ( \row ->
             forM [0 .. cols -1] (\col -> ((row, col),) <$> tileP) <* newlineP
         )
-  let extractFromResults extract = mapMaybe extract results
-      brNums =
-        M.fromList $
-          extractFromResults
-            ( \(c, r) -> do
-                Right (m, _) <- pure r
-                (c,) <$> m
+  let ( M.fromList . DL.toList -> brNums,
+        M.fromList . DL.toList -> brMines,
+        S.fromList . DL.toList -> brMissing
+        ) =
+          foldMap
+            ( (,,)
+                <$> ( \(c, r) -> case r of
+                        Right (Just v, _) -> DL.singleton (c, v)
+                        _ -> mempty
+                    )
+                <*> ( \(c, r) -> case r of
+                        Right (_, Just v) -> DL.singleton (c, v)
+                        _ -> mempty
+                    )
+                <*> ( \(c, r) -> case r of
+                        Left () -> DL.singleton c
+                        _ -> mempty
+                    )
             )
-      brMines =
-        M.fromList $
-          extractFromResults
-            ( \(c, r) -> do
-                Right (_, m) <- pure r
-                (c,) <$> m
-            )
-      brMissing =
-        S.fromList $
-          extractFromResults
-            ( \(c, r) -> do
-                Left () <- pure r
-                Just c
-            )
+            results
   pure $ BoardRep {brDims, brNums, brMines, brMissing}
 
 fullBoardP :: ReadP BoardRep
