@@ -182,7 +182,7 @@ spec =
         bdDims bdSolved `shouldBe` bdDims bdAfter
 
         when (bdMines bdSolved /= bdMines bdAfter) $ do
-          putStrLn "Solver founds a better solution:"
+          putStrLn "Solver founds a different solution:"
           forM_ [0 .. rows -1] $ \r -> do
             let f c = case getTile' bdSolved (r, c) of
                   Nothing -> "?"
