@@ -1,31 +1,43 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Game.Minesweeper.Main where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Solver
 import Game.Minesweeper.Types
+import System.Console.Terminfo
 import System.Environment
 
-pprBoard :: Board -> IO ()
-pprBoard bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
+pprBoard :: Terminal -> Bool -> Board -> IO ()
+pprBoard term extraInfo bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
+  let fgColor = fromMaybe (flip const) (getCapability term withForegroundColor)
+      bgColor = fromMaybe (flip const) (getCapability term withBackgroundColor)
   putStrLn "===="
   forM_ [0 .. rows -1] $ \r -> do
-    forM_ [0 .. cols -1] $ \c -> do
+    rs <- forM [0 .. cols -1] $ \c -> do
       let coord = (r, c)
-      putStr $ case getTile bd coord of
-        Nothing -> "?"
+      pure $ case getTile bd coord of
+        Nothing -> bgColor Green $ fgColor White $ termText "?"
         Just b ->
           if b
-            then "*"
-            else maybe " " show (bdNums M.!? coord)
-
+            then fgColor Red $ termText "*"
+            else
+              let content =
+                    termText $ maybe " " show (bdNums M.!? coord)
+               in case bdCandidates M.!? coord of
+                    Nothing ->
+                      content
+                    Just _ ->
+                      bgColor Cyan $ fgColor White $ content
+    runTermOutput term (mconcat rs)
     putStrLn ""
   putStrLn "===="
-  unless (M.null bdCandidates) $ do
+  when (extraInfo && not (M.null bdCandidates)) $ do
     putStrLn "Candidates:"
     forM_ (M.toAscList bdCandidates) $
       \(coord, cs) -> do
@@ -35,6 +47,7 @@ pprBoard bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
 
 main :: IO ()
 main = do
+  term <- setupTermFromEnv
   args <- getArgs
   raw <- case args of
     [fs] -> readFile fs
@@ -43,4 +56,4 @@ main = do
   case solveBoardFromRaw raw of
     Nothing -> putStrLn "Nothing"
     Just bdFin ->
-      pprBoard bdFin
+      pprBoard term True bdFin
