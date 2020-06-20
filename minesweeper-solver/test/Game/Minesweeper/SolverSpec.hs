@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Game.Minesweeper.SolverSpec where
@@ -109,7 +110,7 @@ _**__
 ?___*_
 |]
 
-tests :: [(String, (TmpBoard, TmpBoard))]
+tests :: [(String, (BoardRep, BoardRep))]
 tests = case readP_to_S (many fullTestCaseP <* eof) rawTests of
   [(xs, "")] ->
     let len = length xs
@@ -140,12 +141,12 @@ tests = case readP_to_S (many fullTestCaseP <* eof) rawTests of
   - "----\n"
   - exact same format as a board, but without the row and col count.
  -}
-fullTestCaseP :: ReadP (String, (TmpBoard, TmpBoard))
+fullTestCaseP :: ReadP (String, (BoardRep, BoardRep))
 fullTestCaseP = do
   label <- string "= " *> munch1 (/= '\n') <* char '\n'
-  bdBefore@(dims, _, _) <- fullBoardP
+  bdBefore@BoardRep {brDims} <- fullBoardP
   _ <- string "----\n"
-  bdAfter <- boardP dims
+  bdAfter <- boardP brDims
   pure (label, (bdBefore, bdAfter))
 
 {-

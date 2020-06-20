@@ -1,10 +1,10 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 module Game.Minesweeper.Parser
-  ( TmpBoard,
-    sampleRaw,
+  ( sampleRaw,
     parseBoard,
     newlineP,
     rowsAndColsP,
@@ -50,7 +50,7 @@ sampleRaw =
 ???????
 |]
 
-parseBoard :: String -> Maybe TmpBoard
+parseBoard :: String -> Maybe BoardRep
 parseBoard raw = do
   [(v, "")] <- pure $ readP_to_S (fullBoardP <* eof) raw
   pure v
@@ -76,8 +76,8 @@ tileP =
         )
     <++ ((Nothing, Just True) <$ char '*')
 
-boardP :: (Int, Int) -> ReadP TmpBoard
-boardP dims@(rows, cols) = do
+boardP :: (Int, Int) -> ReadP BoardRep
+boardP brDims@(rows, cols) = do
   (results :: [((Int, Int), (Maybe Int, Maybe Bool))]) <-
     concat
       <$> forM
@@ -85,9 +85,9 @@ boardP dims@(rows, cols) = do
         ( \row ->
             forM [0 .. cols -1] (\col -> ((row, col),) <$> tileP) <* newlineP
         )
-  let numMap = M.fromList $ mapMaybe (\(c, (m, _)) -> (c,) <$> m) results
-      tileMap = M.fromList $ mapMaybe (\(c, (_, m)) -> (c,) <$> m) results
-  pure (dims, numMap, tileMap)
+  let brNums = M.fromList $ mapMaybe (\(c, (m, _)) -> (c,) <$> m) results
+      brMines = M.fromList $ mapMaybe (\(c, (_, m)) -> (c,) <$> m) results
+  pure $ BoardRep {brDims, brNums, brMines, brMissing = mempty}
 
-fullBoardP :: ReadP TmpBoard
+fullBoardP :: ReadP BoardRep
 fullBoardP = (rowsAndColsP <* newlineP) >>= boardP

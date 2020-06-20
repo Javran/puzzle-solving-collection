@@ -4,11 +4,12 @@ module Game.Minesweeper.ParserSpec where
 
 import Data.Monoid
 import Game.Minesweeper.Parser
+import Game.Minesweeper.Types
 import Test.Hspec
 import Text.ParserCombinators.ReadP
 import Text.RawString.QQ
 
-parseAllBoards :: ReadP [TmpBoard]
+parseAllBoards :: ReadP [BoardRep]
 parseAllBoards = many1 (sepP *> fullBoardP)
   where
     sepP = string "====\n"

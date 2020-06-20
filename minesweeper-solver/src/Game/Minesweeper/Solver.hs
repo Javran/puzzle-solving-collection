@@ -173,32 +173,39 @@ isCoordClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
   other fields as well. So here I figure it's best to separate out future updates
   by having a difflist.
  -}
-mkBoard :: TmpBoard -> Maybe (DL.DList (Coord, Bool), Board)
-mkBoard (bdDims@(rows, cols), bdNums, bdMines) = do
-  let initCandidates :: M.Map Coord [MineCoords]
-      -- initial candidates are just blindly copied from precomputed data,
-      -- invalid candidates are to be eliminated by tidyBoard.
-      initCandidates =
-        M.mapWithKey
-          ( \(cX, cY) v ->
-              let placement = placementTable V.! v
-               in fmap (M.mapKeysMonotonic (\(offX, offY) -> (cX + offX, cY + offY))) placement
-          )
-          bdNums
-      bd0 = Board {bdDims, bdNums, bdMines, bdCandidates = initCandidates}
-      -- those are "just-out-of-bound" coordinates that we intend to perform "tidyBoard" on.
-      -- this way we'll eliminate candidates that doesn't fit into the board.
-      edgeCoords =
-        [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
-          <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
-      tidyCoords = edgeCoords <> M.keys bdMines
-  foldM
-    ( \(xs0, curBd) coord -> do
-        (xs1, bd') <- tidyBoard curBd coord
-        pure (xs0 <> xs1, bd')
-    )
-    (DL.empty, bd0)
-    tidyCoords
+mkBoard :: BoardRep -> Maybe (DL.DList (Coord, Bool), Board)
+mkBoard
+  BoardRep
+    { brDims = bdDims@(rows, cols),
+      brNums = bdNums,
+      brMines = bdMines,
+      brMissing
+    } = do
+    guard $ S.null brMissing
+    let initCandidates :: M.Map Coord [MineCoords]
+        -- initial candidates are just blindly copied from precomputed data,
+        -- invalid candidates are to be eliminated by tidyBoard.
+        initCandidates =
+          M.mapWithKey
+            ( \(cX, cY) v ->
+                let placement = placementTable V.! v
+                 in fmap (M.mapKeysMonotonic (\(offX, offY) -> (cX + offX, cY + offY))) placement
+            )
+            bdNums
+        bd0 = Board {bdDims, bdNums, bdMines, bdCandidates = initCandidates}
+        -- those are "just-out-of-bound" coordinates that we intend to perform "tidyBoard" on.
+        -- this way we'll eliminate candidates that doesn't fit into the board.
+        edgeCoords =
+          [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
+            <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
+        tidyCoords = edgeCoords <> M.keys bdMines
+    foldM
+      ( \(xs0, curBd) coord -> do
+          (xs1, bd') <- tidyBoard curBd coord
+          pure (xs0 <> xs1, bd')
+      )
+      (DL.empty, bd0)
+      tidyCoords
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
 improveBoard bdPre xsPre = do
@@ -284,15 +291,15 @@ solveBoardStage1 bd@Board {bdCandidates} = do
   -- TODO: the size of initCoords
   -- can be further reduced by clustering.
   fix
-    ( \tryNext coords -> do
+    ( \tryNext coords ->
         case coords of
           [] -> Just bd
           coord : coords' -> do
             let boardsMissing :: [M.Map Coord Bool]
                 boardsMissing =
                   -- only keep those missing from bd (current input board)
-                  fmap (\curBd -> M.difference (bdMines curBd) (bdMines bd)) $
-                    applyMineCoordsDeep bd coord S.empty
+                  (\curBd -> M.difference (bdMines curBd) (bdMines bd))
+                    <$> applyMineCoordsDeep bd coord S.empty
                 intersectAux :: M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
                 intersectAux xs ys =
                   M.fromList

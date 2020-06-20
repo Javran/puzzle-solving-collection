@@ -1,6 +1,7 @@
 module Game.Minesweeper.Types where
 
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 
 type Coord = (Int, Int)
 
@@ -29,12 +30,13 @@ data Board = Board
   }
   deriving (Show)
 
--- the intermediate representation after parsing.
-type TmpBoard =
-  ( -- rows, cols
-    (Int, Int),
-    -- num map
-    M.Map Coord Int,
-    -- mine map
-    MineMap
-  )
+-- visual representation of the board which, unlike Board,
+-- doesn't keep track of any internal states like candidates.
+data BoardRep = BoardRep
+  { brDims :: (Int, Int),
+    brNums :: M.Map Coord Int, -- num tiles
+    brMines :: MineMap,
+    -- set of coordinates that we don't have information.
+    -- if this field is non-empty, that indicates a partial board representation.
+    brMissing :: S.Set Coord
+  }
