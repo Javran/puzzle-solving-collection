@@ -10,13 +10,14 @@ description: description
 
 dependencies:
 - base
-- vector
 - containers
-- unordered-containers
-- mtl
 - dlist
+- mtl
 - raw-strings-qq
 - terminfo
+- union-find
+- unordered-containers
+- vector
 
 library:
   source-dirs: src

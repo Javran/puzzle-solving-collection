@@ -5,12 +5,14 @@
 module Game.Minesweeper.Solver where
 
 import Control.Monad
+import Control.Monad.ST
 import Control.Monad.Writer.Strict
 import qualified Data.DList as DL
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
+import qualified Data.UnionFind.ST as UF
 import qualified Data.Vector as V
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
@@ -264,6 +266,31 @@ applyMineCoordsDeep bd coord coverage = do
       applyMineCoordsDeep bd' nextCoord coverage'
     [] -> pure bd'
 
+clusterCoords :: M.Map Coord [MineCoords] -> [Coord]
+clusterCoords mc = runST $ do
+  ufs <- mapM UF.fresh sortedCoords
+  forM_ (tails (zip sortedCoords ufs)) $ \cs -> case cs of
+    [] -> pure ()
+    (y, ySet) : ys ->
+      mapM_ (\(_, ySet') ->
+                -- make sure ySet is on the RHS,
+                -- as that is the descriptor we want to keep.
+                UF.union ySet' ySet) $
+        filter (isCoordClose y . fst) ys
+  filterM
+    ( \t ->
+        UF.redundant t >>= pure . not
+    )
+    ufs
+    >>= mapM UF.descriptor
+  where
+    -- sort by length first
+    -- by doing so we can always pick one with least candidate
+    -- as representative for union-find set
+    sortedCoords :: [Coord]
+    sortedCoords =
+      fmap fst . sortOn (length . snd) . M.toList $ mc
+
 makingProgress :: Board -> Board -> Bool
 makingProgress before after =
   bdCandidates before /= bdCandidates after
@@ -283,13 +310,7 @@ solveBoardStage0 bd xs = do
 -- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
 solveBoardStage1 :: Board -> Maybe Board
 solveBoardStage1 bd@Board {bdCandidates} = do
-  let initCoords =
-        fmap fst
-          . sortOn (length . snd)
-          . M.toList
-          $ bdCandidates
-  -- TODO: the size of initCoords
-  -- can be further reduced by clustering.
+  let initCoords = clusterCoords bdCandidates
   fix
     ( \tryNext coords ->
         case coords of
