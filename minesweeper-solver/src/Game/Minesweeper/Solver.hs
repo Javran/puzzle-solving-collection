@@ -1,8 +1,16 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Game.Minesweeper.Solver where
+module Game.Minesweeper.Solver
+  ( getTile,
+    mkBoard,
+    isCoordInRange,
+    solveBoardFromRaw,
+    solveBoard,
+  )
+where
 
 import Control.Monad
 import Control.Monad.ST
@@ -233,56 +241,49 @@ improveBoardFix bd xs = do
   (ys, bd') <- improveBoard bd xs
   DL.list (pure bd') (\_ _ -> improveBoardFix bd' ys) ys
 
--- fully apply a MineCoords, the idea here is to see if we can find contradictions this way.
-applyMineCoords :: Board -> MineCoords -> Maybe (DL.DList (Coord, Bool), Board)
-applyMineCoords bd0 mc = do
-  bd1 <- solveBoardStage0 bd0 (DL.fromList (M.toList mc))
-  pure (DL.empty, bd1)
-
 {-
-  applyMineCoordsDeep bd coord coverage:
-
-  - non-deterministically apply a candidate `c` indexed by `coord` onto `board`
-  - then expand candidate coverage from `coverage` to `coverage` + `coord`
-  - repeat this process until fixpoint
+  Perform depth first search on a set of coordinates
+  (those coordinates should usually be key of bdCandidates).
  -}
-applyMineCoordsDeep :: Board -> Coord -> S.Set Coord -> [Board]
-applyMineCoordsDeep bd coord coverage = do
-  Just candidates <- pure $ bdCandidates bd M.!? coord
-  mcs <- candidates
-  Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
-  let coverage' = S.insert coord coverage
-      nextCoords =
-        fmap fst
-          . sortOn (length . snd)
-          . M.toList
-          . M.filterWithKey
-            ( \k _ ->
-                (k `notElem` coverage') && isCoordClose k coord
-            )
-          $ bdCandidates bd'
-  case nextCoords of
-    nextCoord : _ ->
-      applyMineCoordsDeep bd' nextCoord coverage'
-    [] -> pure bd'
+applyMineCoordsDeep' :: Board -> [Coord] -> [Board]
+applyMineCoordsDeep' bd = \case
+  [] -> [bd]
+  (coord : cs) ->
+    case bdCandidates bd M.!? coord of
+      Just candidates -> do
+        mcs <- candidates
+        Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
+        applyMineCoordsDeep' bd' cs
+      Nothing ->
+        -- It is not necessary that all coords given has bdCandidates,
+        -- this is because those coordinates could be eliminated by applying
+        -- other candidate coordinates.
+        applyMineCoordsDeep' bd cs
 
-clusterCoords :: M.Map Coord [MineCoords] -> [Coord]
+clusterUF :: Ord a => [(UF.Point s a, b)] -> ST s (M.Map a (DL.DList b))
+clusterUF pairs =
+  M.fromListWith (<>)
+    <$> mapM
+      ( \(uf, c) -> do
+          cRep <- UF.descriptor =<< UF.repr uf
+          pure (cRep, DL.singleton c)
+      )
+      pairs
+
+clusterCoords :: M.Map Coord [MineCoords] -> M.Map Coord (DL.DList Coord)
 clusterCoords mc = runST $ do
   ufs <- mapM UF.fresh sortedCoords
-  forM_ (tails (zip sortedCoords ufs)) $ \cs -> case cs of
+  forM_ (tails (zip sortedCoords ufs)) $ \case
     [] -> pure ()
     (y, ySet) : ys ->
-      mapM_ (\(_, ySet') ->
-                -- make sure ySet is on the RHS,
-                -- as that is the descriptor we want to keep.
-                UF.union ySet' ySet) $
-        filter (isCoordClose y . fst) ys
-  filterM
-    ( \t ->
-        UF.redundant t >>= pure . not
-    )
-    ufs
-    >>= mapM UF.descriptor
+      mapM_
+        ( \(_, ySet') ->
+            -- make sure ySet is on the RHS,
+            -- as that is the descriptor we want to keep.
+            UF.union ySet' ySet
+        )
+        $ filter (isCoordClose y . fst) ys
+  clusterUF (zip ufs sortedCoords)
   where
     -- sort by length first
     -- by doing so we can always pick one with least candidate
@@ -299,7 +300,6 @@ makingProgress before after =
 solveBoardStage0 :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 solveBoardStage0 bd xs = do
   bd' <- improveBoardFix bd xs
-  -- (xs', bd') <- improveBoard bd xs
   -- note that if there's no change of candidate or mines between bd and bd'
   -- xs' will not contain anything.
   -- therefore checking whether xs' is empty is not necessary.
@@ -310,24 +310,25 @@ solveBoardStage0 bd xs = do
 -- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
 solveBoardStage1 :: Board -> Maybe Board
 solveBoardStage1 bd@Board {bdCandidates} = do
-  let initCoords = clusterCoords bdCandidates
+  let initClusters :: [[Coord]]
+      initClusters = fmap DL.toList . M.elems $ clusterCoords bdCandidates
   {-
     TODO: now since coords are clustered,
     we can further optimize by deep search cluster-by-cluster
     rather than try to expand by searching through bdCandidates.
    -}
   fix
-    ( \tryNext coords ->
-        case coords of
+    ( \tryNext clusters ->
+        case clusters of
           [] -> Just bd
-          coord : coords' -> do
+          cluster : clusters' -> do
             let boardsMissing :: [M.Map Coord Bool]
                 boardsMissing =
                   -- only keep those missing from bd (current input board)
                   (\curBd -> M.difference (bdMines curBd) (bdMines bd))
-                    <$> applyMineCoordsDeep bd coord S.empty
+                    <$> applyMineCoordsDeep' bd cluster
             case boardsMissing of
-              [] -> tryNext coords'
+              [] -> tryNext clusters'
               _ : _ -> do
                 let intersectAux ::
                       M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
@@ -340,10 +341,10 @@ solveBoardStage1 bd@Board {bdCandidates} = do
                         result = M.intersectionWith compatible xs ys
                     common = foldr1 intersectAux boardsMissing
                 if M.null common
-                  then tryNext coords'
+                  then tryNext clusters'
                   else improveBoardFix bd (DL.fromList (M.toList common))
     )
-    initCoords
+    initClusters
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 solveBoard bd0 xs = do
