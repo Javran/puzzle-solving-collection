@@ -13,6 +13,10 @@ import Game.Minesweeper.Types
 isPartial :: BoardRep -> Bool
 isPartial = not . S.null . brMissing
 
+{-
+  TODO: should be able to use mergeA to simplify this, and also make some unit tests.
+ -}
+
 consistentMerge :: (Ord k, Eq v) => M.Map k v -> M.Map k v -> Maybe (M.Map k v)
 consistentMerge l r =
   M.union l r

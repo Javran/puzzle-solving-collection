@@ -1,17 +1,13 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Game.Minesweeper.Main where
+module Game.Minesweeper.Pretty where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
 import Data.Maybe
-import Game.Minesweeper.Parser
 import Game.Minesweeper.Solver
 import Game.Minesweeper.Types
 import System.Console.Terminfo
-import System.Environment
 
 pprBoard :: Terminal -> Bool -> Board -> IO ()
 pprBoard term extraInfo bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} = do
@@ -44,16 +40,3 @@ pprBoard term extraInfo bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} =
         let n = bdNums M.! coord
         putStrLn $ show n <> " on " <> show coord <> ":"
         mapM_ (putStrLn . ("  " ++) . show) cs
-
-main :: IO ()
-main = do
-  term <- setupTermFromEnv
-  args <- getArgs
-  raw <- case args of
-    [fs] -> readFile fs
-    _ -> pure sampleRaw
-
-  case solveBoardFromRaw raw of
-    Nothing -> putStrLn "Nothing"
-    Just bdFin ->
-      pprBoard term True bdFin
