@@ -300,18 +300,19 @@ solveBoardStage1 bd@Board {bdCandidates} = do
                   -- only keep those missing from bd (current input board)
                   (\curBd -> M.difference (bdMines curBd) (bdMines bd))
                     <$> applyMineCoordsDeep bd coord S.empty
-                intersectAux :: M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
-                intersectAux xs ys =
-                  M.fromList
-                    $ mapMaybe (\(k, mv) -> (k,) <$> mv)
-                    $ M.toList result
-                  where
-                    compatible x y = x <$ guard (x == y)
-                    result = M.intersectionWith compatible xs ys
             case boardsMissing of
               [] -> tryNext coords'
               _ : _ -> do
-                let common = foldr1 intersectAux boardsMissing
+                let intersectAux ::
+                      M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
+                    intersectAux xs ys =
+                      M.fromList
+                        . mapMaybe (\(k, mv) -> (k,) <$> mv)
+                        $ M.toList result
+                      where
+                        compatible x y = x <$ guard (x == y)
+                        result = M.intersectionWith compatible xs ys
+                    common = foldr1 intersectAux boardsMissing
                 if M.null common
                   then tryNext coords'
                   else improveBoardFix bd (DL.fromList (M.toList common))
