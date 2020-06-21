@@ -17,6 +17,7 @@ import Control.Monad.ST
 import Control.Monad.Writer.Strict
 import qualified Data.DList as DL
 import Data.List
+import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
@@ -337,13 +338,13 @@ solveBoardStage1 bd@Board {bdCandidates} = do
               _ : _ -> do
                 let intersectAux ::
                       M.Map Coord Bool -> M.Map Coord Bool -> M.Map Coord Bool
-                    intersectAux xs ys =
-                      M.fromList
-                        . mapMaybe (\(k, mv) -> (k,) <$> mv)
-                        $ M.toList result
+                    intersectAux =
+                      M.merge
+                        M.dropMissing
+                        M.dropMissing
+                        (M.zipWithMaybeMatched compatible)
                       where
-                        compatible x y = x <$ guard (x == y)
-                        result = M.intersectionWith compatible xs ys
+                        compatible _k x y = x <$ guard (x == y)
                     common = foldr1 intersectAux boardsMissing
                 if M.null common
                   then tryNext clusters'
