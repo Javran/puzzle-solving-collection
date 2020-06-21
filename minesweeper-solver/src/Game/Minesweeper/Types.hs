@@ -1,11 +1,29 @@
-module Game.Minesweeper.Types where
+module Game.Minesweeper.Types
+  ( Coord,
+    Offset,
+    mkOffset,
+    applyOffset,
+    MinePlacement,
+    MineCoords,
+    MineMap,
+    Board (..),
+    BoardRep (..),
+  )
+where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 type Coord = (Int, Int)
 
-type Offset = (Int, Int)
+-- Offset is intentionally obscure to avoid misusing it as Coord.
+newtype Offset = Offset (Int, Int) deriving (Eq, Ord)
+
+mkOffset :: Int -> Int -> Offset
+mkOffset x y = Offset (x, y)
+
+applyOffset :: Offset -> Coord -> Coord
+applyOffset (Offset (dx, dy)) (x, y) = (x + dx, y + dy)
 
 -- a mine placement has no more than 8 elements,
 -- mines are indicated by True, non-mines False.

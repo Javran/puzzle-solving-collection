@@ -1,4 +1,8 @@
-module Game.Minesweeper.BoardRep where
+module Game.Minesweeper.BoardRep
+  ( isPartial,
+    mergeBoardRep,
+  )
+where
 
 import Control.Monad
 import Data.Function

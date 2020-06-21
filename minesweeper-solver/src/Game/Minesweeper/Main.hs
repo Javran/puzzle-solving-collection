@@ -33,7 +33,7 @@ pprBoard term extraInfo bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} =
                     Nothing ->
                       content
                     Just _ ->
-                      bgColor Cyan $ fgColor White $ content
+                      bgColor Cyan . fgColor White $ content
     runTermOutput term (mconcat rs)
     putStrLn ""
   putStrLn "===="

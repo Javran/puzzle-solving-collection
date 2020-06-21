@@ -16,6 +16,7 @@ import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Writer.Strict
 import qualified Data.DList as DL
+import Data.Function
 import Data.List
 import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
@@ -29,18 +30,20 @@ import Game.Minesweeper.Types
 -- 2d offset of 8 surrounding tiles.
 surroundings :: [Offset]
 surroundings =
-  [ -- top
-    (-1, -1),
-    (-1, 0),
-    (-1, 1),
-    -- middle
-    (0, -1),
-    (0, 1),
-    (1, -1),
-    -- bottom
-    (1, 0),
-    (1, 1)
-  ]
+  fmap
+    (uncurry mkOffset)
+    [ -- top
+      (-1, -1),
+      (-1, 0),
+      (-1, 1),
+      -- middle
+      (0, -1),
+      (0, 1),
+      (1, -1),
+      -- bottom
+      (1, 0),
+      (1, 1)
+    ]
 
 {-
   Like "pick", but whenever an element picked,
@@ -92,13 +95,13 @@ setMineMap bd coord m =
 -- check a candidate against current board to ensure consistency
 -- the argument given as Coord must be one of those number tiles.
 checkCandidate :: Board -> Coord -> MineCoords -> Bool
-checkCandidate bd (x, y) cs =
+checkCandidate bd coord cs =
   -- note that it is unnecessary to check whether current tile is a mine.
   -- this is because number tiles are (will be) explicitly marked as non-mine
   -- during Board construction.
   all check coords
   where
-    coords = (\(dx, dy) -> (x + dx, y + dy)) <$> surroundings
+    coords = (\ofs -> applyOffset ofs coord) <$> surroundings
     check :: Coord -> Bool
     check curCoord =
       case (getTile bd curCoord, cs M.!? curCoord) of
@@ -108,11 +111,11 @@ checkCandidate bd (x, y) cs =
 
 eliminateCommon :: Coord -> [MineCoords] -> ([(Coord, Bool)], [MineCoords])
 eliminateCommon _ [] = ([], [])
-eliminateCommon (x, y) ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
+eliminateCommon coord ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys) ms)
   where
     commons = mapMaybe ((\c -> (c,) <$> isCommon c) . anchor) surroundings
       where
-        anchor (dx, dy) = (x + dx, y + dy)
+        anchor ofs = applyOffset ofs coord
     commonKeys = S.fromList $ fmap fst commons
     -- a coordinate is common when all candidates have the same value
     -- in this particular coordinate.
@@ -175,6 +178,15 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
 isCoordClose :: Coord -> Coord -> Bool
 isCoordClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
 
+tidyByCoords :: Board -> [Coord] -> Maybe (DL.DList (Coord, Bool), Board)
+tidyByCoords bd =
+  foldM
+    ( \(xs0, curBd) coord -> do
+        (xs1, bd') <- tidyBoard curBd coord
+        pure (xs0 <> xs1, bd')
+    )
+    (DL.empty, bd)
+
 {-
   Create Board from BoardRep. This only sets up everything other than bdCandidates.
   This is because setting bdCandidates can trigger a chain reaction that will end up
@@ -195,9 +207,14 @@ mkBoard
         -- invalid candidates are to be eliminated by tidyBoard.
         initCandidates =
           M.mapWithKey
-            ( \(cX, cY) v ->
+            ( \cCoord v ->
                 let placement = placementTable V.! v
-                 in fmap (M.mapKeysMonotonic (\(offX, offY) -> (cX + offX, cY + offY))) placement
+                 in fmap
+                      ( M.mapKeysMonotonic
+                          ( \ofs -> applyOffset ofs cCoord
+                          )
+                      )
+                      placement
             )
             bdNums
         bd0 = Board {bdDims, bdNums, bdMines, bdCandidates = initCandidates}
@@ -207,13 +224,7 @@ mkBoard
           [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
             <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
         tidyCoords = edgeCoords <> M.keys bdMines
-    foldM
-      ( \(xs0, curBd) coord -> do
-          (xs1, bd') <- tidyBoard curBd coord
-          pure (xs0 <> xs1, bd')
-      )
-      (DL.empty, bd0)
-      tidyCoords
+    tidyByCoords bd0 tidyCoords
 
 improveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe (DL.DList (Coord, Bool), Board)
 improveBoard bdPre xsPre = do
@@ -225,13 +236,7 @@ improveBoard bdPre xsPre = do
       (but in order for this assignment to be valid, the value must be False)
    -}
   bd <- foldM (\curBd (k, v) -> setMineMap curBd k v) bdPre xs
-  foldM
-    ( \(xs0, curBd) coord -> do
-        (xs1, bd') <- tidyBoard curBd coord
-        pure (xs0 <> xs1, bd')
-    )
-    (DL.empty, bd)
-    (fmap fst xs)
+  tidyByCoords bd (fmap fst xs)
 
 -- keep improving until there is nothing to do.
 improveBoardFix :: Board -> DL.DList (Coord, Bool) -> Maybe Board
@@ -299,10 +304,19 @@ clusterCoords mc = runST $ do
     sortedCoords =
       fmap fst . sortOn (length . snd) . M.toList $ mc
 
+{-
+  `makingProgress before after` compares a board before and after some sort of solving,
+  and sees if there is any progress being made.
+  This function assumes `after` is the result of processing `before`
+  therefore it only does simple counting without any deeper visiting or comparison.
+ -}
 makingProgress :: Board -> Board -> Bool
 makingProgress before after =
-  bdCandidates before /= bdCandidates after
-    || bdMines before /= bdMines after
+  ((/=) `on` M.size . bdMines) before after
+    || ((/=) `on` simpleCandidateSize . bdCandidates) before after
+  where
+    simpleCandidateSize :: M.Map Coord [MineCoords] -> Int
+    simpleCandidateSize = getSum . (foldMap . foldMap) (const 1)
 
 {-
   Performs DFS therefore is more expensive to run.
