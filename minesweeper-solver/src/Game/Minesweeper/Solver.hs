@@ -311,6 +311,11 @@ solveBoardStage0 bd xs = do
 solveBoardStage1 :: Board -> Maybe Board
 solveBoardStage1 bd@Board {bdCandidates} = do
   let initCoords = clusterCoords bdCandidates
+  {-
+    TODO: now since coords are clustered,
+    we can further optimize by deep search cluster-by-cluster
+    rather than try to expand by searching through bdCandidates.
+   -}
   fix
     ( \tryNext coords ->
         case coords of
