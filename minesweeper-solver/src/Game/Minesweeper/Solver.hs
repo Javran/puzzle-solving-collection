@@ -26,20 +26,21 @@ import qualified Data.Vector as V
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
 
-{- ORMOLU_DISABLE -}
 -- 2d offset of 8 surrounding tiles.
 surroundings :: [Offset]
 surroundings =
-  [ (-1, -1), (-1, 0), (-1, 1)
-  , (0, -1), (0, 1)
-  , (1, -1), (1, 0), (1, 1)
+  [ -- top
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    -- middle
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    -- bottom
+    (1, 0),
+    (1, 1)
   ]
-{- ORMOLU_ENABLE -}
-
-{-
-  TODO: somehow we will end up having some out-of-bound coordinates on board,
-  this should not happen.
- -}
 
 {-
   Like "pick", but whenever an element picked,
@@ -174,12 +175,8 @@ tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
 isCoordClose :: Coord -> Coord -> Bool
 isCoordClose (x0, y0) (x1, y1) = abs (x0 - x1) <= 1 && abs (y0 - y1) <= 1
 
--- TODO: the plan is to use "tidyBoard" for all known tiles and borders,
--- after which is done, we'll end up with a list of more (Coord, Bool)s that
--- we can update and improve further.
-
 {-
-  Create Board from TmpBoard. This only sets up everything other than bdCandidates.
+  Create Board from BoardRep. This only sets up everything other than bdCandidates.
   This is because setting bdCandidates can trigger a chain reaction that will end up
   other fields as well. So here I figure it's best to separate out future updates
   by having a difflist.
@@ -240,7 +237,13 @@ improveBoard bdPre xsPre = do
 improveBoardFix :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 improveBoardFix bd xs = do
   (ys, bd') <- improveBoard bd xs
-  DL.list (pure bd') (\_ _ -> improveBoardFix bd' ys) ys
+  DL.list
+    -- null case
+    (pure bd')
+    -- cons case
+    (\_ _ -> improveBoardFix bd' ys)
+    -- dlist
+    ys
 
 {-
   Perform depth first search on a set of coordinates
@@ -260,7 +263,6 @@ applyMineCoordsDeep bd = \case
         -- this is because those coordinates could be eliminated by applying
         -- other candidate coordinates.
         applyMineCoordsDeep bd cs
-
 
 clusterUF :: Ord a => [(UF.Point s a, b)] -> ST s (M.Map a (DL.DList b))
 clusterUF pairs =
@@ -302,27 +304,12 @@ makingProgress before after =
   bdCandidates before /= bdCandidates after
     || bdMines before /= bdMines after
 
-solveBoardStage0 :: Board -> DL.DList (Coord, Bool) -> Maybe Board
-solveBoardStage0 bd xs = do
-  bd' <- improveBoardFix bd xs
-  -- note that if there's no change of candidate or mines between bd and bd'
-  -- xs' will not contain anything.
-  -- therefore checking whether xs' is empty is not necessary.
-  if makingProgress bd bd'
-    then solveBoardStage0 bd' DL.empty
-    else Just bd'
-
--- stage1 is more expensive to do so we only do this when stage0 is no longer making progress.
-solveBoardStage1 :: Board -> Maybe Board
-solveBoardStage1 bd@Board {bdCandidates} = do
-  let initClusters :: [[Coord]]
-      initClusters = fmap DL.toList . M.elems $ clusterCoords bdCandidates
-
-  {-
-    TODO: now since coords are clustered,
-    we can further optimize by deep search cluster-by-cluster
-    rather than try to expand by searching through bdCandidates.
-   -}
+{-
+  Performs DFS therefore is more expensive to run.
+  We only do this when improveBoardFix is no longer making progress.
+ -}
+solveBoardStageDeep :: Board -> Maybe Board
+solveBoardStageDeep bd@Board {bdCandidates} =
   fix
     ( \tryNext clusters ->
         case clusters of
@@ -351,11 +338,14 @@ solveBoardStage1 bd@Board {bdCandidates} = do
                   else improveBoardFix bd (DL.fromList (M.toList common))
     )
     initClusters
+  where
+    initClusters :: [[Coord]]
+    initClusters = fmap DL.toList . M.elems $ clusterCoords bdCandidates
 
 solveBoard :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 solveBoard bd0 xs = do
-  bd1 <- solveBoardStage0 bd0 xs
-  bd2 <- solveBoardStage1 bd1
+  bd1 <- improveBoardFix bd0 xs
+  bd2 <- solveBoardStageDeep bd1
   if makingProgress bd1 bd2
     then solveBoard bd2 DL.empty
     else Just bd2
