@@ -245,24 +245,28 @@ improveBoardFix bd xs = do
   Perform depth first search on a set of coordinates
   (those coordinates should usually be key of bdCandidates).
  -}
-applyMineCoordsDeep' :: Board -> [Coord] -> [Board]
-applyMineCoordsDeep' bd = \case
+applyMineCoordsDeep :: Board -> [Coord] -> [Board]
+applyMineCoordsDeep bd = \case
   [] -> [bd]
   (coord : cs) ->
     case bdCandidates bd M.!? coord of
       Just candidates -> do
         mcs <- candidates
         Just bd' <- pure $ improveBoardFix bd (DL.fromList (M.toList mcs))
-        applyMineCoordsDeep' bd' cs
+        applyMineCoordsDeep bd' cs
       Nothing ->
         -- It is not necessary that all coords given has bdCandidates,
         -- this is because those coordinates could be eliminated by applying
         -- other candidate coordinates.
-        applyMineCoordsDeep' bd cs
+        applyMineCoordsDeep bd cs
+
 
 clusterUF :: Ord a => [(UF.Point s a, b)] -> ST s (M.Map a (DL.DList b))
 clusterUF pairs =
-  M.fromListWith (<>)
+  -- note the flip on <>, as we want to construct the list in reversed order
+  -- so that the original order is kept.
+  M.fromListWith
+    (flip (<>))
     <$> mapM
       ( \(uf, c) -> do
           cRep <- UF.descriptor =<< UF.repr uf
@@ -312,6 +316,7 @@ solveBoardStage1 :: Board -> Maybe Board
 solveBoardStage1 bd@Board {bdCandidates} = do
   let initClusters :: [[Coord]]
       initClusters = fmap DL.toList . M.elems $ clusterCoords bdCandidates
+
   {-
     TODO: now since coords are clustered,
     we can further optimize by deep search cluster-by-cluster
@@ -326,7 +331,7 @@ solveBoardStage1 bd@Board {bdCandidates} = do
                 boardsMissing =
                   -- only keep those missing from bd (current input board)
                   (\curBd -> M.difference (bdMines curBd) (bdMines bd))
-                    <$> applyMineCoordsDeep' bd cluster
+                    <$> applyMineCoordsDeep bd cluster
             case boardsMissing of
               [] -> tryNext clusters'
               _ : _ -> do
