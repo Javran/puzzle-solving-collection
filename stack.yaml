@@ -1,5 +1,6 @@
-resolver: lts-15.12
+resolver: lts-16.3
 packages:
 - kuromasu-solver
-- takuzu-solver
 - minesweeper-solver
+- takuzu-solver
+- tents-solver
