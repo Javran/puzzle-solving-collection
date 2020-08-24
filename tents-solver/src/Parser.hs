@@ -39,7 +39,7 @@ rawPuzzle0 =
     , "3 2 1 1 2 1 2 2"
     ]
 
-data Cell = Empty | Tree | Tent
+data Cell = Empty | Tree | Tent deriving (Show)
 
 type Coord = (Int, Int) -- (row, col)
 
@@ -49,6 +49,7 @@ data BoardRep = BoardRep
   , brColTreeCounts :: V.Vector Int -- same but for cols
   , brBoard :: M.Map Coord Cell
   }
+  deriving (Show)
 
 int :: ReadP Int
 int = read <$> munch1 isDigit
@@ -93,3 +94,8 @@ boardRep = do
       , brColTreeCounts
       , brBoard
       }
+
+parseBoard :: String -> Maybe BoardRep
+parseBoard raw = case readP_to_S (boardRep <* eof) raw of
+  [(v, "")] -> pure v
+  _ -> Nothing
