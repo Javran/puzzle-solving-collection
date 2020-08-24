@@ -1,9 +1,13 @@
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
+
 module Parser where
 
 import Control.Applicative
 import Control.Monad
 import Data.Char
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import qualified Data.Vector as V
 import Text.ParserCombinators.ReadP
 
@@ -40,7 +44,7 @@ data Cell = Empty | Tree | Tent
 type Coord = (Int, Int) -- (row, col)
 
 data BoardRep = BoardRep
-  { brDim :: (Int, Int) -- (rows, cols)
+  { brDims :: (Int, Int) -- (rows, cols)
   , brRowTreeCounts :: V.Vector Int -- # of trees in each row, must be of length rows
   , brColTreeCounts :: V.Vector Int -- same but for cols
   , brBoard :: M.Map Coord Cell
@@ -70,3 +74,22 @@ lastLine cols = do
   xs <- int `sepBy` char ' '
   guard $ length xs == cols
   xs <$ char '\n'
+
+boardRep :: ReadP BoardRep
+boardRep = do
+  brDims@(rows, cols) <- dimsLine
+  zippedResults <- replicateM rows (boardLine cols)
+  let brRowTreeCounts = V.fromListN rows (snd <$> zippedResults)
+      joinedLines = concatMap fst zippedResults
+      brBoard =
+        M.fromList
+          . mapMaybe (\(coord, m) -> (coord,) <$> m)
+          $ zip [(row, col) | row <- [0 .. rows -1], col <- [0 .. cols -1]] joinedLines
+  brColTreeCounts <- V.fromListN cols <$> lastLine cols
+  pure
+    BoardRep
+      { brDims
+      , brRowTreeCounts
+      , brColTreeCounts
+      , brBoard
+      }
