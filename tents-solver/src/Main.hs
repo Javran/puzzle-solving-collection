@@ -1,33 +1,9 @@
 module Main
   ( main
-  ) where
+  )
+where
 
-{-
-  syntax draft:
-  - first line: <rows> <cols>
-  - next <rows> lines: board presentation <space> <number>
-    + board:
-      - '?': unknown
-      - '_': empty
-      - 'R': tree (tRee)
-      - 'E': tent (tEnt)
-  - last line: numbers, space-separated.
-
- -}
-rawPuzzle0 :: String
-rawPuzzle0 = unlines
-  [ "9 8"
-  , "??R????_ 1"
-  , "???R?R?? 2"
-  , "R??????? 1"
-  , "???????? 1"
-  , "?R??R?RR 2"
-  , "??R???R? 2"
-  , "?R?????R 2"
-  , "?????R?? 2"
-  , "ER?????? 1"
-  , "3 2 1 1 2 1 2 2"
-  ]
+import Parser ()
 
 main :: IO ()
 main = pure ()
