@@ -1,0 +1,6 @@
+.stack-work/
+tents-solver.cabal
+stack.yaml.lock
+*~
+
+z
