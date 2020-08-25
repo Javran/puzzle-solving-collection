@@ -21,6 +21,15 @@ contract on other functions.
  -}
 type Candidates = [Piece]
 
+-- using newtype to avoid confusion between this and Coord.
+newtype Dir = Dir (Int, Int) -- diff by (row, col)
+
+applyDir :: Dir -> Coord -> Coord
+applyDir (Dir (dr, dc)) (r, c) = (r + dr, c + dc)
+
+allDirs :: [Dir]
+allDirs = Dir <$> [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
 {-
 
 Board keeps track of info necessary for solving the puzzle.
@@ -38,6 +47,16 @@ we'll use bdTodo{Row,Col}Candidates to store pieces that are (shallowly) consist
 
 To address (3), we have `bdTodoTrees` that keep track of possible tree-tent assignments for each tree.
 
+Note that those rules have an important implication:
+if a cell is not adjacent vertically or horizontally to a tree,
+it is impossible for it to be a tent, therefore it must be an empty cell.
+This implication does not rely on current solving state (as tree is never introduced during solving),
+and therefore can be done during preprocessing.
+(TODO) we want to establish an invariant on this data type that all empty cells that can be inferred from this implication
+will be inferred and put in bdCells, so in subsequent solving steps we never need to worry about it.
+
+In addition, it is beneficial to have those cells set to empty as soon as possible,
+as this process cuts down search space drastically.
 
  -}
 data Board = Board
@@ -46,8 +65,8 @@ data Board = Board
   , -- transformed from brRowTreeCounts,
     -- every unsatified row us supposed to have one entity here.
     bdTodoRowCandidates :: [Candidates]
-    -- same but for cols.
-  , bdTodoColCandidates :: [Candidates]
+  , -- same but for cols.
+    bdTodoColCandidates :: [Candidates]
   , -- all trees whose tent assignment is not yet determined.
     bdTodoTrees :: M.Map Coord [Coord]
   }
