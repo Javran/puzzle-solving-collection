@@ -3,13 +3,13 @@
 
 module Parser where
 
-import Control.Applicative
 import Control.Monad
 import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Vector as V
 import Text.ParserCombinators.ReadP
+import Types
 
 {-
   syntax draft:
@@ -38,18 +38,6 @@ rawPuzzle0 =
     , "ER?????? 1"
     , "3 2 1 1 2 1 2 2"
     ]
-
-data Cell = Empty | Tree | Tent deriving (Show)
-
-type Coord = (Int, Int) -- (row, col)
-
-data BoardRep = BoardRep
-  { brDims :: (Int, Int) -- (rows, cols)
-  , brRowTreeCounts :: V.Vector Int -- # of trees in each row, must be of length rows
-  , brColTreeCounts :: V.Vector Int -- same but for cols
-  , brBoard :: M.Map Coord Cell
-  }
-  deriving (Show)
 
 int :: ReadP Int
 int = read <$> munch1 isDigit
