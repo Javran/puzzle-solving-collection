@@ -3,7 +3,7 @@ module Types where
 import qualified Data.Map.Strict as M
 import qualified Data.Vector as V
 
-data Cell = Empty | Tree | Tent deriving (Show)
+data Cell = Empty | Tree | Tent deriving (Show, Eq)
 
 type Coord = (Int, Int) -- (row, col)
 

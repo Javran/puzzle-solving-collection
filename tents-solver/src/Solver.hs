@@ -1,6 +1,10 @@
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
+
 module Solver where
 
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import Types
 
 -- a Piece is a set of coord-cell assignments
@@ -63,10 +67,21 @@ data Board = Board
   { bdDims :: (Int, Int) -- rows, cols
   , bdCells :: M.Map Coord Cell
   , -- transformed from brRowTreeCounts,
-    -- every unsatified row us supposed to have one entity here.
+    -- every unsatified row is supposed to have one entity here.
     bdTodoRowCandidates :: [Candidates]
   , -- same but for cols.
     bdTodoColCandidates :: [Candidates]
   , -- all trees whose tent assignment is not yet determined.
     bdTodoTrees :: M.Map Coord [Coord]
   }
+
+mkBoard :: BoardRep -> Maybe Board
+mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
+  let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+      missingCoords = allCoords `S.difference` M.keysSet brBoard
+      allTrees = M.keysSet $ M.filter (== Tree) brBoard
+      simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
+        where
+          nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
+      bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
+  pure Board {bdDims, bdCells}
