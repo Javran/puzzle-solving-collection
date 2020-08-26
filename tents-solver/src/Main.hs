@@ -3,7 +3,13 @@ module Main
   )
 where
 
+import System.Console.Terminfo
 import Parser
+import Solver
 
 main :: IO ()
-main = print (parseBoard rawPuzzle0)
+main = do
+  term <- setupTermFromEnv
+  let Just br = parseBoard rawPuzzle0
+      Just bd = mkBoard br
+  pprBoard term bd

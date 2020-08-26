@@ -1,10 +1,14 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Solver where
 
+import Control.Monad
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import System.Console.Terminfo
 import Types
 
 -- a Piece is a set of coord-cell assignments
@@ -84,4 +88,32 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
         where
           nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
       bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
-  pure Board {bdDims, bdCells}
+      bdTodoRowCandidates = [] -- TODO
+      bdTodoColCandidates = [] -- TODO
+      bdTodoTrees = mempty -- TODO
+  pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
+
+getCell :: Board -> Coord -> Maybe Cell
+getCell Board {bdCells} coord = bdCells M.!? coord
+
+pprBoard :: Terminal -> Board -> IO ()
+pprBoard term bd@Board {bdDims} = do
+  let (rows, cols) = bdDims
+  putStrLn $ "(rows,cols): " <> show bdDims
+  case (,)
+    <$> getCapability term (withForegroundColor @TermOutput)
+    <*> getCapability term (withBackgroundColor @TermOutput) of
+    Nothing ->
+      forM_ [0 .. rows -1] $ \r -> do
+        forM_ [0 .. cols -1] $ \c ->
+          putStr
+            [ case getCell bd (r, c) of
+                Nothing -> '?'
+                Just Empty -> '_'
+                Just Tree -> 'R'
+                Just Tent -> 'E'
+            ]
+        putStrLn ""
+    Just (_fg, _bg) ->
+      -- TODO
+      pure ()

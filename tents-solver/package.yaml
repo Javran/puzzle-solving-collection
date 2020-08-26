@@ -12,6 +12,7 @@ dependencies:
 - base
 - containers
 - vector
+- terminfo
 
 executables:
   demo:
