@@ -114,6 +114,13 @@ pprBoard term bd@Board {bdDims} = do
                 Just Tent -> 'E'
             ]
         putStrLn ""
-    Just (_fg, _bg) ->
-      -- TODO
-      pure ()
+    Just (fg, bg) ->
+      forM_ [0 .. rows -1] $ \r -> do
+        let renderCell c =
+              case getCell bd (r, c) of
+                Nothing -> termText "?"
+                Just Empty -> bg White $ termText " "
+                Just Tree -> bg Green $ fg White $ termText "R"
+                Just Tent -> bg Blue $ fg White $ termText "E"
+            rendered = foldMap renderCell [0 .. cols -1] <> termText "\n"
+        runTermOutput term rendered
