@@ -7,7 +7,6 @@ module Game.Tents.Solver where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
-import Data.Maybe
 import qualified Data.Set as S
 import Game.Tents.Types
 import System.Console.Terminfo
@@ -97,27 +96,39 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
 {-
   Given a line (row or col) of incomplete board,
   complete that line nondeterministically.
+
+  Line completion is done by replacing all Nothings with either Empty or Tent
+  so that resulting line has # of tents specified
+  and no two tents are adjacent to each other.
  -}
 fillLine :: Int -> [Maybe Cell] -> [] [Cell]
 fillLine tentCount = fillLineAux tentCount Empty []
   where
-    -- fillLineAux <# of tents required> <previous cell> <reversed result> <remaining current line>
-    fillLineAux n _ revAcc [] = [reverse revAcc | n == 0]
-    fillLineAux n _ revAcc (Just v : xs) = do
-      let n' = if v == Tent then n-1 else n
-      guard $ n' >= 0
-      fillLineAux n' v (v : revAcc) xs
-    fillLineAux n prevCell revAcc (Nothing : xs) = case prevCell of
-      Tent ->
-        -- forced to place an Empty cell, otherwise two Tent will be adjacent to each other
-        fillLineAux n Empty (Empty : revAcc) xs
-      _ ->
-        -- when previous cell is Tree or Empty, next one is free to pick from Tent or Empty
-        let placeEmpty = fillLineAux n Empty (Empty : revAcc) xs
-            placeTent = do
-              guard $ n > 0
-              fillLineAux (n -1) Tent (Tent : revAcc) xs
-         in placeEmpty <> placeTent
+    {-
+      fillLineAux n prevCell revAcc xs
+      - n: # of tents required
+      - prevCell
+      - revAcc: accumulated result, in reverse order
+      - xs: remaining current line
+     -}
+    fillLineAux n prevCell revAcc xs = case xs of
+      [] ->
+        -- end of list, verify, reverse and return.
+        [reverse revAcc | n == 0]
+      hd : tl -> case hd of
+        Just v -> do
+          let n' = if v == Tent then n -1 else n
+          guard $ n' >= 0
+          fillLineAux n' v (v : revAcc) tl
+        Nothing -> do
+          let placeEmpty = fillLineAux n Empty (Empty : revAcc) tl
+              placeTent = do
+                guard $ n > 0
+                fillLineAux (n -1) Tent (Tent : revAcc) tl
+          -- forced to place an Empty cell, otherwise two Tent will be adjacent to each other
+          placeEmpty
+            -- when previous cell is Tree or Empty, next one is free to pick from Tent or Empty
+            <> (guard (prevCell /= Tent) >> placeTent)
 
 {-
   It is guaranteed that getCell will never access any field with Todo in name.
