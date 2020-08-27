@@ -104,7 +104,10 @@ fillLine tentCount = fillLineAux tentCount Empty []
   where
     -- fillLineAux <# of tents required> <previous cell> <reversed result> <remaining current line>
     fillLineAux n _ revAcc [] = [reverse revAcc | n == 0]
-    fillLineAux n _ revAcc (Just v : xs) = fillLineAux n v (v : revAcc) xs
+    fillLineAux n _ revAcc (Just v : xs) = do
+      let n' = if v == Tent then n-1 else n
+      guard $ n' >= 0
+      fillLineAux n' v (v : revAcc) xs
     fillLineAux n prevCell revAcc (Nothing : xs) = case prevCell of
       Tent ->
         -- forced to place an Empty cell, otherwise two Tent will be adjacent to each other
