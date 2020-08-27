@@ -7,9 +7,10 @@ module Game.Tents.Solver where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import qualified Data.Set as S
-import System.Console.Terminfo
 import Game.Tents.Types
+import System.Console.Terminfo
 
 -- a Piece is a set of coord-cell assignments
 -- that has to be applied to the board at the same time.
@@ -93,9 +94,28 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
       bdTodoTrees = mempty -- TODO
   pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
 
--- populateCandidates: given a line (row or col) of incomplete board,
--- complete that line using all possible ways.
 -- TODO: structural modules. so that we can start unit testing with hspec.
+{-
+  Given a line (row or col) of incomplete board,
+  complete that line nondeterministically.
+ -}
+fillLine :: Int -> [Maybe Cell] -> [] [Cell]
+fillLine tentCount = fillLineAux tentCount Empty []
+  where
+    -- fillLineAux <# of tents required> <previous cell> <reversed result> <remaining current line>
+    fillLineAux n _ revAcc [] = [reverse revAcc | n == 0]
+    fillLineAux n _ revAcc (Just v : xs) = fillLineAux n v (v : revAcc) xs
+    fillLineAux n prevCell revAcc (Nothing : xs) = case prevCell of
+      Tent ->
+        -- forced to place an Empty cell, otherwise two Tent will be adjacent to each other
+        fillLineAux n Empty (Empty : revAcc) xs
+      _ ->
+        -- when previous cell is Tree or Empty, next one is free to pick from Tent or Empty
+        let placeEmpty = fillLineAux n Empty (Empty : revAcc) xs
+            placeTent = do
+              guard $ n > 0
+              fillLineAux (n -1) Tent (Tent : revAcc) xs
+         in placeEmpty <> placeTent
 
 {-
   It is guaranteed that getCell will never access any field with Todo in name.
