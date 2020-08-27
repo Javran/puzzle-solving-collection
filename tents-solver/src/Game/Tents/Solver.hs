@@ -94,7 +94,6 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
       bdTodoTrees = mempty -- TODO
   pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
 
--- TODO: structural modules. so that we can start unit testing with hspec.
 {-
   Given a line (row or col) of incomplete board,
   complete that line nondeterministically.
