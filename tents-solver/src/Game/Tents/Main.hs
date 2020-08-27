@@ -1,11 +1,11 @@
-module Main
+module Game.Tents.Main
   ( main
   )
 where
 
 import System.Console.Terminfo
-import Parser
-import Solver
+import Game.Tents.Parser
+import Game.Tents.Solver
 
 main :: IO ()
 main = do

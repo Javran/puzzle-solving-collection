@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Parser where
+module Game.Tents.Parser where
 
 import Control.Monad
 import Data.Char
@@ -9,7 +9,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Vector as V
 import Text.ParserCombinators.ReadP
-import Types
+import Game.Tents.Types
 
 {-
   syntax draft:

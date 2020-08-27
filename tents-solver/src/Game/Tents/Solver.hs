@@ -3,13 +3,13 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Solver where
+module Game.Tents.Solver where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import System.Console.Terminfo
-import Types
+import Game.Tents.Types
 
 -- a Piece is a set of coord-cell assignments
 -- that has to be applied to the board at the same time.
@@ -93,6 +93,14 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
       bdTodoTrees = mempty -- TODO
   pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
 
+-- populateCandidates: given a line (row or col) of incomplete board,
+-- complete that line using all possible ways.
+-- TODO: structural modules. so that we can start unit testing with hspec.
+
+{-
+  It is guaranteed that getCell will never access any field with Todo in name.
+  We need this property so that this function can be called even during Board construction.
+ -}
 getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 

@@ -14,12 +14,21 @@ dependencies:
 - vector
 - terminfo
 
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+
 executables:
   demo:
     main: Main.hs
-    source-dirs: src
+    dependencies:
+      - tents-solver
+    source-dirs: exe
     ghc-options:
       - -Wall
       - -threaded
+      - -O2
       - -rtsopts
       - -with-rtsopts=-N

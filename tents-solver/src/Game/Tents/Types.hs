@@ -1,4 +1,4 @@
-module Types where
+module Game.Tents.Types where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Vector as V
