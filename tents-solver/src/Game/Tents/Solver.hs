@@ -8,6 +8,7 @@ module Game.Tents.Solver where
 import Control.Monad
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import qualified Data.Vector as V
 import Game.Tents.Types
 import System.Console.Terminfo
 
@@ -80,7 +81,7 @@ data Board = Board
   }
 
 mkBoard :: BoardRep -> Maybe Board
-mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
+mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard, brRowTreeCounts} = do
   let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
       missingCoords = allCoords `S.difference` M.keysSet brBoard
       allTrees = M.keysSet $ M.filter (== Tree) brBoard
@@ -88,7 +89,12 @@ mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard} = do
         where
           nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
       bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
-      bdTodoRowCandidates = [] -- TODO
+      bdTodoRowCandidates = zipWith go [0 ..] (V.toList brRowTreeCounts)
+        where
+          go r count = fmap (M.fromList . zip coords) filledLine :: Candidates
+            where
+              coords = [(r, c) | c <- [0 .. cols -1]]
+              filledLine = fillLine count $ fmap (bdCells M.!?) coords
       bdTodoColCandidates = [] -- TODO
       bdTodoTrees = mempty -- TODO
   pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
@@ -120,15 +126,16 @@ fillLine tentCount = fillLineAux tentCount Empty []
           let n' = if v == Tent then n -1 else n
           guard $ n' >= 0
           fillLineAux n' v (v : revAcc) tl
-        Nothing -> do
-          let placeEmpty = fillLineAux n Empty (Empty : revAcc) tl
-              placeTent = do
-                guard $ n > 0
-                fillLineAux (n -1) Tent (Tent : revAcc) tl
-          -- forced to place an Empty cell, otherwise two Tent will be adjacent to each other
-          placeEmpty
-            -- when previous cell is Tree or Empty, next one is free to pick from Tent or Empty
-            <> (guard (prevCell /= Tent) >> placeTent)
+        Nothing ->
+          -- it is always possible to place an empty one.
+          fillLineAux n Empty (Empty : revAcc) tl
+            -- when previous cell is a Tent, we are forced to place an Empty cell,
+            -- otherwise two Tent will be adjacent to each other.
+            -- when previous cell is Tree or Empty, next one is free to pick from Tent or Empty.
+            <> do
+              guard $ prevCell /= Tent
+              guard $ n > 0
+              fillLineAux (n -1) Tent (Tent : revAcc) tl
 
 {-
   It is guaranteed that getCell will never access any field with Todo in name.
