@@ -81,23 +81,29 @@ data Board = Board
   }
 
 mkBoard :: BoardRep -> Maybe Board
-mkBoard BoardRep {brDims = bdDims@(rows, cols), brBoard, brRowTreeCounts} = do
-  let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
-      missingCoords = allCoords `S.difference` M.keysSet brBoard
-      allTrees = M.keysSet $ M.filter (== Tree) brBoard
-      simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
-        where
-          nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
-      bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
-      bdTodoRowCandidates = zipWith go [0 ..] (V.toList brRowTreeCounts)
-        where
-          go r count = fmap (M.fromList . zip coords) filledLine :: Candidates
-            where
-              coords = [(r, c) | c <- [0 .. cols -1]]
-              filledLine = fillLine count $ fmap (bdCells M.!?) coords
-      bdTodoColCandidates = [] -- TODO
-      bdTodoTrees = mempty -- TODO
-  pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
+mkBoard
+  BoardRep
+    { brDims = bdDims@(rows, cols)
+    , brBoard
+    , brRowTreeCounts
+    , brColTreeCounts
+    } = do
+    let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+        missingCoords = allCoords `S.difference` M.keysSet brBoard
+        allTrees = M.keysSet $ M.filter (== Tree) brBoard
+        simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
+          where
+            nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
+        bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
+        bdTodoRowCandidates =
+          zipWith go [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]] (V.toList brRowTreeCounts)
+          where
+            go coords count = fmap (M.fromList . zip coords) filledLine :: Candidates
+              where
+                filledLine = fillLine count $ fmap (bdCells M.!?) coords
+        bdTodoColCandidates = [] -- TODO
+        bdTodoTrees = mempty -- TODO
+    pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
 
 {-
   Given a line (row or col) of incomplete board,
