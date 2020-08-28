@@ -95,13 +95,20 @@ mkBoard
           where
             nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
         bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
-        bdTodoRowCandidates =
-          zipWith go [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]] (V.toList brRowTreeCounts)
+        genRowOrColCandidates coordss rowOrColTreeCounts =
+          zipWith go coordss rowOrColTreeCounts
           where
             go coords count = fmap (M.fromList . zip coords) filledLine :: Candidates
               where
                 filledLine = fillLine count $ fmap (bdCells M.!?) coords
-        bdTodoColCandidates = [] -- TODO
+        bdTodoRowCandidates =
+          genRowOrColCandidates
+            [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]]
+            (V.toList brRowTreeCounts)
+        bdTodoColCandidates =
+          genRowOrColCandidates
+            [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
+            (V.toList brColTreeCounts)
         bdTodoTrees = mempty -- TODO
     pure Board {bdDims, bdCells, bdTodoRowCandidates, bdTodoColCandidates, bdTodoTrees}
 
