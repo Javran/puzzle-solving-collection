@@ -190,7 +190,7 @@ getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 
 pprBoard :: Terminal -> Board -> IO ()
-pprBoard term bd@Board {bdDims, bdTodoTrees} = do
+pprBoard term bd@Board {bdDims, bdTodoTrees, bdRowTentCounts, bdColTentCounts} = do
   let (rows, cols) = bdDims
   putStrLn $ "(rows,cols): " <> show bdDims
   case (,)
@@ -206,7 +206,7 @@ pprBoard term bd@Board {bdDims, bdTodoTrees} = do
                 Just Tree -> 'R'
                 Just Tent -> 'E'
             ]
-        putStrLn ""
+        putStrLn $ show (bdRowTentCounts V.! r)
     Just (fg, bg) ->
       forM_ [0 .. rows -1] $ \r -> do
         let renderCell c =
@@ -215,8 +215,15 @@ pprBoard term bd@Board {bdDims, bdTodoTrees} = do
                 Just Empty -> bg White $ termText " "
                 Just Tree -> bg Green $ fg White $ termText "R"
                 Just Tent -> bg Blue $ fg White $ termText "E"
-            rendered = foldMap renderCell [0 .. cols -1] <> termText "\n"
+            rendered =
+              foldMap renderCell [0 .. cols -1]
+              <> termText (show (bdRowTentCounts V.! r))
+              <> termText "\n"
         runTermOutput term rendered
+  let tr n =
+        -- let's not worry about what to do when n > 9 for now, it's very rare.
+        if n > 9 then "-" else show n
+  putStrLn (concatMap tr $ V.toList bdColTentCounts)
   putStrLn "Tree candidates counts:"
   forM_ [0 .. rows -1] $ \r -> do
     forM_ [0 .. cols -1] $ \c ->
