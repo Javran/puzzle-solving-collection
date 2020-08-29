@@ -67,9 +67,13 @@ will be inferred and put in bdCells, so in subsequent solving steps we never nee
 In addition, it is beneficial to have those cells set to empty as soon as possible,
 as this process cuts down search space drastically.
 
+Note that it is guaranteed that bdDims, bd{Row,Col}TreeCounts never change after construction.
+
  -}
 data Board = Board
   { bdDims :: (Int, Int) -- rows, cols
+  , bdRowTreeCounts :: V.Vector Int
+  , bdColTreeCounts :: V.Vector Int
   , bdCells :: M.Map Coord Cell
   , -- transformed from brRowTreeCounts,
     -- every unsatified row is supposed to have one entity here.
@@ -86,8 +90,8 @@ mkBoard
   BoardRep
     { brDims = bdDims@(rows, cols)
     , brBoard
-    , brRowTreeCounts
-    , brColTreeCounts
+    , brRowTreeCounts = bdRowTreeCounts
+    , brColTreeCounts = bdColTreeCounts
     } = do
     let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
@@ -109,16 +113,19 @@ mkBoard
     bdTodoRowCandidates <-
       genRowOrColCandidates
         [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]]
-        (V.toList brRowTreeCounts)
+        (V.toList bdRowTreeCounts)
     bdTodoColCandidates <-
       genRowOrColCandidates
         [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
-        (V.toList brColTreeCounts)
+        (V.toList bdColTreeCounts)
     bdTodoTrees <- do
       let candidateTentCoords :: Coord -> Maybe [Coord]
           candidateTentCoords coord = do
             let result =
-                  filter (\coord' -> let r = bdCells M.!? coord' in r == Nothing || r == Just Tent)
+                  filter
+                    (\coord' ->
+                       let r = bdCells M.!? coord'
+                        in r == Nothing || r == Just Tent)
                     . filter coordIsInside
                     $ fmap (\d -> applyDir d coord) allDirs
             guard $ not . null $ result
@@ -129,6 +136,8 @@ mkBoard
     pure
       Board
         { bdDims
+        , bdRowTreeCounts
+        , bdColTreeCounts
         , bdCells
         , bdTodoRowCandidates
         , bdTodoColCandidates
