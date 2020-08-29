@@ -80,6 +80,7 @@ data Board = Board
     bdTodoTrees :: M.Map Coord [Coord]
   }
 
+-- TODO: verify that boards with impossible candidates result in Nothing.
 mkBoard :: BoardRep -> Maybe Board
 mkBoard
   BoardRep
@@ -89,6 +90,7 @@ mkBoard
     , brColTreeCounts
     } = do
     let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+        coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
         missingCoords = allCoords `S.difference` M.keysSet brBoard
         allTrees = M.keysSet $ M.filter (== Tree) brBoard
         simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
@@ -99,7 +101,7 @@ mkBoard
           let result = zipWith go coordss rowOrColTreeCounts
           -- ensure that every `Candidates` is not empty.
           guard $ all (not . null) result
-          pure $ result
+          pure result
           where
             go coords count = fmap (M.fromList . zip coords) filledLine :: Candidates
               where
@@ -112,7 +114,18 @@ mkBoard
       genRowOrColCandidates
         [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
         (V.toList brColTreeCounts)
-    let bdTodoTrees = mempty -- TODO
+    bdTodoTrees <- do
+      let candidateTentCoords :: Coord -> Maybe [Coord]
+          candidateTentCoords coord = do
+            let result =
+                  filter (\coord' -> let r = bdCells M.!? coord' in r == Nothing || r == Just Tent)
+                    . filter coordIsInside
+                    $ fmap (\d -> applyDir d coord) allDirs
+            guard $ not . null $ result
+            pure result
+      M.fromList
+        <$> (forM (S.toList allTrees) $ \tCoord ->
+               (tCoord,) <$> candidateTentCoords tCoord)
     pure
       Board
         { bdDims
@@ -168,7 +181,7 @@ getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 
 pprBoard :: Terminal -> Board -> IO ()
-pprBoard term bd@Board {bdDims} = do
+pprBoard term bd@Board {bdDims, bdTodoTrees} = do
   let (rows, cols) = bdDims
   putStrLn $ "(rows,cols): " <> show bdDims
   case (,)
@@ -195,3 +208,19 @@ pprBoard term bd@Board {bdDims} = do
                 Just Tent -> bg Blue $ fg White $ termText "E"
             rendered = foldMap renderCell [0 .. cols -1] <> termText "\n"
         runTermOutput term rendered
+  putStrLn "Tree candidates counts:"
+  forM_ [0 .. rows -1] $ \r -> do
+    forM_ [0 .. cols -1] $ \c ->
+      putStr $
+        case getCell bd (r, c) of
+          Nothing -> "?"
+          Just Empty -> " "
+          Just Tree ->
+            case bdTodoTrees M.!? (r, c) of
+              Nothing ->
+                -- this can only happen when the tree is question
+                -- is considered solved therefore discharged.
+                "!"
+              Just v -> show (length v)
+          Just Tent -> "E"
+    putStrLn ""
