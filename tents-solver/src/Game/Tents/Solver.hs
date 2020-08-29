@@ -9,6 +9,7 @@ import Control.Monad
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Vector as V
+import Data.List
 import Game.Tents.Types
 import System.Console.Terminfo
 
@@ -76,7 +77,8 @@ data Board = Board
   , bdColTentCounts :: V.Vector Int
   , bdCells :: M.Map Coord Cell
   , -- transformed from brRowTentCounts,
-    -- every unsatified row is supposed to have one entity here.
+    -- every unsatisfied row is supposed to have one entity here.
+    -- TODO: perhaps row and col candidates can be combined into a single list?
     bdTodoRowCandidates :: [Candidates]
   , -- same but for cols.
     bdTodoColCandidates :: [Candidates]
@@ -190,53 +192,78 @@ getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 
 pprBoard :: Terminal -> Board -> IO ()
-pprBoard term bd@Board {bdDims, bdTodoTrees, bdRowTentCounts, bdColTentCounts} = do
-  let (rows, cols) = bdDims
-  putStrLn $ "(rows,cols): " <> show bdDims
-  case (,)
-    <$> getCapability term (withForegroundColor @TermOutput)
-    <*> getCapability term (withBackgroundColor @TermOutput) of
-    Nothing ->
-      forM_ [0 .. rows -1] $ \r -> do
-        forM_ [0 .. cols -1] $ \c ->
-          putStr
-            [ case getCell bd (r, c) of
-                Nothing -> '?'
-                Just Empty -> '_'
-                Just Tree -> 'R'
-                Just Tent -> 'E'
-            ]
-        putStrLn $ show (bdRowTentCounts V.! r)
-    Just (fg, bg) ->
-      forM_ [0 .. rows -1] $ \r -> do
-        let renderCell c =
-              case getCell bd (r, c) of
-                Nothing -> termText "?"
-                Just Empty -> bg White $ termText " "
-                Just Tree -> bg Green $ fg White $ termText "R"
-                Just Tent -> bg Blue $ fg White $ termText "E"
-            rendered =
-              foldMap renderCell [0 .. cols -1]
-              <> termText (show (bdRowTentCounts V.! r))
-              <> termText "\n"
-        runTermOutput term rendered
-  let tr n =
-        -- let's not worry about what to do when n > 9 for now, it's very rare.
-        if n > 9 then "-" else show n
-  putStrLn (concatMap tr $ V.toList bdColTentCounts)
-  putStrLn "Tree candidates counts:"
-  forM_ [0 .. rows -1] $ \r -> do
-    forM_ [0 .. cols -1] $ \c ->
-      putStr $
-        case getCell bd (r, c) of
-          Nothing -> "?"
-          Just Empty -> " "
-          Just Tree ->
-            case bdTodoTrees M.!? (r, c) of
-              Nothing ->
-                -- this can only happen when the tree is question
-                -- is considered solved therefore discharged.
-                "!"
-              Just v -> show (length v)
-          Just Tent -> "E"
-    putStrLn ""
+pprBoard
+  term
+  bd@Board
+    { bdDims
+    , bdTodoTrees
+    , bdRowTentCounts
+    , bdColTentCounts
+    , bdTodoRowCandidates
+    , bdTodoColCandidates
+    } = do
+    let (rows, cols) = bdDims
+    putStrLn $ "(rows,cols): " <> show bdDims
+    case (,)
+      <$> getCapability term (withForegroundColor @TermOutput)
+      <*> getCapability term (withBackgroundColor @TermOutput) of
+      Nothing ->
+        forM_ [0 .. rows -1] $ \r -> do
+          forM_ [0 .. cols -1] $ \c ->
+            putStr
+              [ case getCell bd (r, c) of
+                  Nothing -> '?'
+                  Just Empty -> '_'
+                  Just Tree -> 'R'
+                  Just Tent -> 'E'
+              ]
+          putStrLn $ show (bdRowTentCounts V.! r)
+      Just (fg, bg) ->
+        forM_ [0 .. rows -1] $ \r -> do
+          let renderCell c =
+                case getCell bd (r, c) of
+                  Nothing -> termText "?"
+                  Just Empty -> bg White $ termText " "
+                  Just Tree -> bg Green $ fg White $ termText "R"
+                  Just Tent -> bg Blue $ fg White $ termText "E"
+              rendered =
+                foldMap renderCell [0 .. cols -1]
+                  <> termText (show (bdRowTentCounts V.! r))
+                  <> termText "\n"
+          runTermOutput term rendered
+    let tr n =
+          -- let's not worry about what to do when n > 9 for now, it's very rare.
+          if n > 9 then "-" else show n
+    putStrLn (concatMap tr $ V.toList bdColTentCounts)
+    putStrLn "Tree candidates counts:"
+    forM_ [0 .. rows -1] $ \r -> do
+      forM_ [0 .. cols -1] $ \c ->
+        putStr $
+          case getCell bd (r, c) of
+            Nothing -> "?"
+            Just Empty -> " "
+            Just Tree ->
+              case bdTodoTrees M.!? (r, c) of
+                Nothing ->
+                  -- this can only happen when the tree is question
+                  -- is considered solved therefore discharged.
+                  "!"
+                Just v -> show (length v)
+            Just Tent -> "E"
+      putStrLn ""
+    let pprLineCandidates =
+          putStrLn . intercalate "," . fmap (show . length)
+    putStrLn "Row Candidates:"
+    pprLineCandidates bdTodoRowCandidates
+    putStrLn "Col Candidates:"
+    pprLineCandidates bdTodoColCandidates
+
+{-
+Few tactics we can implement:
+
+- a tent "repels" nearby Nothings, making them all Empty
+- DFS starting from a set of least populated candidates, and extract what is common.
+  (this process will require we have a way to "settle" current Board
+  into either Nothing or a consistent state)
+
+ -}
