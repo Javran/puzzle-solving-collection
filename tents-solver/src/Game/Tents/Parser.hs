@@ -68,18 +68,18 @@ boardRep :: ReadP BoardRep
 boardRep = do
   brDims@(rows, cols) <- dimsLine
   zippedResults <- replicateM rows (boardLine cols)
-  let brRowTreeCounts = V.fromListN rows (snd <$> zippedResults)
+  let brRowTentCounts = V.fromListN rows (snd <$> zippedResults)
       joinedLines = concatMap fst zippedResults
       brBoard =
         M.fromList
           . mapMaybe (\(coord, m) -> (coord,) <$> m)
           $ zip [(row, col) | row <- [0 .. rows -1], col <- [0 .. cols -1]] joinedLines
-  brColTreeCounts <- V.fromListN cols <$> lastLine cols
+  brColTentCounts <- V.fromListN cols <$> lastLine cols
   pure
     BoardRep
       { brDims
-      , brRowTreeCounts
-      , brColTreeCounts
+      , brRowTentCounts
+      , brColTentCounts
       , brBoard
       }
 

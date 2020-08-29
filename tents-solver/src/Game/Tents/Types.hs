@@ -13,8 +13,8 @@ type Coord = (Int, Int) -- (row, col)
 
 data BoardRep = BoardRep
   { brDims :: (Int, Int) -- (rows, cols)
-  , brRowTreeCounts :: V.Vector Int -- # of trees in each row, must be of length rows
-  , brColTreeCounts :: V.Vector Int -- same but for cols
+  , brRowTentCounts :: V.Vector Int -- # of tents in each row, must be of length rows
+  , brColTentCounts :: V.Vector Int -- same but for cols
   , brBoard :: M.Map Coord Cell
   }
   deriving (Show)

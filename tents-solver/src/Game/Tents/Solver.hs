@@ -67,15 +67,15 @@ will be inferred and put in bdCells, so in subsequent solving steps we never nee
 In addition, it is beneficial to have those cells set to empty as soon as possible,
 as this process cuts down search space drastically.
 
-Note that it is guaranteed that bdDims, bd{Row,Col}TreeCounts never change after construction.
+Note that it is guaranteed that bdDims, bd{Row,Col}TentCounts never change after construction.
 
  -}
 data Board = Board
   { bdDims :: (Int, Int) -- rows, cols
-  , bdRowTreeCounts :: V.Vector Int
-  , bdColTreeCounts :: V.Vector Int
+  , bdRowTentCounts :: V.Vector Int
+  , bdColTentCounts :: V.Vector Int
   , bdCells :: M.Map Coord Cell
-  , -- transformed from brRowTreeCounts,
+  , -- transformed from brRowTentCounts,
     -- every unsatified row is supposed to have one entity here.
     bdTodoRowCandidates :: [Candidates]
   , -- same but for cols.
@@ -90,8 +90,8 @@ mkBoard
   BoardRep
     { brDims = bdDims@(rows, cols)
     , brBoard
-    , brRowTreeCounts = bdRowTreeCounts
-    , brColTreeCounts = bdColTreeCounts
+    , brRowTentCounts = bdRowTentCounts
+    , brColTentCounts = bdColTentCounts
     } = do
     let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
@@ -101,8 +101,8 @@ mkBoard
           where
             nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
         bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
-        genRowOrColCandidates coordss rowOrColTreeCounts = do
-          let result = zipWith go coordss rowOrColTreeCounts
+        genRowOrColCandidates coordss rowOrColTentCounts = do
+          let result = zipWith go coordss rowOrColTentCounts
           -- ensure that every `Candidates` is not empty.
           guard $ all (not . null) result
           pure result
@@ -113,11 +113,11 @@ mkBoard
     bdTodoRowCandidates <-
       genRowOrColCandidates
         [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]]
-        (V.toList bdRowTreeCounts)
+        (V.toList bdRowTentCounts)
     bdTodoColCandidates <-
       genRowOrColCandidates
         [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
-        (V.toList bdColTreeCounts)
+        (V.toList bdColTentCounts)
     bdTodoTrees <- do
       let candidateTentCoords :: Coord -> Maybe [Coord]
           candidateTentCoords coord = do
@@ -136,8 +136,8 @@ mkBoard
     pure
       Board
         { bdDims
-        , bdRowTreeCounts
-        , bdColTreeCounts
+        , bdRowTentCounts
+        , bdColTentCounts
         , bdCells
         , bdTodoRowCandidates
         , bdTodoColCandidates
