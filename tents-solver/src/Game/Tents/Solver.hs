@@ -6,9 +6,10 @@
 module Game.Tents.Solver where
 
 import Control.Monad
-import Data.List
+import Data.Bifunctor
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Data.Semigroup
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Tents.Types
@@ -139,7 +140,11 @@ mkBoard
         , bdRowTentCounts
         , bdColTentCounts
         , bdCells
-        , bdTodoCandidates = todoRowCandidates <> todoColCandidates
+        , bdTodoCandidates =
+            -- TODO: investigate whether it is desirable
+            -- to merge candidates when their sets of coordinates are exactly the same.
+            -- this might or might not happen when putting row and col candidates together.
+            todoRowCandidates <> todoColCandidates
         , bdTodoTrees
         }
 
@@ -237,10 +242,23 @@ pprBoard
                 Just v -> show (length v)
             Just Tent -> "E"
       putStrLn ""
-    let pprLineCandidates =
-          putStrLn . intercalate "," . fmap (show . length)
-    putStrLn "Candidates:"
-    pprLineCandidates bdTodoCandidates
+    forM_ bdTodoCandidates $ \cs -> do
+      let coords =
+            -- the invariant is that pieces in `cs` share the same set of coordinates.
+            case cs of
+              v : _ | v' <- M.keys v, not . null $ v' -> v'
+              _ -> error "invalid: candidates or pieces cannot be empty"
+          ( (Just (Min minRow), Just (Max maxRow))
+            , (Just (Min minCol), Just (Max maxCol))
+            ) =
+              foldMap (let f v = (Just (Min v), Just (Max v)) in bimap f f) coords
+
+      putStrLn $
+        "- " <> show (length cs) <> " pieces, with range: "
+          <> show (minRow, minCol)
+          <> "-"
+          <> show (maxRow, maxCol)
+      pure ()
 
 {-
 Few tactics we can implement:
