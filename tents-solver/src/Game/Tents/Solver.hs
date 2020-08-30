@@ -76,12 +76,9 @@ data Board = Board
   , bdRowTentCounts :: V.Vector Int
   , bdColTentCounts :: V.Vector Int
   , bdCells :: M.Map Coord Cell
-  , -- transformed from brRowTentCounts,
-    -- every unsatisfied row is supposed to have one entity here.
-    -- TODO: perhaps row and col candidates can be combined into a single list?
-    bdTodoRowCandidates :: [Candidates]
-  , -- same but for cols.
-    bdTodoColCandidates :: [Candidates]
+  , -- transformed from brRowTentCounts + brColTentcounts,
+    -- every unsatisfied row or column is supposed to have one entity here.
+    bdTodoCandidates :: [Candidates]
   , -- all trees whose tent assignment is not yet determined.
     bdTodoTrees :: M.Map Coord [Coord]
   }
@@ -112,11 +109,11 @@ mkBoard
             go coords count = fmap (M.fromList . zip coords) filledLine :: Candidates
               where
                 filledLine = fillLine count $ fmap (bdCells M.!?) coords
-    bdTodoRowCandidates <-
+    todoRowCandidates <-
       genRowOrColCandidates
         [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]]
         (V.toList bdRowTentCounts)
-    bdTodoColCandidates <-
+    todoColCandidates <-
       genRowOrColCandidates
         [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
         (V.toList bdColTentCounts)
@@ -141,8 +138,7 @@ mkBoard
         , bdRowTentCounts
         , bdColTentCounts
         , bdCells
-        , bdTodoRowCandidates
-        , bdTodoColCandidates
+        , bdTodoCandidates = todoRowCandidates <> todoColCandidates
         , bdTodoTrees
         }
 
@@ -199,8 +195,7 @@ pprBoard
     , bdTodoTrees
     , bdRowTentCounts
     , bdColTentCounts
-    , bdTodoRowCandidates
-    , bdTodoColCandidates
+    , bdTodoCandidates
     } = do
     let (rows, cols) = bdDims
     putStrLn $ "(rows,cols): " <> show bdDims
@@ -253,10 +248,8 @@ pprBoard
       putStrLn ""
     let pprLineCandidates =
           putStrLn . intercalate "," . fmap (show . length)
-    putStrLn "Row Candidates:"
-    pprLineCandidates bdTodoRowCandidates
-    putStrLn "Col Candidates:"
-    pprLineCandidates bdTodoColCandidates
+    putStrLn "Candidates:"
+    pprLineCandidates bdTodoCandidates
 
 {-
 Few tactics we can implement:
