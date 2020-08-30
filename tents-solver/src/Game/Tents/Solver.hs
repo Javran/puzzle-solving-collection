@@ -255,8 +255,17 @@ pprBoard
 Few tactics we can implement:
 
 - a tent "repels" nearby Nothings, making them all Empty
+- look at a single candidate and find commit assignments and set them to board.
 - DFS starting from a set of least populated candidates, and extract what is common.
   (this process will require we have a way to "settle" current Board
   into either Nothing or a consistent state)
+
+primitive / basic operations:
+
+- tidyBoard :: Board -> Coord -> Maybe Board, this function looks
+  at a specifc coordinate of the board and figure out if it is possible
+  to fill in the value. if so, that value will be filled in with related
+  candidate structures removed from the board.
+
 
  -}
