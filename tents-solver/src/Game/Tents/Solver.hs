@@ -6,10 +6,11 @@
 module Game.Tents.Solver where
 
 import Control.Monad
+import Data.List
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Vector as V
-import Data.List
 import Game.Tents.Types
 import System.Console.Terminfo
 
@@ -198,34 +199,24 @@ pprBoard
     , bdTodoCandidates
     } = do
     let (rows, cols) = bdDims
+        (fg, bg) =
+          fromMaybe (const id, const id) $
+            (,)
+              <$> getCapability term (withForegroundColor @TermOutput)
+              <*> getCapability term (withBackgroundColor @TermOutput)
     putStrLn $ "(rows,cols): " <> show bdDims
-    case (,)
-      <$> getCapability term (withForegroundColor @TermOutput)
-      <*> getCapability term (withBackgroundColor @TermOutput) of
-      Nothing ->
-        forM_ [0 .. rows -1] $ \r -> do
-          forM_ [0 .. cols -1] $ \c ->
-            putStr
-              [ case getCell bd (r, c) of
-                  Nothing -> '?'
-                  Just Empty -> '_'
-                  Just Tree -> 'R'
-                  Just Tent -> 'E'
-              ]
-          putStrLn $ show (bdRowTentCounts V.! r)
-      Just (fg, bg) ->
-        forM_ [0 .. rows -1] $ \r -> do
-          let renderCell c =
-                case getCell bd (r, c) of
-                  Nothing -> termText "?"
-                  Just Empty -> bg White $ termText " "
-                  Just Tree -> bg Green $ fg White $ termText "R"
-                  Just Tent -> bg Blue $ fg White $ termText "E"
-              rendered =
-                foldMap renderCell [0 .. cols -1]
-                  <> termText (show (bdRowTentCounts V.! r))
-                  <> termText "\n"
-          runTermOutput term rendered
+    forM_ [0 .. rows -1] $ \r -> do
+      let renderCell c =
+            case getCell bd (r, c) of
+              Nothing -> termText "?"
+              Just Empty -> bg White $ termText " "
+              Just Tree -> bg Green $ fg White $ termText "R"
+              Just Tent -> bg Blue $ fg White $ termText "E"
+          rendered =
+            foldMap renderCell [0 .. cols -1]
+              <> termText (show (bdRowTentCounts V.! r))
+              <> termText "\n"
+      runTermOutput term rendered
     let tr n =
           -- let's not worry about what to do when n > 9 for now, it's very rare.
           if n > 9 then "-" else show n
@@ -266,6 +257,5 @@ primitive / basic operations:
   at a specifc coordinate of the board and figure out if it is possible
   to fill in the value. if so, that value will be filled in with related
   candidate structures removed from the board.
-
 
  -}
