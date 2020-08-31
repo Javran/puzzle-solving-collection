@@ -267,14 +267,25 @@ pprBoard
           <> "-"
           <> show (maxRow, maxCol)
       forM_ cs $ \p -> do
-        forM_ [minRow .. maxRow] $ \r -> do
-          let rendered =
-                termText "  "
-                  <> foldMap (renderCell (\coord -> p M.!? coord) . (r,)) [minCol .. maxCol]
-                  <> termText "\n"
-          runTermOutput term rendered
-        putStrLn ""
-      pure ()
+        if minRow == maxRow
+          then do
+            forM_ [minRow .. maxRow] $ \r -> do
+              let rendered =
+                    termText "  "
+                      <> foldMap (renderCell (\coord -> p M.!? coord) . (r,)) [minCol .. maxCol]
+                      <> termText "\n"
+              runTermOutput term rendered
+            putStrLn ""
+          else do
+            -- transpose before printing out to make it easier to compare candidates against each other.
+            putStrLn "  (transposed)"
+            forM_ [minCol .. maxCol] $ \c -> do
+              let rendered =
+                    termText "  "
+                      <> foldMap (renderCell (\coord -> p M.!? coord) . (,c)) [minRow .. maxRow]
+                      <> termText "\n"
+              runTermOutput term rendered
+            putStrLn ""
 
 {-
 Few tactics we can implement:
