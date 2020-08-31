@@ -210,15 +210,16 @@ pprBoard
               <$> getCapability term (withForegroundColor @TermOutput)
               <*> getCapability term (withBackgroundColor @TermOutput)
     putStrLn $ "(rows,cols): " <> show bdDims
+    let renderCell getCell' (r, c) =
+          case getCell' (r, c) of
+            Nothing -> termText "?"
+            Just Empty -> bg White $ termText " "
+            Just Tree -> bg Green $ fg White $ termText "R"
+            Just Tent -> bg Blue $ fg White $ termText "E"
+
     forM_ [0 .. rows -1] $ \r -> do
-      let renderCell c =
-            case getCell bd (r, c) of
-              Nothing -> termText "?"
-              Just Empty -> bg White $ termText " "
-              Just Tree -> bg Green $ fg White $ termText "R"
-              Just Tent -> bg Blue $ fg White $ termText "E"
-          rendered =
-            foldMap renderCell [0 .. cols -1]
+      let rendered =
+            foldMap (renderCell (getCell bd) . (r,)) [0 .. cols -1]
               <> termText (show (bdRowTentCounts V.! r))
               <> termText "\n"
       runTermOutput term rendered
@@ -258,6 +259,14 @@ pprBoard
           <> show (minRow, minCol)
           <> "-"
           <> show (maxRow, maxCol)
+      forM_ cs $ \p -> do
+        forM_ [minRow .. maxRow] $ \r -> do
+          let rendered =
+                termText "  "
+                  <> foldMap (renderCell (\coord -> p M.!? coord) . (r,)) [minCol .. maxCol]
+                  <> termText "\n"
+          runTermOutput term rendered
+        putStrLn ""
       pure ()
 
 {-
