@@ -108,8 +108,15 @@ mkBoard
           guard $ all (not . null) result
           pure result
           where
-            go coords count = fmap (M.fromList . zip coords) filledLine :: Candidates
+            go coords count =
+              fmap
+                (M.filterWithKey (\coord _ -> isUnknown coord)
+                   . M.fromList
+                   . zip coords)
+                filledLine
+              :: Candidates
               where
+                isUnknown coord = bdCells M.!? coord == Nothing
                 filledLine = fillLine count $ fmap (bdCells M.!?) coords
     todoRowCandidates <-
       genRowOrColCandidates
