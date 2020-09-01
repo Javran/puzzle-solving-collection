@@ -200,6 +200,39 @@ fillLine tentCount = fillLineAux tentCount Empty []
 getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 
+{-
+  remove candidates that are inconsistent with one particular cell of the board.
+ -}
+tidyBoard :: Board -> Coord -> Maybe Board
+tidyBoard bd coord = case getCell bd coord of
+  Nothing -> Just bd
+  Just Tree -> Just bd
+  Just cell -> do
+    -- here cell is either Empty or Tent
+    let Board {bdTodoCandidates, bdTodoTrees} = bd
+        updateCandidates :: Candidates -> Maybe Candidates
+        updateCandidates cs = do
+          -- must be non-empty
+          (p : _) <- pure cs
+          -- only need to examine one piece as the key set is shared in a single `Candidates`.
+          case p M.!? coord of
+            Nothing -> Just cs
+            Just _ -> do
+              let updatePiece :: Piece -> Maybe Piece
+                  updatePiece pc =
+                    if pc M.! coord == cell
+                      then
+                        -- remove record of that cell since this value is now set.
+                        Just $ M.delete coord p
+                      else
+                        -- remove this piece from candidate as it is no longer consistent.
+                      Nothing
+              -- if we have filtered out all candidates, this board is impossible to solve.
+              cs'@(_:_) <- pure $ mapMaybe updatePiece cs
+              pure cs'
+    bdTodoCandidates' <- mapM updateCandidates bdTodoCandidates
+    pure $ bd {bdTodoCandidates = bdTodoCandidates'}
+
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
   term
