@@ -211,7 +211,7 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
           r' <- [0 .. rows -1]
           c' <- [0 .. cols -1]
           let coord' = (r', c')
-          guard $ abs (r - r') <= 1 || abs (c - c') <= 1
+          guard $ abs (r - r') <= 1 && abs (c - c') <= 1
           guard $ getCell bd coord' == Nothing
           pure coord'
         bdCells' = M.union (M.fromList $ fmap (,Empty) coordsToEmpty) bdCells
