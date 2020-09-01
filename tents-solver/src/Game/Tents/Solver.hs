@@ -7,6 +7,7 @@ module Game.Tents.Solver where
 
 import Control.Monad
 import Data.Bifunctor
+import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Semigroup
@@ -221,17 +222,22 @@ tidyBoard bd coord = case getCell bd coord of
               let updatePiece :: Piece -> Maybe Piece
                   updatePiece pc =
                     if pc M.! coord == cell
-                      then
-                        -- remove record of that cell since this value is now set.
+                      then -- remove record of that cell since this value is now set.
                         Just $ M.delete coord p
-                      else
-                        -- remove this piece from candidate as it is no longer consistent.
-                      Nothing
+                      else -- remove this piece from candidate as it is no longer consistent.
+                        Nothing
               -- if we have filtered out all candidates, this board is impossible to solve.
-              cs'@(_:_) <- pure $ mapMaybe updatePiece cs
+              cs'@(_ : _) <- pure $ mapMaybe updatePiece cs
               pure cs'
+        bdTodoTrees' :: M.Map Coord [Coord]
+        bdTodoTrees' =
+          if cell == Empty
+            then -- an Empty cell cannot be paired with a tree.
+              M.map (delete coord) bdTodoTrees
+            else bdTodoTrees
     bdTodoCandidates' <- mapM updateCandidates bdTodoCandidates
-    pure $ bd {bdTodoCandidates = bdTodoCandidates'}
+    guard $ all (not . null) bdTodoTrees'
+    pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
