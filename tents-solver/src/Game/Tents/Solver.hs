@@ -201,6 +201,24 @@ fillLine tentCount = fillLineAux tentCount Empty []
 getCell :: Board -> Coord -> Maybe Cell
 getCell Board {bdCells} coord = bdCells M.!? coord
 
+-- TODO: to be tested
+{- a tent "repels" nearby Nothings, making them all Empty -}
+tentRepel :: Board -> Coord -> Maybe Board
+tentRepel bd coord@(r, c) = case getCell bd coord of
+  Just Tent -> do
+    let Board {bdDims = (rows, cols), bdCells} = bd
+        coordsToEmpty = do
+          r' <- [0 .. rows -1]
+          c' <- [0 .. cols -1]
+          let coord' = (r', c')
+          guard $ abs (r - r') <= 1 || abs (c - c') <= 1
+          guard $ getCell bd coord' == Nothing
+          pure coord'
+        bdCells' = M.union (M.fromList $ fmap (,Empty) coordsToEmpty) bdCells
+        bdResult = bd {bdCells = bdCells'}
+    foldM tidyBoard bdResult coordsToEmpty
+  _ -> pure bd
+
 {-
   remove candidates that are inconsistent with one particular cell of the board.
  -}
