@@ -333,7 +333,7 @@ pprBoard
                 Just v -> show (length v)
             Just Tent -> "E"
       putStrLn ""
-    forM_ bdTodoCandidates $ \cs -> do
+    forM_ (zip [0 :: Int ..] bdTodoCandidates) $ \(idx, cs) -> do
       let coords =
             -- the invariant is that pieces in `cs` share the same set of coordinates.
             case cs of
@@ -345,7 +345,7 @@ pprBoard
               foldMap (let f v = (Just (Min v), Just (Max v)) in bimap f f) coords
 
       putStrLn $
-        "- " <> show (length cs) <> " pieces, with range: "
+        show idx <> ": " <> show (length cs) <> " pieces, with range: "
           <> show (minRow, minCol)
           <> "-"
           <> show (maxRow, maxCol)
