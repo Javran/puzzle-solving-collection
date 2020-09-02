@@ -257,6 +257,26 @@ tidyBoard bd coord = case getCell bd coord of
     guard $ all (not . null) bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
+{-
+  set coord to a cell value, internal use only (for now),
+  since we don't have much check on things on this function.
+ -}
+setCoordInternal :: Coord -> Cell -> Board -> Maybe Board
+setCoordInternal coord cell bd@Board {bdCells} = do
+  bd' <- tidyBoard bd { bdCells = M.insert coord cell bdCells} coord
+  case cell of
+    Tent -> tentRepel bd' coord
+    _ -> pure bd'
+
+fillPiece :: Piece -> Board -> Maybe Board
+fillPiece p bd = do
+  let Board { bdCells } = bd
+      (pExisting, pNew) = M.partitionWithKey (\coord _ -> M.member coord bdCells) p
+  -- ideally pExisting should be empty, but if there is any kind of overlap,
+  -- bdCells must agree.
+  guard $ pExisting == M.restrictKeys bdCells (M.keysSet pExisting)
+  foldM (\curBd (coord, cell) -> setCoordInternal coord cell curBd) bd (M.toList pNew)
+
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
   term
