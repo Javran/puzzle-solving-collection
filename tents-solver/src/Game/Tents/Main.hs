@@ -12,4 +12,6 @@ main = do
   term <- setupTermFromEnv
   let Just br = parseBoard rawPuzzle0
       Just bd = mkBoard br
-  pprBoard term bd
+      [p] = bdTodoCandidates bd !! 8
+      Just bd' = fillPiece p bd
+  pprBoard term bd'

@@ -142,6 +142,7 @@ mkBoard
       M.fromList
         <$> (forM (S.toList allTrees) $ \tCoord ->
                (tCoord,) <$> candidateTentCoords tCoord)
+    -- TOOD: tentRepel is not performed on this initial board.
     pure
       Board
         { bdDims
@@ -245,7 +246,9 @@ tidyBoard bd coord = case getCell bd coord of
                       else -- remove this piece from candidate as it is no longer consistent.
                         Nothing
               -- if we have filtered out all candidates, this board is impossible to solve.
-              cs'@(_ : _) <- pure $ mapMaybe updatePiece cs
+              -- TODO: this is not an efficient way to de-dup.
+              -- TODO: find out how does duplication show up in the first place?
+              cs'@(_ : _) <- pure $ nub $ mapMaybe updatePiece cs
               pure cs'
         bdTodoTrees' :: M.Map Coord [Coord]
         bdTodoTrees' =
@@ -253,7 +256,10 @@ tidyBoard bd coord = case getCell bd coord of
             then -- an Empty cell cannot be paired with a tree.
               M.map (delete coord) bdTodoTrees
             else bdTodoTrees
-    bdTodoCandidates' <- mapM updateCandidates bdTodoCandidates
+        satCandidates = all M.null -- TODO: dedup after discharging coord from pieces.
+    bdTodoCandidates' <-
+      filter (not . satCandidates)
+        <$> mapM updateCandidates bdTodoCandidates
     guard $ all (not . null) bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
@@ -263,14 +269,14 @@ tidyBoard bd coord = case getCell bd coord of
  -}
 setCoordInternal :: Coord -> Cell -> Board -> Maybe Board
 setCoordInternal coord cell bd@Board {bdCells} = do
-  bd' <- tidyBoard bd { bdCells = M.insert coord cell bdCells} coord
+  bd' <- tidyBoard bd {bdCells = M.insert coord cell bdCells} coord
   case cell of
     Tent -> tentRepel bd' coord
     _ -> pure bd'
 
 fillPiece :: Piece -> Board -> Maybe Board
 fillPiece p bd = do
-  let Board { bdCells } = bd
+  let Board {bdCells} = bd
       (pExisting, pNew) = M.partitionWithKey (\coord _ -> M.member coord bdCells) p
   -- ideally pExisting should be empty, but if there is any kind of overlap,
   -- bdCells must agree.
