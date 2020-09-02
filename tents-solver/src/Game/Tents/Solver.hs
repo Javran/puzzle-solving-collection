@@ -235,6 +235,7 @@ tidyBoard bd coord = case getCell bd coord of
           -- must be non-empty
           (p : _) <- pure cs
           -- only need to examine one piece as the key set is shared in a single `Candidates`.
+          -- Note: `p` should never be used inside sub-expressions, is there a way we can prevent this kind of mistakes?
           case p M.!? coord of
             Nothing -> Just cs
             Just _ -> do
@@ -242,13 +243,11 @@ tidyBoard bd coord = case getCell bd coord of
                   updatePiece pc =
                     if pc M.! coord == cell
                       then -- remove record of that cell since this value is now set.
-                        Just $ M.delete coord p
+                        Just $ M.delete coord pc
                       else -- remove this piece from candidate as it is no longer consistent.
                         Nothing
               -- if we have filtered out all candidates, this board is impossible to solve.
-              -- TODO: this is not an efficient way to de-dup.
-              -- TODO: find out how does duplication show up in the first place?
-              cs'@(_ : _) <- pure $ nub $ mapMaybe updatePiece cs
+              cs'@(_ : _) <- pure $ mapMaybe updatePiece cs
               pure cs'
         bdTodoTrees' :: M.Map Coord [Coord]
         bdTodoTrees' =
