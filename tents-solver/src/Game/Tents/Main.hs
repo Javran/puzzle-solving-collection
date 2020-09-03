@@ -14,4 +14,6 @@ main = do
       Just bd = mkBoard br
       [p] = bdTodoCandidates bd !! 8
       Just bd' = fillPiece p bd
-  pprBoard term bd'
+      cs = bdTodoCandidates bd' !! 6
+      Just bd'' = tryCandidates cs bd'
+  pprBoard term bd''
