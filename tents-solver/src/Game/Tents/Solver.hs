@@ -305,6 +305,31 @@ tryCandidates cs bd = do
         foldl1' mergeCommon newMappings
   fillPiece commonMappings bd
 
+-- a slow but working solver: it tries every `Candidates` until it's solved
+-- or no progress can be made on the board.
+slowSolve :: Board -> Maybe Board
+slowSolve bd = do
+  let Board {bdDims = (rows, cols), bdCells = bdCells0, bdTodoCandidates} = bd
+      allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+      -- TODO: we can probably put missingCoords in Board structure.
+      missingCoords = allCoords `S.difference` M.keysSet bdCells0
+  if S.null missingCoords
+    then Just bd
+    else do
+      let sortedCandidates =
+            sortOn
+              -- ascending length, then descending size.
+              -- the idea is to try "large pieces", which is more likely
+              -- to resolve into more known common mappings.
+              (\xs -> (length xs, - M.size (head xs)))
+              bdTodoCandidates
+      -- try to resolve candidates in sorted order
+      nextBds <- mapM (\cs -> tryCandidates cs bd) sortedCandidates
+      let updated = filter (\curBd -> bdCells curBd /= bdCells0) nextBds
+      case updated of
+        [] -> Just bd
+        nextBd:_ -> slowSolve nextBd
+
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
   term

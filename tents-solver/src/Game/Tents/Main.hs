@@ -16,4 +16,6 @@ main = do
       Just bd' = fillPiece p bd
       cs = bdTodoCandidates bd' !! 6
       Just bd'' = tryCandidates cs bd'
+      Just bd''' = slowSolve bd''
   pprBoard term bd''
+  pprBoard term bd'''
