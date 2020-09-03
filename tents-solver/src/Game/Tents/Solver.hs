@@ -8,6 +8,7 @@ module Game.Tents.Solver where
 import Control.Monad
 import Data.Bifunctor
 import Data.List
+import qualified Data.Map.Merge.Strict as MMerge
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Semigroup
@@ -281,6 +282,28 @@ fillPiece p bd = do
   -- bdCells must agree.
   guard $ pExisting == M.restrictKeys bdCells (M.keysSet pExisting)
   foldM (\curBd (coord, cell) -> setCoordInternal coord cell curBd) bd (M.toList pNew)
+
+-- try all possible Pieces of a Candidates,
+-- and set cells that are common among all those Pieces.
+tryCandidates :: Candidates -> Board -> Maybe Board
+tryCandidates cs bd = do
+  -- it is expected that some will fail but the result should not be empty
+  -- if the input Board is solvable.
+  cs'@(_ : _) <- pure $ mapMaybe (\p -> fillPiece p bd) cs
+  let bdCells0 = bdCells bd
+      mergeCommon :: M.Map Coord Cell -> M.Map Coord Cell -> M.Map Coord Cell
+      mergeCommon =
+        MMerge.merge
+          MMerge.dropMissing
+          MMerge.dropMissing
+          (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
+      newMappings =
+        -- for each viable Piece, extra newly added mappings.
+        fmap ((\s -> s `M.difference` bdCells0) . bdCells) cs'
+      commonMappings =
+        -- this is safe since we know newMappings is non-empty.
+        foldl1' mergeCommon newMappings
+  fillPiece commonMappings bd
 
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
