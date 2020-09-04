@@ -312,15 +312,25 @@ tryCandidates cs bd = do
         foldl1' mergeCommon newMappings
   fillPiece commonMappings bd
 
+-- Provide a digest for a Board to tell if the board has been changed by some tactics
+-- the digest is a short summary of "how big" are the the todo fields.
+bdProgress :: Board -> (Int, Int, Int)
+bdProgress Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} =
+  ( S.size bdTodoCoords
+  , getSum ((foldMap . foldMap) (Sum . M.size) bdTodoCandidates)
+  , getSum ((foldMap . foldMap) (Sum . length) bdTodoTrees)
+  )
+
 -- a slow but working solver: it tries every `Candidates` until it's solved
 -- or no progress can be made on the board.
 slowSolve :: Board -> Maybe Board
 slowSolve bd = do
-  let Board { bdCells = bdCells0, bdTodoCandidates, bdTodoCoords} = bd
+  let Board {bdTodoCandidates, bdTodoCoords} = bd
   if S.null bdTodoCoords
     then Just bd
     else do
-      let sortedCandidates =
+      let progress = bdProgress bd
+          sortedCandidates =
             sortOn
               -- ascending length, then descending size.
               -- the idea is to try "large pieces", which is more likely
@@ -329,7 +339,7 @@ slowSolve bd = do
               bdTodoCandidates
       -- try to resolve candidates in sorted order
       nextBds <- mapM (\cs -> tryCandidates cs bd) sortedCandidates
-      let updated = filter (\curBd -> bdCells curBd /= bdCells0) nextBds
+      let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
       case updated of
         [] -> Just bd
         nextBd : _ -> slowSolve nextBd
