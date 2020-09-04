@@ -1,1 +1,1 @@
-cradle: {stack: {component: "tents-solver:exe:demo"}}
+cradle: {stack: {component: "tents-solver:exe:tents-demo"}}

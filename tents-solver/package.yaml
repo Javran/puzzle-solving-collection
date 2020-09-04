@@ -21,7 +21,7 @@ library:
     - -O2
 
 executables:
-  demo:
+  tents-demo:
     main: Main.hs
     dependencies:
       - tents-solver
