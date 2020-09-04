@@ -255,9 +255,13 @@ tidyBoard bd coord = case getCell bd coord of
         bdTodoTrees' =
           if cell == Empty
             then -- an Empty cell cannot be paired with a tree.
-              M.map (delete coord) bdTodoTrees
+
+              let treeCoords = fmap (\d -> applyDir d coord) allDirs
+               in foldr (M.adjust (delete coord)) bdTodoTrees treeCoords
             else bdTodoTrees
-        satCandidates = all M.null -- TODO: dedup after discharging coord from pieces.
+        -- True only if a `Candidates` is a singleton list of an empty Map.
+        satCandidates [x] = M.null x
+        satCandidates _ = False
     bdTodoCandidates' <-
       filter (not . satCandidates)
         <$> mapM updateCandidates bdTodoCandidates
