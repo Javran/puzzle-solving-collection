@@ -85,6 +85,7 @@ data Board = Board
     bdTodoCandidates :: [Candidates]
   , -- all trees whose tent assignment is not yet determined.
     bdTodoTrees :: M.Map Coord [Coord]
+  , bdTodoCoords :: S.Set Coord
   }
 
 -- TODO: verify that boards with impossible candidates result in Nothing.
@@ -98,9 +99,9 @@ mkBoard
     } = do
     let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
-        missingCoords = allCoords `S.difference` M.keysSet brBoard
+        bdTodoCoords = allCoords `S.difference` M.keysSet brBoard
         allTrees = M.keysSet $ M.filter (== Tree) brBoard
-        simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
+        simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) bdTodoCoords
           where
             nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
         bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
@@ -156,6 +157,7 @@ mkBoard
             -- this might or might not happen when putting row and col candidates together.
             todoRowCandidates <> todoColCandidates
         , bdTodoTrees
+        , bdTodoCoords
         }
 
 {-
@@ -210,6 +212,7 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
   Just Tent -> do
     let Board {bdDims = (rows, cols), bdCells} = bd
         coordsToEmpty = do
+          -- TODO: optimize with bdTodoCoords
           r' <- [0 .. rows -1]
           c' <- [0 .. cols -1]
           let coord' = (r', c')
@@ -268,8 +271,14 @@ tidyBoard bd coord = case getCell bd coord of
   since we don't have much check on things on this function.
  -}
 setCoordInternal :: Coord -> Cell -> Board -> Maybe Board
-setCoordInternal coord cell bd@Board {bdCells} = do
-  bd' <- tidyBoard bd {bdCells = M.insert coord cell bdCells} coord
+setCoordInternal coord cell bd@Board {bdCells, bdTodoCoords} = do
+  bd' <-
+    tidyBoard
+      bd
+        { bdCells = M.insert coord cell bdCells
+        , bdTodoCoords = S.delete coord bdTodoCoords
+        }
+      coord
   case cell of
     Tent -> tentRepel bd' coord
     _ -> pure bd'
@@ -298,7 +307,7 @@ tryCandidates cs bd = do
           MMerge.dropMissing
           (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
       newMappings =
-        -- for each viable Piece, extra newly added mappings.
+        -- for each viable Piece, extract newly added mappings.
         fmap ((\s -> s `M.difference` bdCells0) . bdCells) cs'
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
@@ -328,7 +337,7 @@ slowSolve bd = do
       let updated = filter (\curBd -> bdCells curBd /= bdCells0) nextBds
       case updated of
         [] -> Just bd
-        nextBd:_ -> slowSolve nextBd
+        nextBd : _ -> slowSolve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
