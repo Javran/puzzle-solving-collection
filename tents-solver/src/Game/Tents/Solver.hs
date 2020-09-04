@@ -212,10 +212,10 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
   Just Tent -> do
     let Board {bdDims = (rows, cols), bdCells} = bd
         coordsToEmpty = do
-          r' <- [max 0 (r-1) .. min (rows -1) (r+1)]
-          c' <- [max 0 (c-1) .. min (cols -1) (c+1)]
+          r' <- [max 0 (r -1) .. min (rows -1) (r + 1)]
+          c' <- [max 0 (c -1) .. min (cols -1) (c + 1)]
           let coord' = (r', c')
-          guard $  getCell bd coord' == Nothing
+          guard $ getCell bd coord' == Nothing
           pure coord'
         bdCells' = M.union (M.fromList $ fmap (,Empty) coordsToEmpty) bdCells
         bdResult = bd {bdCells = bdCells'}
