@@ -79,13 +79,13 @@ data Board = Board
   { bdDims :: (Int, Int) -- rows, cols
   , bdRowTentCounts :: V.Vector Int
   , bdColTentCounts :: V.Vector Int
-  , bdCells :: M.Map Coord Cell
+  , bdCells :: !(M.Map Coord Cell)
   , -- transformed from brRowTentCounts + brColTentcounts,
     -- every unsatisfied row or column is supposed to have one entity here.
-    bdTodoCandidates :: [Candidates]
+    bdTodoCandidates :: ![Candidates]
   , -- all trees whose tent assignment is not yet determined.
-    bdTodoTrees :: M.Map Coord [Coord]
-  , bdTodoCoords :: S.Set Coord
+    bdTodoTrees :: !(M.Map Coord [Coord])
+  , bdTodoCoords :: !(S.Set Coord)
   }
 
 -- TODO: verify that boards with impossible candidates result in Nothing.
@@ -212,12 +212,10 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
   Just Tent -> do
     let Board {bdDims = (rows, cols), bdCells} = bd
         coordsToEmpty = do
-          -- TODO: optimize with bdTodoCoords
-          r' <- [0 .. rows -1]
-          c' <- [0 .. cols -1]
+          r' <- [max 0 (r-1) .. min (rows -1) (r+1)]
+          c' <- [max 0 (c-1) .. min (cols -1) (c+1)]
           let coord' = (r', c')
-          guard $ abs (r - r') <= 1 && abs (c - c') <= 1
-          guard $ getCell bd coord' == Nothing
+          guard $  getCell bd coord' == Nothing
           pure coord'
         bdCells' = M.union (M.fromList $ fmap (,Empty) coordsToEmpty) bdCells
         bdResult = bd {bdCells = bdCells'}
@@ -318,11 +316,8 @@ tryCandidates cs bd = do
 -- or no progress can be made on the board.
 slowSolve :: Board -> Maybe Board
 slowSolve bd = do
-  let Board {bdDims = (rows, cols), bdCells = bdCells0, bdTodoCandidates} = bd
-      allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
-      -- TODO: we can probably put missingCoords in Board structure.
-      missingCoords = allCoords `S.difference` M.keysSet bdCells0
-  if S.null missingCoords
+  let Board { bdCells = bdCells0, bdTodoCandidates, bdTodoCoords} = bd
+  if S.null bdTodoCoords
     then Just bd
     else do
       let sortedCandidates =
