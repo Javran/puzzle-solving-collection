@@ -233,9 +233,10 @@ tidyBoard bd coord = case getCell bd coord of
     -- here cell is either Empty or Tent
     let Board {bdTodoCandidates, bdTodoTrees} = bd
         updateCandidates :: Candidates -> Maybe Candidates
-        updateCandidates cs = do
+        updateCandidates [] =
           -- must be non-empty
-          (p : _) <- pure cs
+          Nothing
+        updateCandidates cs@(p : _) = do
           -- only need to examine one piece as the key set is shared in a single `Candidates`.
           -- Note: `p` should never be used inside sub-expressions, is there a way we can prevent this kind of mistakes?
           case p M.!? coord of
@@ -245,7 +246,7 @@ tidyBoard bd coord = case getCell bd coord of
                   updatePiece pc =
                     if pc M.! coord == cell
                       then -- remove record of that cell since this value is now set.
-                        Just $ M.delete coord pc
+                        Just $! M.delete coord pc
                       else -- remove this piece from candidate as it is no longer consistent.
                         Nothing
               -- if we have filtered out all candidates, this board is impossible to solve.
