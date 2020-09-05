@@ -17,6 +17,22 @@ import qualified Data.Vector as V
 import Game.Tents.Types
 import System.Console.Terminfo
 
+{-
+  Note on use of Maybe.
+
+  `Maybe` technically is not accurate in terms of what we express,
+  as there are two kinds of exceptions that we might run into:
+
+  - hard exception, meaning the Board we are working on is not solvable.
+  - soft exception, meaning we cannot make progress using a specific tactic,
+    which is fine given that we have other alternatives to try.
+
+  Here we make the decision that if a tactic knows that it might not be able
+  to make any progress, Nothing is returned. This allows us to be more aggressive
+  at pruning search branches.
+
+ -}
+
 -- a Piece is a set of coord-cell assignments
 -- that has to be applied to the board at the same time.
 type Piece = M.Map Coord Cell
@@ -324,6 +340,9 @@ tryCandidates cs bd = do
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
         foldl1' mergeCommon newMappings
+  -- if we don't have anything in newMappings,
+  -- there is no progress to be made.
+  -- this is a "soft" exception but we want it to fail to reduce branching factor on searches.
   guard $ not . null $ newMappings
   fillPiece commonMappings bd
 
