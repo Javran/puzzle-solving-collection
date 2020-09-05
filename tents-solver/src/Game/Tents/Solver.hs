@@ -23,14 +23,14 @@ type Piece = M.Map Coord Cell
 
 {-
 
-a `Candidates` is a set of alternative Piece
-meant to be applied to the same set of Coords,
+  a `Candidates` is a set of alternative `Piece`
+  meant to be applied to the same set of `Coord`s,
 
-- if a Candidates is an empty list, it's impossible to satisfy.
-- if a Candidates is a singleton list, it is the only possible set of assignment.
+  - if a Candidates is an empty list, it's impossible to satisfy.
+  - if a Candidates is a singleton list, it is the only possible set of assignment.
 
-Note that duplication is never verified and therefore must be maintained by
-contract on other functions.
+  Note that duplication is never verified and therefore must be maintained by
+  contract on other functions.
 
  -}
 type Candidates = [Piece]
@@ -46,33 +46,37 @@ allDirs = Dir <$> [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 {-
 
-Board keeps track of info necessary for solving the puzzle.
+  Board keeps track of info necessary for solving the puzzle.
 
-Rules are:
+  Game rules are:
 
-Place tents in the empty squares in such a way that:
+  Place tents in the empty squares in such a way that:
 
-(1) no two tents are adjacent, even diagonally
-(2) the number of tents in each row and column matches the numbers around the edge of the grid
-(3) it is possible to match tents to trees so that each tree is orthogonally adjacent to its own tent (but may also be adjacent to other tents).
+  (1) no two tents are adjacent, even diagonally
+  (2) the number of tents in each row and column matches the numbers around the edge of the grid
+  (3) it is possible to match tents to trees so that each tree is orthogonally adjacent to its own tent (but may also be adjacent to other tents).
 
-To address (2) for each unsolved row or column,
-we'll use bdTodo{Row,Col}Candidates to store pieces that are (shallowly) consistent with rest of the board.
+  To address (2) for each unsolved row or column,
+  we'll use bdTodoCandidates to store pieces that are (shallowly) consistent with rest of the board.
 
-To address (3), we have `bdTodoTrees` that keep track of possible tree-tent assignments for each tree.
+  To address (3), we have `bdTodoTrees` that keep track of possible tree-tent assignments for each tree.
+  (TODO) implement a tactic that uses this infomation.
 
-Note that those rules have an important implication:
-if a cell is not adjacent vertically or horizontally to a tree,
-it is impossible for it to be a tent, therefore it must be an empty cell.
-This implication does not rely on current solving state (as tree is never introduced during solving),
-and therefore can be done during preprocessing.
-(TODO) we want to establish an invariant on this data type that all empty cells that can be inferred from this implication
-will be inferred and put in bdCells, so in subsequent solving steps we never need to worry about it.
+  Note that those rules have an important implication:
+  if a cell is not adjacent vertically or horizontally to a tree,
+  it is impossible for it to be a tent, therefore it must be an empty cell.
+  This implication does not rely on current solving state (as tree is never introduced during solving),
+  and therefore can be done during preprocessing.
 
-In addition, it is beneficial to have those cells set to empty as soon as possible,
-as this process cuts down search space drastically.
+  In this datatype, we establish an invariant:
 
-Note that it is guaranteed that bdDims, bd{Row,Col}TentCounts never change after construction.
+   all empty cells that can be inferred from this implication will be inferred and put in bdCells
+
+  this invariant allows us to never worry about cells that are not close to trees (and therefore must be empty)
+  after this datatype is created.
+
+
+  Note that it is also guaranteed that bdDims, bd{Row,Col}TentCounts never change after construction.
 
  -}
 data Board = Board
@@ -144,7 +148,12 @@ mkBoard
       M.fromList
         <$> (forM (S.toList allTrees) $ \tCoord ->
                (tCoord,) <$> candidateTentCoords tCoord)
-    -- TOOD: tentRepel is not performed on this initial board.
+    {-
+      Note that it's intentional that tentRepel is not performed on this initial board.
+      This decision is made so that we can untie any test on tentRepel from this function.
+
+      TODO: but this also means that we want an initial pass to call tentRepel on all existing tents.
+     -}
     pure
       Board
         { bdDims
@@ -315,6 +324,7 @@ tryCandidates cs bd = do
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
         foldl1' mergeCommon newMappings
+  guard $ not . null $ newMappings
   fillPiece commonMappings bd
 
 -- Provide a digest for a Board to tell if the board has been changed by some tactics
@@ -435,21 +445,3 @@ pprBoard
                       <> termText "\n"
               runTermOutput term rendered
             putStrLn ""
-
-{-
-Few tactics we can implement:
-
-- a tent "repels" nearby Nothings, making them all Empty
-- look at a single candidate and find commit assignments and set them to board.
-- DFS starting from a set of least populated candidates, and extract what is common.
-  (this process will require we have a way to "settle" current Board
-  into either Nothing or a consistent state)
-
-primitive / basic operations:
-
-- tidyBoard :: Board -> Coord -> Maybe Board, this function looks
-  at a specifc coordinate of the board and figure out if it is possible
-  to fill in the value. if so, that value will be filled in with related
-  candidate structures removed from the board.
-
- -}
