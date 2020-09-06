@@ -12,5 +12,5 @@ main = do
   term <- setupTermFromEnv
   let Just br = parseBoard rawPuzzle1
       Just bd = mkBoard br
-      Just bd' = slowSolve bd
+      Just bd' = solve bd
   pprBoard term bd'

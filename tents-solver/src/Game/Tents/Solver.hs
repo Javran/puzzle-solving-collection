@@ -394,6 +394,27 @@ bdProgress Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} =
   , getSum ((foldMap . foldMap) (Sum . length) bdTodoTrees)
   )
 
+
+{-
+  This will be the entry point of the solver.
+  We first work on bdTodoTrees (tryTree) since it's relatively cheap to trial and error,
+  and only proceed to the more expensive tactic involving bdTodoCandidates if tryTree cannot make any progress.
+ -}
+solve :: Board -> Maybe Board
+solve bd = do
+  -- TOOD: might be able to refactor solve and slowSolve.
+  let Board {bdTodoTrees, bdTodoCoords} = bd
+  if S.null bdTodoCoords
+    then Just bd
+    else do
+      let progress = bdProgress bd
+          sortedTrees = sortOn (length . snd) $ M.toList bdTodoTrees
+      nextBds <- mapM (\(treeCoord, alts) -> tryTree treeCoord alts bd) sortedTrees
+      let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
+      case updated of
+        [] -> slowSolve bd
+        nextBd : _ -> solve nextBd
+
 -- a slow but working solver: it tries every `Candidates` until it's solved
 -- or no progress can be made on the board.
 slowSolve :: Board -> Maybe Board
@@ -415,7 +436,9 @@ slowSolve bd = do
       let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
       case updated of
         [] -> Just bd
-        nextBd : _ -> slowSolve nextBd
+        nextBd : _ ->
+          -- call into less expensive tactics which might now make better progress.
+          solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
