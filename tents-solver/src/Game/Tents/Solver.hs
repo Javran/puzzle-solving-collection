@@ -104,6 +104,12 @@ data Board = Board
     -- every unsatisfied row or column is supposed to have one entity here.
     bdTodoCandidates :: ![Candidates]
   , -- all trees whose tent assignment is not yet determined.
+    -- TODO: probably this can also be encoded using bdTodoCandidates: we just need to ignore
+    -- tree position and assign one neighbor Tent
+    -- (Note: don't assign Empty, as there might be Tent meant to be bound to another tree.)
+    -- TODO: additionally, we might want to do some bookkeeping with a ADT, say Tag = Row Int | Col Int | Tree Coord
+    -- this allows us to keep track of where a given Candidates is coming. This does not provide any additional power
+    -- in terms of algorithm, but it does provide us with better debugging potentials.
     bdTodoTrees :: !(M.Map Coord [Coord])
   , bdTodoCoords :: !(S.Set Coord)
   }
