@@ -326,13 +326,13 @@ fillPiece p bd = do
   guard $ pExisting == M.restrictKeys bdCells (M.keysSet pExisting)
   foldM (\curBd (coord, cell) -> setCoordInternal coord cell curBd) bd (M.toList pNew)
 
--- try all possible Pieces of a Candidates,
--- and set cells that are common among all those Pieces.
-tryCandidates :: Candidates -> Board -> Maybe Board
-tryCandidates cs bd = do
-  -- it is expected that some will fail but the result should not be empty
-  -- if the input Board is solvable.
-  cs'@(_ : _) <- pure $ mapMaybe (\p -> fillPiece p bd) cs
+{-
+  Given a Board and a list of Boards directly derived from it,
+  find and set mappings common among all of them.
+  This function fails when no common mapping can be found.
+ -}
+resolveCommonMappings :: Board -> [Board] -> Maybe Board
+resolveCommonMappings bd nextBds = do
   let bdCells0 = bdCells bd
       mergeCommon :: M.Map Coord Cell -> M.Map Coord Cell -> M.Map Coord Cell
       mergeCommon =
@@ -342,7 +342,7 @@ tryCandidates cs bd = do
           (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
       newMappings =
         -- for each viable Piece, extract newly added mappings.
-        fmap ((\s -> s `M.difference` bdCells0) . bdCells) cs'
+        fmap ((\s -> s `M.difference` bdCells0) . bdCells) nextBds
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
         foldl1' mergeCommon newMappings
@@ -351,6 +351,16 @@ tryCandidates cs bd = do
   -- this is a "soft" exception but we want it to fail to reduce branching factor on searches.
   guard $ not . null $ newMappings
   fillPiece commonMappings bd
+
+
+-- try all possible Pieces of a Candidates,
+-- and set cells that are common among all those Pieces.
+tryCandidates :: Candidates -> Board -> Maybe Board
+tryCandidates cs bd = do
+  -- it is expected that some will fail but the result should not be empty
+  -- if the input Board is solvable.
+  cs'@(_ : _) <- pure $ mapMaybe (\p -> fillPiece p bd) cs
+  resolveCommonMappings bd cs'
 
 {-
   Try placing a tent near a tree.
@@ -366,24 +376,8 @@ tryTreeCoord treeCoord tentCoord bd = do
 
 tryTree :: Coord -> [Coord] -> Board -> Maybe Board
 tryTree treeCoord tentAltCoords bd = do
-  -- TODO: obviously this can be refactored.
   cs'@(_ : _) <- pure $ mapMaybe (\tentCoord -> tryTreeCoord treeCoord tentCoord bd) tentAltCoords
-  let bdCells0 = bdCells bd
-      mergeCommon :: M.Map Coord Cell -> M.Map Coord Cell -> M.Map Coord Cell
-      mergeCommon =
-        MMerge.merge
-          MMerge.dropMissing
-          MMerge.dropMissing
-          (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
-      newMappings =
-        -- for each viable Piece, extract newly added mappings.
-        fmap ((\s -> s `M.difference` bdCells0) . bdCells) cs'
-      commonMappings =
-        -- this is safe since we know newMappings is non-empty.
-                -- this is safe since we know newMappings is non-empty.
-        foldl1' mergeCommon newMappings
-  guard $ not . null $ newMappings
-  fillPiece commonMappings bd
+  resolveCommonMappings bd cs'
 
 -- Provide a digest for a Board to tell if the board has been changed by some tactics
 -- the digest is a short summary of "how big" are the the todo fields.
