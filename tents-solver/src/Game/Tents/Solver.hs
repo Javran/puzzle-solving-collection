@@ -352,6 +352,39 @@ tryCandidates cs bd = do
   guard $ not . null $ newMappings
   fillPiece commonMappings bd
 
+{-
+  Try placing a tent near a tree.
+  Note that there is almost no input verification so
+  - whether input coordinates are actually near each other is not checked.
+  - whether tree coordinate actually present in bdTodoTrees is not checked.
+ -}
+tryTreeCoord :: Coord -> Coord -> Board -> Maybe Board
+tryTreeCoord treeCoord tentCoord bd = do
+  bd'@Board {bdTodoTrees = todoTrees'} <- setCoordInternal tentCoord Tent bd
+  -- bd' should have been called with tidyBoard in setCoordInternal
+  pure bd' {bdTodoTrees = M.delete treeCoord todoTrees'}
+
+tryTree :: Coord -> [Coord] -> Board -> Maybe Board
+tryTree treeCoord tentAltCoords bd = do
+  -- TODO: obviously this can be refactored.
+  cs'@(_ : _) <- pure $ mapMaybe (\tentCoord -> tryTreeCoord treeCoord tentCoord bd) tentAltCoords
+  let bdCells0 = bdCells bd
+      mergeCommon :: M.Map Coord Cell -> M.Map Coord Cell -> M.Map Coord Cell
+      mergeCommon =
+        MMerge.merge
+          MMerge.dropMissing
+          MMerge.dropMissing
+          (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
+      newMappings =
+        -- for each viable Piece, extract newly added mappings.
+        fmap ((\s -> s `M.difference` bdCells0) . bdCells) cs'
+      commonMappings =
+        -- this is safe since we know newMappings is non-empty.
+                -- this is safe since we know newMappings is non-empty.
+        foldl1' mergeCommon newMappings
+  guard $ not . null $ newMappings
+  fillPiece commonMappings bd
+
 -- Provide a digest for a Board to tell if the board has been changed by some tactics
 -- the digest is a short summary of "how big" are the the todo fields.
 bdProgress :: Board -> (Int, Int, Int)
