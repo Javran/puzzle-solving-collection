@@ -60,6 +60,9 @@ applyDir (Dir (dr, dc)) (r, c) = (r + dr, c + dc)
 allDirs :: [Dir]
 allDirs = Dir <$> [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
+directNeighbors :: Coord -> [Coord]
+directNeighbors c = fmap (\d -> applyDir d c) allDirs
+
 {-
 
   Board keeps track of info necessary for solving the puzzle.
@@ -131,7 +134,7 @@ mkBoard
         allTrees = M.keysSet $ M.filter (== Tree) brBoard
         simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) bdTodoCoords
           where
-            nearTrees c = any (\dir -> applyDir dir c `S.member` allTrees) allDirs
+            nearTrees c = any (`S.member` allTrees) $ directNeighbors c
         bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
         genRowOrColCandidates coordss rowOrColTentCounts = do
           let result = zipWith go coordss rowOrColTentCounts
@@ -166,7 +169,7 @@ mkBoard
                        let r = bdCells M.!? coord'
                         in r == Nothing || r == Just Tent)
                     . filter coordIsInside
-                    $ fmap (\d -> applyDir d coord) allDirs
+                    $ directNeighbors coord
             guard $ not . null $ result
             pure result
       M.fromList
@@ -290,7 +293,7 @@ tidyBoard bd coord = case getCell bd coord of
           if cell == Empty
             then -- an Empty cell cannot be paired with a tree.
 
-              let treeCoords = fmap (\d -> applyDir d coord) allDirs
+              let treeCoords = filter (`M.member` bdTodoTrees) (directNeighbors coord)
                in foldr (M.adjust (delete coord)) bdTodoTrees treeCoords
             else bdTodoTrees
         -- True only if a `Candidates` is a singleton list of an empty Map.
@@ -344,7 +347,11 @@ resolveCommonMappings bd (hdBds : tlBds) = do
           MMerge.dropMissing
           (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
       commonMappings =
-        -- this is safe since we know newMappings is non-empty.
+        {-
+          Instead of taking difference on each of nextBds, we can just remove bdCells0 from first element,
+          and then fold the remaining list with intersection.
+          This way we get a "smaller" collection of things to deal with on each binary operation.
+         -}
         foldl mergeCommon (bdCells hdBds `M.difference` bdCells0) (fmap bdCells tlBds)
   -- if we don't have anything in newMappings,
   -- there is no progress to be made.
