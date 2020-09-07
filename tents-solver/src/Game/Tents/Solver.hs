@@ -75,8 +75,8 @@ allDirs = Dir <$> [(0, -1), (0, 1), (-1, 0), (1, 0)]
   To address (2) for each unsolved row or column,
   we'll use bdTodoCandidates to store pieces that are (shallowly) consistent with rest of the board.
 
-  To address (3), we have `bdTodoTrees` that keep track of possible tree-tent assignments for each tree.
-  (TODO) implement a tactic that uses this infomation.
+  To address (3), we have `bdTodoTrees` that keep track of possible tree-tent assignments for each tree,
+  which is then used in `tryTree` to resolve tree candidates.
 
   Note that those rules have an important implication:
   if a cell is not adjacent vertically or horizontally to a tree,
@@ -107,6 +107,9 @@ data Board = Board
     -- TODO: probably this can also be encoded using bdTodoCandidates: we just need to ignore
     -- tree position and assign one neighbor Tent
     -- (Note: don't assign Empty, as there might be Tent meant to be bound to another tree.)
+    -- TODO: turns out it is not straightforward merging two kinds of Candidates together:
+    -- `Candidates` has an invariant that all containing `Piece`s must share the exact same set of Coord, which
+    -- is not true for tree candidates.
     -- TODO: additionally, we might want to do some bookkeeping with a ADT, say Tag = Row Int | Col Int | Tree Coord
     -- this allows us to keep track of where a given Candidates is coming. This does not provide any additional power
     -- in terms of algorithm, but it does provide us with better debugging potentials.
@@ -402,6 +405,10 @@ solve bd = do
     then Just bd
     else do
       let progress = bdProgress bd
+          -- TODO: we might consider merging `solve` and `slowSolve` into one function
+          -- that mixes bdTodoCandidates and bdTodoTrees in one sorted list,
+          -- so that we don't run into an awkward situation that all not-yet-resolved trees
+          -- must be attempted when there is some obvious and simple row/col candidate available.
           sortedTrees = sortOn (length . snd) $ M.toList bdTodoTrees
       nextBds <- mapM (\(treeCoord, alts) -> tryTree treeCoord alts bd) sortedTrees
       let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
