@@ -334,7 +334,8 @@ fillPiece p bd = do
   This function fails when no common mapping can be found.
  -}
 resolveCommonMappings :: Board -> [Board] -> Maybe Board
-resolveCommonMappings bd nextBds = do
+resolveCommonMappings _ [] = Nothing
+resolveCommonMappings bd (hdBds : tlBds) = do
   let bdCells0 = bdCells bd
       mergeCommon :: M.Map Coord Cell -> M.Map Coord Cell -> M.Map Coord Cell
       mergeCommon =
@@ -342,18 +343,13 @@ resolveCommonMappings bd nextBds = do
           MMerge.dropMissing
           MMerge.dropMissing
           (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
-      newMappings =
-        -- for each viable Piece, extract newly added mappings.
-        -- TODO: we can do something smarter,
-        -- for example it is not exactly necessary to call M.difference on each of them.
-        fmap ((\s -> s `M.difference` bdCells0) . bdCells) nextBds
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
-        foldl1' mergeCommon newMappings
+        foldl mergeCommon (bdCells hdBds `M.difference` bdCells0) (fmap bdCells tlBds)
   -- if we don't have anything in newMappings,
   -- there is no progress to be made.
   -- this is a "soft" exception but we want it to fail to reduce branching factor on searches.
-  guard $ not . null $ newMappings
+  guard $ not . null $ commonMappings
   fillPiece commonMappings bd
 
 -- try all possible Pieces of a Candidates,
@@ -362,7 +358,7 @@ tryCandidates :: Candidates -> Board -> Maybe Board
 tryCandidates cs bd = do
   -- it is expected that some will fail but the result should not be empty
   -- if the input Board is solvable.
-  cs'@(_ : _) <- pure $ mapMaybe (\p -> fillPiece p bd) cs
+  let cs' = mapMaybe (\p -> fillPiece p bd) cs
   resolveCommonMappings bd cs'
 
 {-
@@ -379,7 +375,7 @@ tryTreeCoord treeCoord tentCoord bd = do
 
 tryTree :: Coord -> [Coord] -> Board -> Maybe Board
 tryTree treeCoord tentAltCoords bd = do
-  cs'@(_ : _) <- pure $ mapMaybe (\tentCoord -> tryTreeCoord treeCoord tentCoord bd) tentAltCoords
+  let cs' = mapMaybe (\tentCoord -> tryTreeCoord treeCoord tentCoord bd) tentAltCoords
   resolveCommonMappings bd cs'
 
 -- Provide a digest for a Board to tell if the board has been changed by some tactics
