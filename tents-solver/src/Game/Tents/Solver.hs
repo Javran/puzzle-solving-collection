@@ -391,6 +391,24 @@ bdProgress Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} =
   , getSum ((foldMap . foldMap) (Sum . length) bdTodoTrees)
   )
 
+{-
+  A SearchItem represents a potential way to progress, given current puzzle.
+
+  ((<size>, <type and sub-size>), <lazy Board result>)
+
+  - for a row/col candidate, <size> is the # of candidates,
+    <type and sub-size> is a (Just v) with v being the negative of # of involved coords in that candidate.
+    (so that we achieve the goal that candidates are sorted in ascending order while a larger set
+    of coordinates will be attempted first if their <size> happen to be the same)
+  - for a tree candidate, <size> is the # of candidates. <type and sub-size> is simply Nothing.
+
+  - overall we achieve the goal that SearchItems are sorted by:
+
+    1. size (in ascending order)
+    2. type (tree candidates then row/col candidates)
+    3. sub-size (larger set of coordinates first) (this is not relevant to tree candidates)
+ -}
+type SearchItem = ((Int, Maybe Int), Maybe Board)
 
 {-
   This will be the entry point of the solver.
@@ -399,47 +417,23 @@ bdProgress Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} =
  -}
 solve :: Board -> Maybe Board
 solve bd = do
-  -- TOOD: might be able to refactor solve and slowSolve.
-  let Board {bdTodoTrees, bdTodoCoords} = bd
+  let Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} = bd
   if S.null bdTodoCoords
     then Just bd
     else do
       let progress = bdProgress bd
-          -- TODO: we might consider merging `solve` and `slowSolve` into one function
-          -- that mixes bdTodoCandidates and bdTodoTrees in one sorted list,
-          -- so that we don't run into an awkward situation that all not-yet-resolved trees
-          -- must be attempted when there is some obvious and simple row/col candidate available.
-          sortedTrees = sortOn (length . snd) $ M.toList bdTodoTrees
-      nextBds <- mapM (\(treeCoord, alts) -> tryTree treeCoord alts bd) sortedTrees
-      let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
-      case updated of
-        [] -> slowSolve bd
-        nextBd : _ -> solve nextBd
-
--- a slow but working solver: it tries every `Candidates` until it's solved
--- or no progress can be made on the board.
-slowSolve :: Board -> Maybe Board
-slowSolve bd = do
-  let Board {bdTodoCandidates, bdTodoCoords} = bd
-  if S.null bdTodoCoords
-    then Just bd
-    else do
-      let progress = bdProgress bd
-          sortedCandidates =
-            sortOn
-              -- ascending length, then descending size.
-              -- the idea is to try "large pieces", which is more likely
-              -- to resolve into more known common mappings.
-              (\xs -> (length xs, - M.size (head xs)))
-              bdTodoCandidates
-      -- try to resolve candidates in sorted order
-      nextBds <- mapM (\cs -> tryCandidates cs bd) sortedCandidates
-      let updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
+          treeItems :: [SearchItem]
+          treeItems = fmap (\(treeCoord, alts) -> ((length alts, Nothing), tryTree treeCoord alts bd)) $ M.toList bdTodoTrees
+          rowOrColItems :: [SearchItem]
+          rowOrColItems = fmap (\cs -> ((length cs, Just (- M.size (head cs))), tryCandidates cs bd)) bdTodoCandidates
+          -- all possible next steps to explore. see comments in SearchItem.
+          sortedSearchItems :: [SearchItem]
+          sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
+      let nextBds = mapMaybe snd sortedSearchItems
+          updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
       case updated of
         [] -> Just bd
-        nextBd : _ ->
-          -- call into less expensive tactics which might now make better progress.
-          solve nextBd
+        nextBd : _ -> solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
 pprBoard
