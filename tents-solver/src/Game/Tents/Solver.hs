@@ -345,6 +345,8 @@ resolveCommonMappings bd nextBds = do
           (MMerge.zipWithMaybeMatched (\_k x y -> x <$ guard (x == y)))
       newMappings =
         -- for each viable Piece, extract newly added mappings.
+        -- TODO: we can do something smarter,
+        -- for example it is not exactly necessary to call M.difference on each of them.
         fmap ((\s -> s `M.difference` bdCells0) . bdCells) nextBds
       commonMappings =
         -- this is safe since we know newMappings is non-empty.
@@ -427,6 +429,7 @@ solve bd = do
           rowOrColItems :: [SearchItem]
           rowOrColItems = fmap (\cs -> ((length cs, Just (- M.size (head cs))), tryCandidates cs bd)) bdTodoCandidates
           -- all possible next steps to explore. see comments in SearchItem.
+          -- TODO: perhaps it's better to sort first them merge those sorted lists.
           sortedSearchItems :: [SearchItem]
           sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
       let nextBds = mapMaybe snd sortedSearchItems
