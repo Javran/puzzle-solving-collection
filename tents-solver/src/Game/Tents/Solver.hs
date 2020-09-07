@@ -91,7 +91,6 @@ allDirs = Dir <$> [(0, -1), (0, 1), (-1, 0), (1, 0)]
   this invariant allows us to never worry about cells that are not close to trees (and therefore must be empty)
   after this datatype is created.
 
-
   Note that it is also guaranteed that bdDims, bd{Row,Col}TentCounts never change after construction.
 
  -}
@@ -357,7 +356,6 @@ resolveCommonMappings bd nextBds = do
   guard $ not . null $ newMappings
   fillPiece commonMappings bd
 
-
 -- try all possible Pieces of a Candidates,
 -- and set cells that are common among all those Pieces.
 tryCandidates :: Candidates -> Board -> Maybe Board
@@ -428,8 +426,11 @@ solve bd = do
           treeItems = fmap (\(treeCoord, alts) -> ((length alts, Nothing), tryTree treeCoord alts bd)) $ M.toList bdTodoTrees
           rowOrColItems :: [SearchItem]
           rowOrColItems = fmap (\cs -> ((length cs, Just (- M.size (head cs))), tryCandidates cs bd)) bdTodoCandidates
-          -- all possible next steps to explore. see comments in SearchItem.
-          -- TODO: perhaps it's better to sort first them merge those sorted lists.
+          {-
+            all possible next steps to explore. see comments in SearchItem.
+            it is probably tempting to do sorting on two lists and them merging sorted results,
+            but it turns out that the performance gain isn't that significant.
+           -}
           sortedSearchItems :: [SearchItem]
           sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
       let nextBds = mapMaybe snd sortedSearchItems
