@@ -258,6 +258,58 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
     foldM tidyBoard bdResult coordsToEmpty
   _ -> pure bd
 
+isSingleton :: [a] -> Bool
+isSingleton xs = case xs of
+  [_] -> True
+  _ -> False
+
+{-
+  The following tactic takes advantage of the tree-tent mapping:
+  if a tent can only be mapped to a single tree, then that tent cannot be
+  a candidate of other trees.
+
+  consider:
+
+  tree(1) tent tree(2) ????
+
+  the number indicates # of candidates in the tree map.
+
+  (NOTE we can probably do this during discharging item from tree map)
+
+  now because first tree matching tent, that same tent can be removed from the map of the second tree,
+  therefore this can be resolved into:
+
+  tree(1) tent tree(1) ????
+
+  now it's obvious that ???? should be a tent.
+ -}
+forceTentTreePair :: Board -> Coord -> Maybe Board
+forceTentTreePair bd tentCoord = case getCell bd tentCoord of
+  Just Tent -> do
+    let Board {bdTodoTrees} = bd
+        -- get all related pairs from bdTodoTrees that contains this tent.
+        nearbyTreePairs :: [(Coord, [Coord])]
+        nearbyTreePairs = mapMaybe canPair $ directNeighbors tentCoord
+          where
+            canPair treeCoord = do
+              tentCoords <- bdTodoTrees M.!? treeCoord
+              guard $ tentCoord `elem` tentCoords
+              pure (treeCoord, tentCoords)
+    case partition (isSingleton . snd) nearbyTreePairs of
+      ([], _) ->
+        -- no singleton yet, nothing to do.
+        pure bd
+      ([_], todoElimTreePairs) -> do
+        let partialTreePairs =
+              (fmap . second) (delete tentCoord) todoElimTreePairs
+            bdTodoTrees' = foldr (uncurry M.insert) bdTodoTrees partialTreePairs
+        pure $ bd {bdTodoTrees = bdTodoTrees'}
+      _ ->
+        -- in this case there are more than one pair with single candidate,
+        -- which is impossible for solvable puzzle.
+        Nothing
+  _ -> pure bd
+
 {-
   remove candidates that are inconsistent with one particular cell of the board.
  -}
@@ -305,29 +357,6 @@ tidyBoard bd coord = case getCell bd coord of
     guard $ all (not . null) bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
-
-{-
-  TODO: We have one tactic missing to take advantage of the tree-tent mapping:
-  if a tent can only be mapped to a single tree, then that tent cannot be
-  a candidate of other trees.
-
-  consider:
-
-  tree(1) tent tree(2) ????
-
-  the number indicates # of candidates in the tree map.
-
-  (NOTE we can probably do this during discharging item from tree map)
-
-  now because first tree matching tent, that same tent can be removed from the map of the second tree,
-  therefore this can be resolved into:
-
-  tree(1) tent tree(1) ????
-
-  now it's obvious that ???? should be a tent.
-
- -}
-
 {-
   set coord to a cell value, internal use only (for now),
   since we don't have much check on things on this function.
@@ -342,7 +371,9 @@ setCoordInternal coord cell bd@Board {bdCells, bdTodoCoords} = do
         }
       coord
   case cell of
-    Tent -> tentRepel bd' coord
+    Tent -> do
+      bd'' <- tentRepel bd' coord
+      forceTentTreePair bd'' coord
     _ -> pure bd'
 
 fillPiece :: Piece -> Board -> Maybe Board
@@ -438,6 +469,18 @@ bdProgress Board {bdTodoCoords, bdTodoCandidates, bdTodoTrees} =
 type SearchItem = ((Int, Maybe Int), Maybe Board)
 
 {-
+  TODO: for some reason (probably because of removing items in bdTodoTrees in tidyBoard),
+  forceTentTreePair is not as effective as expected, so let's do this the stupid way as
+  a temporary fix: we run this tactic for all trees that has a single candidate.
+  Obviously this is a wasteful strategy so we'll need to figure out if there are other places
+  to do forceTentTreePair that blindly trying them all.
+ -}
+stupidSolve :: Board -> Maybe Board
+stupidSolve bd@Board {bdTodoTrees} = do
+  let tentTargets = concat $ M.elems $ M.filter isSingleton bdTodoTrees
+  foldM forceTentTreePair bd tentTargets
+
+{-
   This will be the entry point of the solver.
   We first work on bdTodoTrees (tryTree) since it's relatively cheap to trial and error,
   and only proceed to the more expensive tactic involving bdTodoCandidates if tryTree cannot make any progress.
@@ -463,7 +506,11 @@ solve bd = do
       let nextBds = mapMaybe snd sortedSearchItems
           updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
       case updated of
-        [] -> Just bd
+        [] -> do
+          bd' <- stupidSolve bd
+          if bdProgress bd' /= progress
+            then solve bd'
+            else Just bd'
         nextBd : _ -> solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
