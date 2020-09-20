@@ -305,6 +305,29 @@ tidyBoard bd coord = case getCell bd coord of
     guard $ all (not . null) bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
+
+{-
+  TODO: We have one tactic missing to take advantage of the tree-tent mapping:
+  if a tent can only be mapped to a single tree, then that tent cannot be
+  a candidate of other trees.
+
+  consider:
+
+  tree(1) tent tree(2) ????
+
+  the number indicates # of candidates in the tree map.
+
+  (NOTE we can probably do this during discharging item from tree map)
+
+  now because first tree matching tent, that same tent can be removed from the map of the second tree,
+  therefore this can be resolved into:
+
+  tree(1) tent tree(1) ????
+
+  now it's obvious that ???? should be a tent.
+
+ -}
+
 {-
   set coord to a cell value, internal use only (for now),
   since we don't have much check on things on this function.
@@ -378,6 +401,7 @@ tryTreeCoord :: Coord -> Coord -> Board -> Maybe Board
 tryTreeCoord treeCoord tentCoord bd = do
   bd'@Board {bdTodoTrees = todoTrees'} <- setCoordInternal tentCoord Tent bd
   -- bd' should have been called with tidyBoard in setCoordInternal
+  -- note that removing treeCoord from todoTrees is important, because tidyBoard doesn't do that.
   pure bd' {bdTodoTrees = M.delete treeCoord todoTrees'}
 
 tryTree :: Coord -> [Coord] -> Board -> Maybe Board
