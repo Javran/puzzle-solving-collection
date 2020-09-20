@@ -10,7 +10,7 @@ import Game.Tents.Solver
 main :: IO ()
 main = do
   term <- setupTermFromEnv
-  let Just br = parseBoard rawPuzzle1
+  let Just br = parseBoard rawPuzzle2
       Just bd = mkBoard br
       Just bd' = solve bd
   pprBoard term bd'
