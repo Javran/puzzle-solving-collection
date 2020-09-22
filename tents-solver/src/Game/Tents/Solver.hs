@@ -12,7 +12,6 @@ import qualified Data.Map.Merge.Strict as MMerge
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Semigroup
--- import System.IO
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Tents.Types
@@ -611,4 +610,4 @@ printTentPositions Board {bdTodoCoords = _unused, bdCells} = do
   let tentPositions = concatMap extractTentPos $ M.toList bdCells
         where
           extractTentPos (coord, cell) = coord <$ guard (cell == Tent)
-  print tentPositions
+  putStrLn $ intercalate "|" $ fmap (\(r,c) -> show r <> "," <> show c) tentPositions
