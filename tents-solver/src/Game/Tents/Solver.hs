@@ -1,6 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Game.Tents.Solver where
@@ -11,6 +12,7 @@ import Data.List
 import qualified Data.Map.Merge.Strict as MMerge
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Data.Monoid
 import Data.Semigroup
 import qualified Data.Set as S
 import qualified Data.Vector as V
@@ -600,6 +602,17 @@ pprBoard
               runTermOutput term rendered
             putStrLn ""
 
+isSolved :: Board -> Bool
+isSolved Board {bdCells} = countTree == countTent
+  where
+    (getSum -> countTree, getSum -> countTent) =
+      foldMap
+        (\x ->
+           ( if x == Tree then 1 :: Sum Int else 0
+           , if x == Tent then 1 :: Sum Int else 0
+           ))
+        (M.elems bdCells)
+
 printTentPositions :: Board -> IO ()
 printTentPositions Board {bdTodoCoords = _unused, bdCells} = do
   {-
@@ -610,4 +623,4 @@ printTentPositions Board {bdTodoCoords = _unused, bdCells} = do
   let tentPositions = concatMap extractTentPos $ M.toList bdCells
         where
           extractTentPos (coord, cell) = coord <$ guard (cell == Tent)
-  putStrLn $ intercalate "|" $ fmap (\(r,c) -> show r <> "," <> show c) tentPositions
+  putStrLn $ intercalate "|" $ fmap (\(r, c) -> show r <> "," <> show c) tentPositions

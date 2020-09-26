@@ -21,7 +21,6 @@ import Text.ParserCombinators.ReadP
       - 'R': tree (tRee)
       - 'E': tent (tEnt)
   - last line: numbers, space-separated.
-
  -}
 rawPuzzle0 :: String
 rawPuzzle0 =
@@ -188,3 +187,15 @@ parseBoard :: String -> Maybe BoardRep
 parseBoard raw = case readP_to_S (boardRep <* eof) raw of
   [(v, "")] -> pure v
   _ -> Nothing
+
+puzzleIdLine :: ReadP String
+puzzleIdLine =
+  string "# " *> munch1 (not . isSpace) <* char '\n'
+
+oneBoardInBatch :: ReadP (String, BoardRep)
+oneBoardInBatch = (,) <$> puzzleIdLine <*> boardRep
+
+parseBatchBoards :: String -> [(String ,BoardRep)]
+parseBatchBoards raw = case readP_to_S (many oneBoardInBatch <* eof) raw of
+  [(v, "")] -> v
+  _ -> []

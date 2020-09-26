@@ -4,6 +4,7 @@ module Game.Tents.Main
 where
 
 import Game.Tents.BatchReorganize
+import Game.Tents.BatchSolve
 import Game.Tents.Parser
 import Game.Tents.Solver
 import System.Console.Terminfo
@@ -34,6 +35,7 @@ main = do
       hPutStrLn stderr "Solver executed."
       printTentPositions bd'
     ["batch-reorg", fPath] -> batchReorganize fPath
+    ["batch-solve", fPath] -> batchSolve fPath
     _ -> do
       hPutStrLn stderr "solver <no arg>: execute builtin puzzle"
       hPutStrLn stderr "solver stdin: take one puzzle from stdin, return tent positions."
