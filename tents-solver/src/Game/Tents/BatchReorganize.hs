@@ -6,7 +6,7 @@ import Data.List.Split
 import qualified System.IO.Strict
 
 {-
-  (WIP_
+  (WIP)
   Reorganizes a batch file (a bundle of puzzles).
 
   - this is to make sure that all puzzles have unique ids.
@@ -23,10 +23,10 @@ batchReorganize fp = do
         split (whenElt ("#" `isPrefixOf`)) (lines raw)
       (rawPuzzles, postJunk) =
         let chunks = chunksOf 2 raw1
+            toPair [a,b] = (unlines a, unlines b)
         in if even (length raw1)
-          then (chunks, [])
-          else (init chunks, last chunks)
-
+          then (fmap toPair chunks, [])
+          else (fmap toPair $ init chunks, last chunks)
   unless (null preJunk) $ do
     putStrLn "Warning: removed sections prior to first '#':"
     putStrLn (unlines preJunk)
