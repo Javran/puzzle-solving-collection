@@ -21,9 +21,10 @@ batchReorganize fp = do
   let preJunk : raw1 =
         -- first round of split cuts out sections.
         split (whenElt ("#" `isPrefixOf`)) (lines raw)
+      rawPuzzles :: [([String], [String])]
       (rawPuzzles, postJunk) =
         let chunks = chunksOf 2 raw1
-            toPair [a,b] = (unlines a, unlines b)
+            toPair [a,b] = (a, b)
         in if even (length raw1)
           then (fmap toPair chunks, [])
           else (fmap toPair $ init chunks, last chunks)
@@ -33,5 +34,5 @@ batchReorganize fp = do
   unless (null postJunk) $ do
     putStrLn "Warning: removed unexpected sections at the end of file:"
     putStrLn (unlines (concat postJunk))
-  print postJunk
+  print rawPuzzles
   pure ()
