@@ -3,5 +3,4 @@ tents-solver.cabal
 stack.yaml.lock
 *~
 
-z
-zt
+z*

@@ -12,6 +12,8 @@ dependencies:
 - base
 - containers
 - vector
+- split
+- strict
 - terminfo
 
 library:

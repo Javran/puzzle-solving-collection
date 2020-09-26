@@ -3,6 +3,7 @@ module Game.Tents.Main
   )
 where
 
+import Game.Tents.BatchReorganize
 import Game.Tents.Parser
 import Game.Tents.Solver
 import System.Console.Terminfo
@@ -32,6 +33,9 @@ main = do
       Just bd' <- pure (solve bd)
       hPutStrLn stderr "Solver executed."
       printTentPositions bd'
+    ["batch-reorg", fPath] -> batchReorganize fPath
     _ -> do
-      hPutStrLn stderr "solver <no arg or 'stdin'>"
+      hPutStrLn stderr "solver <no arg>: execute builtin puzzle"
+      hPutStrLn stderr "solver stdin: take one puzzle from stdin, return tent positions."
+      hPutStrLn stderr "solver batch-reorg: reorganize a bundle of puzzles."
       exitFailure
