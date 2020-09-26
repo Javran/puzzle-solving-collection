@@ -6,6 +6,7 @@
 
 module Game.Tents.Solver where
 
+import Control.Applicative
 import Control.Monad
 import Data.Bifunctor
 import Data.List
@@ -125,7 +126,9 @@ data Board = Board
 {-
   Create Board from BoardRep.
   This process also fills in unknown cells that are not near trees as Emptys.
-  So that all other solving tactics don't need to worry about it.
+  So that:
+  - all other solving tactics don't need to worry about it.
+  - we have way less search space for each row and col.
  -}
 mkBoard :: BoardRep -> Maybe Board
 mkBoard
@@ -151,8 +154,7 @@ mkBoard
         genRowOrColCandidates coordss rowOrColTentCounts = do
           let result = zipWith go coordss rowOrColTentCounts
           -- ensure that every `Candidates` is not empty.
-          guard $ all (not . null) result
-          pure result
+          mapM guardNotNull result
           where
             go coords count =
               fmap
@@ -182,8 +184,7 @@ mkBoard
                         in r == Nothing || r == Just Tent)
                     . filter coordIsInside
                     $ directNeighbors coord
-            guard $ not . null $ result
-            pure result
+            guardNotNull result
       M.fromList
         <$> (forM (S.toList allTrees) $ \tCoord ->
                (tCoord,) <$> candidateTentCoords tCoord)
@@ -274,6 +275,9 @@ isSingleton :: [a] -> Bool
 isSingleton xs = case xs of
   [_] -> True
   _ -> False
+
+guardNotNull :: (Alternative f, Foldable t) => t a -> f (t a)
+guardNotNull xs = xs <$ guard (not . null $ xs)
 
 {-
   The following tactic takes advantage of the tree-tent mapping:
@@ -366,7 +370,7 @@ tidyBoard bd coord = case getCell bd coord of
     bdTodoCandidates' <-
       filter (not . satCandidates)
         <$> mapM updateCandidates bdTodoCandidates
-    guard $ all (not . null) bdTodoTrees'
+    mapM_ guardNotNull bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
 {-
@@ -422,7 +426,7 @@ resolveCommonMappings bd (hdBds : tlBds) = do
   -- if we don't have anything in newMappings,
   -- there is no progress to be made.
   -- this is a "soft" exception but we want it to fail to reduce branching factor on searches.
-  guard $ not . null $ commonMappings
+  _ <- guardNotNull commonMappings
   fillPiece commonMappings bd
 
 -- try all possible Pieces of a Candidates,
@@ -517,12 +521,16 @@ solve bd = do
           sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
       let nextBds = mapMaybe snd sortedSearchItems
           updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
+          doStupidSolve = False
       case updated of
         [] -> do
-          bd' <- stupidSolve bd
-          if bdProgress bd' /= progress
-            then solve bd'
-            else Just bd'
+          if doStupidSolve
+             then do
+                bd' <- stupidSolve bd
+                if bdProgress bd' /= progress
+                  then solve bd'
+                  else Just bd'
+              else Just bd
         nextBd : _ -> solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
