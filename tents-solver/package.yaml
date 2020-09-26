@@ -16,6 +16,7 @@ dependencies:
 - strict
 - terminfo
 - uuid
+- mtl
 
 library:
   source-dirs: src
