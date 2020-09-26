@@ -15,6 +15,7 @@ dependencies:
 - split
 - strict
 - terminfo
+- uuid
 
 library:
   source-dirs: src
