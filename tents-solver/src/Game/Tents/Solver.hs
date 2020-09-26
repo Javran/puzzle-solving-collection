@@ -603,7 +603,13 @@ pprBoard
             putStrLn ""
 
 isSolved :: Board -> Bool
-isSolved Board {bdCells} = countTree == countTent
+isSolved Board {bdCells} =
+  {-
+    Given all the constraints we put on Board, we only need to check that:
+    - there are exactly same number of trees and tents
+    - there are no unknown cells (TODO)
+   -}
+  countTree == countTent
   where
     (getSum -> countTree, getSum -> countTent) =
       foldMap
