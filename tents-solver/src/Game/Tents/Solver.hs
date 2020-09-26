@@ -122,6 +122,11 @@ data Board = Board
   }
 
 -- TODO: verify that boards with impossible candidates result in Nothing.
+{-
+  Create Board from BoardRep.
+  This process also fills in unknown cells that are not near trees as Emptys.
+  So that all other solving tactics don't need to worry about it.
+ -}
 mkBoard :: BoardRep -> Maybe Board
 mkBoard
   BoardRep
@@ -132,12 +137,17 @@ mkBoard
     } = do
     let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
         coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
-        bdTodoCoords = allCoords `S.difference` M.keysSet brBoard
+        missingCoords = allCoords `S.difference` M.keysSet brBoard
         allTrees = M.keysSet $ M.filter (== Tree) brBoard
-        simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) bdTodoCoords
+        -- coordinates that are not near trees are definitely Empty, so we fill them
+        -- during board creation.
+        simpleEmptyCoords = S.toList $ S.filter (not . nearTrees) missingCoords
           where
             nearTrees c = any (`S.member` allTrees) $ directNeighbors c
         bdCells = brBoard `M.union` M.fromList ((,Empty) <$> simpleEmptyCoords)
+        bdTodoCoords =
+          -- all that are missing from brBoard minus those that we just added.
+          missingCoords `S.difference` S.fromList simpleEmptyCoords
         genRowOrColCandidates coordss rowOrColTentCounts = do
           let result = zipWith go coordss rowOrColTentCounts
           -- ensure that every `Candidates` is not empty.
