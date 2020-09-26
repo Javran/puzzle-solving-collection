@@ -72,13 +72,19 @@ batchReorganize fp = do
     putStrLn "Warning: removed unexpected sections at the end of file:"
     putStrLn (unlines (concat postJunk))
   -- puzzles sorted by size
-  sortedPuzzles <- sortOn (fst . snd) . catMaybes <$> mapM normalizePuzzle rawPuzzles
-  let dedupedPuzzles =
+  originalPuzzles <- catMaybes <$> mapM normalizePuzzle rawPuzzles
+  let sortedPuzzles = sortOn (fst . snd) originalPuzzles
+      dedupedPuzzles =
         concatMap (nubBy ((==) `on` (snd . snd)))
           . groupBy ((==) `on` (fst . snd))
           $ sortedPuzzles
       removed = length sortedPuzzles - length dedupedPuzzles
-  when (removed > 0) $
-    putStrLn $ "Dropped " <> show removed <> " duplicated puzzles."
-  writeFile fp (unlines $ concatMap (\(c, (_sz, ps)) -> c : ps) dedupedPuzzles)
-  putStrLn $ "Written to: " <> fp
+      rawAfter = unlines $ concatMap (\(c, (_sz, ps)) -> c : ps) dedupedPuzzles
+  if rawAfter == raw
+    then putStrLn "Skipped saving as the file content is identical."
+    else do
+      when (removed > 0) $
+        putStrLn $ "Dropped " <> show removed <> " duplicated puzzles."
+      writeFile fp (unlines $ concatMap (\(c, (_sz, ps)) -> c : ps) dedupedPuzzles)
+      putStrLn $ "Written to: " <> fp
+  putStrLn $ "There are " <> show (length dedupedPuzzles) <> " puzzles in this batch."
