@@ -61,6 +61,7 @@ batchReorganize fp = do
       (rawPuzzles, postJunk) =
         let chunks = chunksOf 2 raw1
             toPair [a, b] = (a, b)
+            toPair _ = error "unreachable"
          in if even (length raw1)
               then (fmap toPair chunks, [])
               else (fmap toPair $ init chunks, last chunks)
