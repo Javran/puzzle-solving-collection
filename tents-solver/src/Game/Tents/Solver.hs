@@ -367,9 +367,24 @@ tidyBoard bd coord = case getCell bd coord of
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
 -- Note: this should be the only function that removes a tree from bdTodoTrees.
+{-
+  When discharging a tree, we should check all unsolved cells around it,
+  if they have nothing else to attach to, they should be set Empty as well.
+ -}
 treeDischarge :: Coord -> Board -> Maybe Board
-treeDischarge treeCoord bd@Board {bdTodoTrees} =
-  Just bd {bdTodoTrees = M.delete treeCoord bdTodoTrees}
+treeDischarge treeCoord bd@Board {bdTodoTrees, bdTodoCoords} = do
+  let nearbyTodoCoords =
+        filter (`elem` bdTodoCoords) $ directNeighbors treeCoord
+      noOtherTreePairs todoCoord = null pairingTreeCoords
+        where
+          pairingTreeCoords = M.filter (todoCoord `elem`) otherTreeCoords
+          otherTreeCoords =
+            M.restrictKeys
+              bdTodoTrees
+              (S.fromList $ delete treeCoord (directNeighbors todoCoord))
+      coordsToEmpty = filter noOtherTreePairs nearbyTodoCoords
+      bd' = bd {bdTodoTrees = M.delete treeCoord bdTodoTrees}
+  foldM (\curBd curCoord -> setCoordInternal curCoord Empty curBd) bd' coordsToEmpty
 
 {-
   If a tent is only connected to a single unsolved tree,
