@@ -398,6 +398,7 @@ fillPiece p bd = do
   Given a Board and a list of Boards directly derived from it,
   find and set mappings common among all of them.
   This function fails when no common mapping can be found.
+  TODO: currently candidate elimination is not considered yet.
  -}
 resolveCommonMappings :: Board -> [Board] -> Maybe Board
 resolveCommonMappings _ [] = Nothing

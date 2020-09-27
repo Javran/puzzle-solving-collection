@@ -195,7 +195,7 @@ puzzleIdLine =
 oneBoardInBatch :: ReadP (String, BoardRep)
 oneBoardInBatch = (,) <$> puzzleIdLine <*> boardRep
 
-parseBatchBoards :: String -> [(String ,BoardRep)]
+parseBatchBoards :: String -> [(String, BoardRep)]
 parseBatchBoards raw = case readP_to_S (many oneBoardInBatch <* eof) raw of
   [(v, "")] -> v
   _ -> []

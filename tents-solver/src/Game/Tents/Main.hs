@@ -3,6 +3,7 @@ module Game.Tents.Main
   )
 where
 
+import Game.Tents.BatchPick
 import Game.Tents.BatchReorganize
 import Game.Tents.BatchSolve
 import Game.Tents.Parser
@@ -19,7 +20,7 @@ main = do
   case args of
     [] -> do
       -- give no argument to test builtin puzzles
-      let Just br = parseBoard rawPuzzle4
+      let Just br = parseBoard rawPuzzle2
           Just bd = mkBoard br
           Just bd' = solve bd
       pprBoard term bd'
@@ -36,8 +37,11 @@ main = do
       printTentPositions bd'
     ["batch-reorg", fPath] -> batchReorganize fPath
     ["batch-solve", fPath] -> batchSolve fPath
+    ["batch-pick", fPath, puzzleId] -> batchPick term fPath puzzleId
     _ -> do
       hPutStrLn stderr "solver <no arg>: execute builtin puzzle"
       hPutStrLn stderr "solver stdin: take one puzzle from stdin, return tent positions."
-      hPutStrLn stderr "solver batch-reorg: reorganize a bundle of puzzles."
+      hPutStrLn stderr "solver batch-reorg <file>: reorganize a bundle of puzzles."
+      hPutStrLn stderr "solver batch-solve <file>: try to solve a bundle of puzzles."
+      hPutStrLn stderr "solver batch-pick <file> <puzzle-id>: pick one puzzle to solve."
       exitFailure

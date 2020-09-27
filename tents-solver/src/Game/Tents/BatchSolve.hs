@@ -4,13 +4,9 @@ import Control.Monad.Except
 import Game.Tents.Parser
 import Game.Tents.Solver
 import Game.Tents.Types
+import Game.Tents.Utils
 
-m2e :: MonadError e m => e -> Maybe a -> m a
-m2e errMsg v = case v of
-  Nothing -> throwError errMsg
-  Just r -> pure r
-
-processBoard :: BoardRep -> ExceptT String IO ()
+processBoard :: Monad m => BoardRep -> ExceptT String m ()
 processBoard br = do
   bd0 <- m2e "Board failed to initialize." $ mkBoard br
   bd1 <- m2e "Failure while solving." $ solve bd0
