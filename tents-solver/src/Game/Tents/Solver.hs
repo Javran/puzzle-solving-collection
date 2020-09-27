@@ -6,7 +6,6 @@
 
 module Game.Tents.Solver where
 
-import Control.Applicative
 import Control.Monad
 import Data.Bifunctor
 import Data.List
@@ -18,6 +17,7 @@ import Data.Semigroup
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Tents.Types
+import Game.Tents.Utils
 import System.Console.Terminfo
 
 {-
@@ -259,25 +259,15 @@ getCell Board {bdCells} coord = bdCells M.!? coord
 tentRepel :: Board -> Coord -> Maybe Board
 tentRepel bd coord@(r, c) = case getCell bd coord of
   Just Tent -> do
-    let Board {bdDims = (rows, cols), bdCells} = bd
+    let Board {bdDims = (rows, cols)} = bd
         coordsToEmpty = do
           r' <- [max 0 (r -1) .. min (rows -1) (r + 1)]
           c' <- [max 0 (c -1) .. min (cols -1) (c + 1)]
           let coord' = (r', c')
           guard $ getCell bd coord' == Nothing
           pure coord'
-        bdCells' = M.union (M.fromList $ fmap (,Empty) coordsToEmpty) bdCells
-        bdResult = bd {bdCells = bdCells'}
-    foldM tidyBoard bdResult coordsToEmpty
+    foldM (\curBd emptyCoord -> setCoordInternal emptyCoord Empty curBd) bd coordsToEmpty
   _ -> pure bd
-
-isSingleton :: [a] -> Bool
-isSingleton xs = case xs of
-  [_] -> True
-  _ -> False
-
-guardNotNull :: (Alternative f, Foldable t) => t a -> f (t a)
-guardNotNull xs = xs <$ guard (not . null $ xs)
 
 {-
   The following tactic takes advantage of the tree-tent mapping:
@@ -318,16 +308,19 @@ forceTentTreePair bd tentCoord = case getCell bd tentCoord of
       ([_], todoElimTreePairs) -> do
         let partialTreePairs =
               (fmap . second) (delete tentCoord) todoElimTreePairs
-            bdTodoTrees' = foldr (uncurry M.insert) bdTodoTrees partialTreePairs
+            bdTodoTrees' = M.union (M.fromList partialTreePairs) bdTodoTrees
         pure $ bd {bdTodoTrees = bdTodoTrees'}
       _ ->
         -- in this case there are more than one pair with single candidate,
-        -- which is impossible for solvable puzzle.
+        -- which is impossible for any solvable puzzle.
         Nothing
   _ -> pure bd
 
 {-
   remove candidates that are inconsistent with one particular cell of the board.
+
+  Note that this function is only supposed to remove candidates, the actual filling
+  is never done here.
  -}
 tidyBoard :: Board -> Coord -> Maybe Board
 tidyBoard bd coord = case getCell bd coord of
@@ -432,6 +425,9 @@ resolveCommonMappings bd (hdBds : tlBds) = do
 -- try all possible Pieces of a Candidates,
 -- and set cells that are common among all those Pieces.
 tryCandidates :: Candidates -> Board -> Maybe Board
+tryCandidates [p] bd =
+  -- we do want a special singleton case so that candidates states are carried over - for now resolveCommonMappings doesn't do that.
+  fillPiece p bd
 tryCandidates cs bd = do
   -- it is expected that some will fail but the result should not be empty
   -- if the input Board is solvable.
@@ -452,6 +448,9 @@ tryTreeCoord treeCoord tentCoord bd = do
   pure bd' {bdTodoTrees = M.delete treeCoord todoTrees'}
 
 tryTree :: Coord -> [Coord] -> Board -> Maybe Board
+tryTree treeCoord [tentCoord] bd =
+  -- we do want a special singleton case so that candidates states are carried over - for now resolveCommonMappings doesn't do that.
+  tryTreeCoord treeCoord tentCoord bd
 tryTree treeCoord tentAltCoords bd = do
   let cs' = mapMaybe (\tentCoord -> tryTreeCoord treeCoord tentCoord bd) tentAltCoords
   resolveCommonMappings bd cs'
@@ -521,16 +520,8 @@ solve bd = do
           sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
       let nextBds = mapMaybe snd sortedSearchItems
           updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
-          doStupidSolve = False
       case updated of
-        [] -> do
-          if doStupidSolve
-             then do
-                bd' <- stupidSolve bd
-                if bdProgress bd' /= progress
-                  then solve bd'
-                  else Just bd'
-              else Just bd
+        [] -> Just bd
         nextBd : _ -> solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
@@ -626,6 +617,7 @@ isSolved Board {bdCells} =
     Given all the constraints we put on Board, we only need to check that:
     - there are exactly same number of trees and tents
     - there are no unknown cells (TODO)
+    TODO: we can just check bdTodoCoords if the info there is inconsistent.
    -}
   countTree == countTent
   where
