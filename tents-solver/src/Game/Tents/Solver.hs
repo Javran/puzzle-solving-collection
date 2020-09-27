@@ -366,6 +366,11 @@ tidyBoard bd coord = case getCell bd coord of
     mapM_ guardNotNull bdTodoTrees'
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
+-- Note: this should be the only function that removes a tree from bdTodoTrees.
+treeDischarge :: Coord -> Board -> Maybe Board
+treeDischarge treeCoord bd@Board {bdTodoTrees} =
+  Just bd {bdTodoTrees = M.delete treeCoord bdTodoTrees}
+
 {-
   If a tent is only connected to a single unsolved tree,
   this binding is forced.
@@ -375,9 +380,10 @@ tieTentToTheOnlyTree tentCoord bd@Board {bdTodoTrees} = do
   let nearbyTodoTrees = M.restrictKeys bdTodoTrees (S.fromList $ directNeighbors tentCoord)
   if M.size nearbyTodoTrees == 1
     then
-      let [(treeCoord, _)] = M.toList nearbyTodoTrees
-          bdTodoTrees' = M.delete treeCoord bdTodoTrees
-       in Just bd {bdTodoTrees = bdTodoTrees'}
+      let [(treeCoord, tentCoords)] = M.toList nearbyTodoTrees
+       in do
+            guard $ tentCoord `elem` tentCoords
+            treeDischarge treeCoord bd
     else Just bd
 
 {-
@@ -458,10 +464,10 @@ tryCandidates cs bd = do
  -}
 tryTreeCoord :: Coord -> Coord -> Board -> Maybe Board
 tryTreeCoord treeCoord tentCoord bd = do
-  bd'@Board {bdTodoTrees = todoTrees'} <- setCoordInternal tentCoord Tent bd
+  bd' <- setCoordInternal tentCoord Tent bd
   -- bd' should have been called with tidyBoard in setCoordInternal
   -- note that removing treeCoord from todoTrees is important, because tidyBoard doesn't do that.
-  pure bd' {bdTodoTrees = M.delete treeCoord todoTrees'}
+  treeDischarge treeCoord bd'
 
 tryTree :: Coord -> [Coord] -> Board -> Maybe Board
 tryTree treeCoord [tentCoord] bd =
