@@ -6,6 +6,7 @@
 
 module Game.Tents.Solver where
 
+import Control.Applicative
 import Control.Monad
 import Data.Bifunctor
 import Data.List
@@ -316,6 +317,13 @@ forceTentTreePair bd tentCoord = case getCell bd tentCoord of
         Nothing
   _ -> pure bd
 
+bruteForce :: Board -> Maybe Board
+bruteForce bd@Board {bdTodoCoords} = case S.minView bdTodoCoords of
+  Nothing -> Just bd
+  Just (coord, _) ->
+    (setCoordInternal coord Empty bd >>= solve)
+      <|> (setCoordInternal coord Tent bd >>= solve)
+
 {-
   remove candidates that are inconsistent with one particular cell of the board.
 
@@ -557,8 +565,9 @@ solve bd = do
           sortedSearchItems = sortOn fst (treeItems <> rowOrColItems)
       let nextBds = mapMaybe snd sortedSearchItems
           updated = filter (\curBd -> bdProgress curBd /= progress) nextBds
+          allowBruteForce = True
       case updated of
-        [] -> Just bd
+        [] -> if allowBruteForce then bruteForce bd else Just bd
         nextBd : _ -> solve nextBd
 
 pprBoard :: Terminal -> Board -> IO ()
