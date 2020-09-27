@@ -367,23 +367,38 @@ tidyBoard bd coord = case getCell bd coord of
     pure $ bd {bdTodoCandidates = bdTodoCandidates', bdTodoTrees = bdTodoTrees'}
 
 {-
+  If a tent is only connected to a single unsolved tree,
+  this binding is forced.
+ -}
+tieTentToTheOnlyTree :: Coord -> Board -> Maybe Board
+tieTentToTheOnlyTree tentCoord bd@Board {bdTodoTrees} = do
+  let nearbyTodoTrees = M.restrictKeys bdTodoTrees (S.fromList $ directNeighbors tentCoord)
+  if M.size nearbyTodoTrees == 1
+    then
+      let [(treeCoord, _)] = M.toList nearbyTodoTrees
+          bdTodoTrees' = M.delete treeCoord bdTodoTrees
+       in Just bd {bdTodoTrees = bdTodoTrees'}
+    else Just bd
+
+{-
   set coord to a cell value, internal use only (for now),
   since we don't have much check on things on this function.
  -}
 setCoordInternal :: Coord -> Cell -> Board -> Maybe Board
-setCoordInternal coord cell bd@Board {bdCells, bdTodoCoords} = do
-  bd' <-
+setCoordInternal coord cell bd0@Board {bdCells, bdTodoCoords} = do
+  bd1 <-
     tidyBoard
-      bd
+      bd0
         { bdCells = M.insert coord cell bdCells
         , bdTodoCoords = S.delete coord bdTodoCoords
         }
       coord
   case cell of
     Tent -> do
-      bd'' <- tentRepel bd' coord
-      forceTentTreePair bd'' coord
-    _ -> pure bd'
+      bd2 <- tentRepel bd1 coord
+      bd3 <- forceTentTreePair bd2 coord
+      tieTentToTheOnlyTree coord bd3
+    _ -> pure bd1
 
 fillPiece :: Piece -> Board -> Maybe Board
 fillPiece p bd = do
