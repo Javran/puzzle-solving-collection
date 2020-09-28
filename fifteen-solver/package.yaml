@@ -11,8 +11,11 @@ description: description
 dependencies:
 - base
 - containers
+- unordered-containers
 - vector
 - split
+- dlist
+- hashtables
 
 library:
   source-dirs: src
