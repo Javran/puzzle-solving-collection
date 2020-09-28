@@ -115,13 +115,28 @@ bdMoveHole bd@Board {bdHole, bdNums, bdTiles} d = do
   let tn@(Just tileNum) = bdGet bd bdHole'
   pure
     bd
-      { bdTiles = bdTiles V.// [(bdIndex bd bdHole', Nothing), (bdIndex bd bdHole, tn)]
+      { bdTiles =
+          bdTiles
+            V.// [ (bdIndex bd bdHole', Nothing)
+                 , (bdIndex bd bdHole, tn)
+                 ]
       , bdNums = bdNums V.// [(tileNum, bdHole)]
       , bdHole = bdHole'
       }
 
--- possibleMoves :: Board -> M.Map Coord Board
--- possibleMoves bd = M.empty
+possibleMoves :: Board -> M.Map Coord Board
+possibleMoves bd =
+  foldr
+    (\d m -> M.union m (M.fromList $ movesInOneDir d))
+    M.empty
+    [DUp, DDown, DLeft, DRight]
+  where
+    movesInOneDir :: Dir -> [(Coord, Board)]
+    movesInOneDir d = unfoldr go bd
+      where
+        go curBd = do
+          bd' <- bdMoveHole curBd d
+          pure ((bdHole bd', bd'), bd')
 
 -- https://en.wikipedia.org/wiki/Box-drawing_character
 pprBoard :: Board -> IO ()
@@ -154,7 +169,6 @@ main :: IO ()
 main = do
   pprBoard demo0
   pprBoard demo1
-  forM_ [DUp, DDown, DLeft, DRight] $ \d ->
-    case bdMoveHole demo1 d of
-      Nothing -> pure ()
-      Just bd -> pprBoard bd
+  forM_ (M.toList $ possibleMoves demo1) $ \(coord, bd) -> do
+    print coord
+    pprBoard bd
