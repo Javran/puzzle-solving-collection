@@ -160,10 +160,11 @@ pprBoard bd@Board {bdSize} = do
   printSep "╔" "╦" "╗"
   forM_ [0 .. bdSize -1] $ \r -> do
     let lineTiles = fmap (bdGet bd . (r,)) [0 .. bdSize -1]
-    putStrLn $ "║ " <> intercalate " ║ " (fmap renderTile lineTiles) <> " ║"
+    putStrLn $ "║ " <> intercalate " ║ " (fmap renderTile lineTiles) <> " ║ " <> show r
     if r < bdSize -1
       then printSep "╠" "╬" "╣"
       else printSep "╚" "╩" "╝"
+  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [-1..bdSize-2]
 
 main :: IO ()
 main = do
