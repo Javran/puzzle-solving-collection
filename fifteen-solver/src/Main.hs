@@ -9,6 +9,7 @@ where
 import Control.Monad
 import Data.Bifunctor
 import Data.List
+import qualified Data.Map as M
 import Data.Maybe
 import Data.Tuple
 import qualified Data.Vector as V
@@ -88,8 +89,39 @@ parseRaw raw = do
         mapM convertTile rawTiles
   mapM convertLine rawLines
 
+bdIndex :: Board -> Coord -> Int
+bdIndex Board {bdSize} (r, c) = c + bdSize * r
+
 bdGet :: Board -> Coord -> Maybe Int
-bdGet Board {bdSize, bdTiles} (r, c) = bdTiles V.! (c + bdSize * r)
+bdGet bd@Board {bdTiles} coord = bdTiles V.! bdIndex bd coord
+
+data Dir = DUp | DDown | DLeft | DRight
+
+applyDir :: Coord -> Dir -> Coord
+applyDir (r, c) d = case d of
+  DUp -> (r -1, c)
+  DDown -> (r + 1, c)
+  DLeft -> (r, c -1)
+  DRight -> (r, c + 1)
+
+bdInRange :: Board -> Coord -> Bool
+bdInRange Board {bdSize} (r, c) =
+  r >= 0 && r < bdSize && c >= 0 && c < bdSize
+
+bdMoveHole :: Board -> Dir -> Maybe Board
+bdMoveHole bd@Board {bdHole, bdNums, bdTiles} d = do
+  let bdHole' = applyDir bdHole d
+  guard $ bdInRange bd bdHole'
+  let tn@(Just tileNum) = bdGet bd bdHole'
+  pure
+    bd
+      { bdTiles = bdTiles V.// [(bdIndex bd bdHole', Nothing), (bdIndex bd bdHole, tn)]
+      , bdNums = bdNums V.// [(tileNum, bdHole)]
+      , bdHole = bdHole'
+      }
+
+-- possibleMoves :: Board -> M.Map Coord Board
+-- possibleMoves bd = M.empty
 
 -- https://en.wikipedia.org/wiki/Box-drawing_character
 pprBoard :: Board -> IO ()
@@ -100,7 +132,15 @@ pprBoard bd@Board {bdSize} = do
         where
           content = show (v + 1)
       printSep lS midS rS =
-        putStrLn $ lS <> "═" <> intercalate ("═" <> midS <> "═") (replicate bdSize (replicate maxLen '═')) <> "═" <> rS
+        putStrLn $
+          concat
+            [ lS
+            , "═"
+            , intercalate ("═" <> midS <> "═") $
+                replicate bdSize (replicate maxLen '═')
+            , "═"
+            , rS
+            ]
 
   printSep "╔" "╦" "╗"
   forM_ [0 .. bdSize -1] $ \r -> do
@@ -114,3 +154,7 @@ main :: IO ()
 main = do
   pprBoard demo0
   pprBoard demo1
+  forM_ [DUp, DDown, DLeft, DRight] $ \d ->
+    case bdMoveHole demo1 d of
+      Nothing -> pure ()
+      Just bd -> pprBoard bd
