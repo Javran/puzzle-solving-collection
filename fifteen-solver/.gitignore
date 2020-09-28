@@ -1,0 +1,6 @@
+.stack-work/
+fifteen-solver.cabal
+stack.yaml.lock
+*~
+
+z
