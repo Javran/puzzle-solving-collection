@@ -9,6 +9,7 @@ where
 import Control.Monad
 import Data.Bifunctor
 import Data.List
+import Data.List.Split
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Tuple
@@ -164,12 +165,17 @@ pprBoard bd@Board {bdSize} = do
     if r < bdSize -1
       then printSep "╠" "╬" "╣"
       else printSep "╚" "╩" "╝"
-  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [-1..bdSize-2]
+  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [-1 .. bdSize -2]
+
+goalBoard :: Int -> Board
+goalBoard sz = mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
 
 main :: IO ()
 main = do
   pprBoard demo0
+  pprBoard (goalBoard (bdSize demo0))
   pprBoard demo1
+  pprBoard (goalBoard (bdSize demo1))
   forM_ (M.toList $ possibleMoves demo1) $ \(coord, bd) -> do
     print coord
     pprBoard bd

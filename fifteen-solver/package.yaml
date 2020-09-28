@@ -12,6 +12,7 @@ dependencies:
 - base
 - containers
 - vector
+- split
 
 executables:
   fifteen-demo:
