@@ -5,6 +5,7 @@ module Main
   )
 where
 
+import Control.Monad
 import Data.Bifunctor
 import Data.List
 import Data.Maybe
@@ -21,13 +22,6 @@ data Board = Board
   }
   deriving (Show)
 
-{-
-  Note that number starts from 0, this is weird but
-  allows vector indexing to be a bit more convenient.
-  417
-  _52
-  603
- -}
 mkBoard :: [[Maybe Int]] -> Board
 mkBoard tileSource =
   Board
@@ -48,12 +42,52 @@ mkBoard tileSource =
     bdTiles = V.fromListN szSq $ concat tileSource
     bdNums = V.replicate (szSq -1) undefined V.// digitPairs
 
-demo0 :: [[Maybe Int]]
-demo0 =
-  [ [Just 4, Just 1, Just 7]
-  , [Nothing, Just 5, Just 2]
-  , [Just 6, Just 0, Just 3]
-  ]
+mkBoardFromRaw :: String -> Maybe Board
+mkBoardFromRaw = fmap mkBoard . parseRaw
+
+demo0Raw :: String
+demo0Raw =
+  unlines
+    [ "5 2 8"
+    , "_ 6 3"
+    , "7 1 4"
+    ]
+
+demo1Raw :: String
+demo1Raw =
+  unlines
+    [ "16 1 24 18 13"
+    , "21 3 19 6 9"
+    , "8 17 10 23 2"
+    , "5 20 11 _ 22"
+    , "7 4 12 14 15"
+    ]
+
+demo0, demo1 :: Board
+Just demo0 = mkBoardFromRaw demo0Raw
+Just demo1 = mkBoardFromRaw demo1Raw
+
+parseRaw :: String -> Maybe [[Maybe Int]]
+parseRaw raw = do
+  let rawLines = lines raw
+      size = length rawLines
+      convertLine rawLine = do
+        let rawTiles = words rawLine
+            convertTile xs = case xs of
+              "_" -> pure Nothing
+              _
+                | [(v, "")] <- reads xs ->
+                  -- note that number starts from 0,
+                  -- this is admittedly weird but allows
+                  -- vector indexing to be more convenient.
+
+                  pure (Just (pred v))
+              _ -> Nothing
+        guard $ length rawTiles == size
+        mapM convertTile rawTiles
+  mapM convertLine rawLines
 
 main :: IO ()
-main = print (mkBoard demo0)
+main = do
+  print demo0
+  print demo1
