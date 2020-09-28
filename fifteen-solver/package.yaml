@@ -14,12 +14,21 @@ dependencies:
 - vector
 - split
 
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+
 executables:
   fifteen-demo:
     main: Main.hs
-    source-dirs: src
+    source-dirs: exe
+    dependencies:
+      - fifteen-solver
     ghc-options:
       - -Wall
+      - -O2
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N

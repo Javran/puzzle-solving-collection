@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Main
+module Game.Fifteen.Main
   ( main
   )
 where
