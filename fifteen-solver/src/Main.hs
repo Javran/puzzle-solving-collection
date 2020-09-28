@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
 
 module Main
   ( main
@@ -87,7 +88,29 @@ parseRaw raw = do
         mapM convertTile rawTiles
   mapM convertLine rawLines
 
+bdGet :: Board -> Coord -> Maybe Int
+bdGet Board {bdSize, bdTiles} (r, c) = bdTiles V.! (c + bdSize * r)
+
+-- https://en.wikipedia.org/wiki/Box-drawing_character
+pprBoard :: Board -> IO ()
+pprBoard bd@Board {bdSize} = do
+  let maxLen = length (show $ bdSize * bdSize - 1)
+      renderTile Nothing = replicate maxLen ' '
+      renderTile (Just v) = replicate (maxLen - length content) ' ' <> content
+        where
+          content = show (v + 1)
+      printSep lS midS rS =
+        putStrLn $ lS <> "═" <> intercalate ("═" <> midS <> "═") (replicate bdSize (replicate maxLen '═')) <> "═" <> rS
+
+  printSep "╔" "╦" "╗"
+  forM_ [0 .. bdSize -1] $ \r -> do
+    let lineTiles = fmap (bdGet bd . (r,)) [0 .. bdSize -1]
+    putStrLn $ "║ " <> intercalate " ║ " (fmap renderTile lineTiles) <> " ║"
+    if r < bdSize -1
+      then printSep "╠" "╬" "╣"
+      else printSep "╚" "╩" "╝"
+
 main :: IO ()
 main = do
-  print demo0
-  print demo1
+  pprBoard demo0
+  pprBoard demo1
