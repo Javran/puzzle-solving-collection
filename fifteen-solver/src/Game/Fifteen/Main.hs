@@ -12,7 +12,7 @@ import qualified Game.Fifteen.ThreeByThree as TBT
 
 main :: IO ()
 main = do
-  pprBoard demo0
   let smallBoard = fromJust . TBT.fromBoard $ demo0
       goal = fromJust . TBT.fromBoard $ goalBoard 3
-  print $ head (TBT.solveBoard goal smallBoard)
+      steps:_ = (TBT.solveBoard goal smallBoard)
+  pprSteps demo0 steps
