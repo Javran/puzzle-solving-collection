@@ -18,9 +18,8 @@ main = do
   -- print (TBT.solveBoard (goalBoard 3) demo0)
   pprBoard demo0
   let smallBoard = fromJust . TBT.fromBoard $ demo0
-  forM_ [(0, 0), (1, 1), (2, 0)] $ \coord -> do
-    print coord
-    pprBoard (TBT.toBoard $ TBT.swapHole smallBoard coord)
+      goal = fromJust . TBT.fromBoard $ goalBoard 3
+  print (TBT.solveBoard goal smallBoard)
 
 -- demo1 solution in reverse:
 -- [[(2,2),(1,2),(1,1),(2,1),(2,0),(0,0),(0,1),(2,1),(2,0),(1,0),(1,2),(2,2),(2,0),(1,0),(1,2),(0,2),(0,0)]]

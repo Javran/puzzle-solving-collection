@@ -2,6 +2,7 @@
 
 module Game.Fifteen.ThreeByThree where
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.ST
 import Data.Bits
@@ -10,6 +11,7 @@ import Data.Function
 import qualified Data.HashSet as HS
 import Data.HashTable.ST.Basic as HT
 import qualified Data.IntSet as IS
+import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Vector as V
@@ -43,6 +45,10 @@ type Board3 = Word64
 
 type Tile = Word8 -- only valid values are 0-7 and 15.
 
+coordInRange :: Coord -> Bool
+coordInRange (r, c) =
+  r >= 0 && r < 3 && c >= 0 && c < 3
+
 index :: Coord -> Int
 index (r, c) = r * 3 + c
 
@@ -66,6 +72,7 @@ holeIndex bd = go 0 bd
 swapHole :: Board3 -> Coord -> Board3
 swapHole bd0 coord = bd1
   where
+    -- TODO: it's better that holeIndex is given to this function.
     holeBitInd = 4 * holeIndex bd0
     tileBitInd = 4 * index coord
     tileNum = bdGet bd0 coord
@@ -80,6 +87,26 @@ swapHole bd0 coord = bd1
         .|.
         -- set 0xF (mask) to what used to be tile positions
         shiftL 0xF tileBitInd
+
+-- TODO: we could do a "rotateHole" that operate on 3 tiles,
+-- but for now let's just settle on doing two swapHoles.
+possibleMoves :: Board3 -> [(Coord, Board3)]
+possibleMoves bd = do
+  let holeInd = holeIndex bd
+      hCoord = unindex holeInd
+      movesInOneDir :: GB.Dir -> [(Coord, Board3)]
+      movesInOneDir d = unfoldr go (hCoord, bd)
+        where
+          go (curHCoord, curBd) = do
+            let hCoord' = GB.applyDir curHCoord d
+                bd' = swapHole curBd hCoord'
+                p = (hCoord', bd')
+            guard $ coordInRange hCoord'
+            pure (p, p)
+  foldr
+    (\d m -> m <> movesInOneDir d)
+    []
+    [GB.DUp, GB.DDown, GB.DLeft, GB.DRight]
 
 fromBoard :: GB.Board -> Maybe Board3
 fromBoard GB.Board {GB.bdSize, GB.bdTiles} = do
@@ -103,3 +130,30 @@ toBoard bd = bd'
         x = bdGet bd (r, c)
     tileSource = [[convert r c | c <- [0 .. 2]] | r <- [0 .. 2]]
     bd' = GB.mkBoard tileSource
+
+solveBoard :: Board3 -> Board3 -> [[Coord]]
+solveBoard goal initBoard = runST $ do
+  visited <- HT.new
+  let initQ = [(initBoard, [])]
+  fix
+    (\loop dl -> case dl of
+       [] -> pure []
+       (bd, path) : todos -> do
+         if bd == goal
+           then pure [path]
+           else do
+             r <- HT.lookup visited bd
+             case r of
+               Nothing -> do
+                 HT.insert visited bd ()
+                 let nextMoves :: [(Coord, Board3)]
+                     nextMoves = possibleMoves bd
+                 expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
+                   r' <- HT.lookup visited nextBd
+                   pure $ case r' of
+                     Nothing -> Just (nextBd, coord : path)
+                     Just () -> Nothing
+                 loop (todos <> expanded)
+               Just () ->
+                 loop todos)
+    initQ
