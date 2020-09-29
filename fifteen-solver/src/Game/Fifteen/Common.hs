@@ -158,18 +158,19 @@ pprBoard bd@Board {bdSize} = do
 goalBoard :: Int -> Board
 goalBoard sz = mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
 
-pprSteps :: Board -> [Coord] -> IO ()
+pprSteps :: Board -> [Coord] -> IO (Maybe Board)
 pprSteps initBd allMoves = do
     putStrLn "Initial board:"
     pprBoard initBd
     pprStepsAux (1 :: Int) initBd allMoves
   where
-    pprStepsAux _ _ [] = putStrLn "Done."
+    pprStepsAux _ bd [] = Just bd <$ putStrLn "Done."
     pprStepsAux step bd (coord:ms) = do
       putStrLn $ "Step #" <> show step <> ": " <> show coord
       case lookup coord (possibleMoves bd) of
         Nothing -> do
           putStrLn $ "This move cannot be performed, aborted."
+          pure Nothing
         Just nextBd -> do
           pprBoard nextBd
           pprStepsAux (step+1) nextBd ms

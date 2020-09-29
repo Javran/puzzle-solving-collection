@@ -11,10 +11,11 @@ import Data.Bifunctor
 import qualified Data.DList as DL
 import Data.Function
 import Data.List
+import qualified Data.Map as M
+import Data.Maybe
 import qualified Data.Set as S
 import Data.Tuple
 import qualified Data.Vector as V
-import Debug.Trace
 import Game.Fifteen.Common
 import Game.Fifteen.Types
 
@@ -313,3 +314,37 @@ tryMoveTile srcCoord dstCoord
     mapM_ play moves
     -- TODO: do CW or CCW rotation?
     rotateUntilFit rotatingRect dstCoord srcTile
+
+{-
+  for a n x n board (n > 1), check that first row and col are solved,
+  and produce a (n-1) x (n-1) board with numbers remapped properly.
+ -}
+subBoard :: Board -> Maybe Board
+subBoard bd@Board {bdSize} = do
+  let goal = goalBoard bdSize
+      smallGoal = goalBoard (bdSize -1)
+  guard $ bdGet goal (bdSize -1, bdSize -1) == Nothing
+  guard $ bdGet smallGoal (bdSize -2, bdSize -2) == Nothing
+  do
+    -- check size and expect first row and col to be solved.
+    guard $ bdSize > 1
+    let expectSolvedCoords =
+          [(0, c) | c <- [0 .. bdSize -1]] <> [(r, 0) | r <- [1 .. bdSize -1]]
+    forM_ expectSolvedCoords $ \coord ->
+      guard $ bdGet goal coord == bdGet bd coord
+  let tileMap =
+        M.fromList
+          . fmap
+            (\coord@(r, c) ->
+               ( fromJust $ bdGet goal coord
+               , fromJust $ bdGet smallGoal (r -1, c -1)
+               ))
+          . init -- drop last one, which is Nothing.
+          $ [(r, c) | r <- [1 .. bdSize -1], c <- [1 .. bdSize -1]]
+      tileSource =
+        [ [ fmap (tileMap M.!) $ bdGet bd (r, c)
+          | c <- [1 .. bdSize -1]
+          ]
+        | r <- [1 .. bdSize -1]
+        ]
+  pure $ mkBoard tileSource

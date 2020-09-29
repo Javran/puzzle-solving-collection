@@ -13,10 +13,12 @@ mainSmall = do
   let smallBoard = fromJust . TBT.fromBoard $ demo0
       goal = fromJust . TBT.fromBoard $ goalBoard 3
       steps : _ = (TBT.solveBoard goal smallBoard)
-  pprSteps demo0 steps
+  _ <- pprSteps demo0 steps
+  pure ()
 
 main :: IO ()
 main = do
   let goal = goalBoard 5
       steps:_ = solveBoard goal demo1
-  pprSteps demo1 steps
+  Just bd' <- pprSteps demo1 steps
+  pprBoard (fromJust $ subBoard bd')
