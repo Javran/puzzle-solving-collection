@@ -64,22 +64,22 @@ holeIndex bd = go 0 bd
         else go (i + 1) (shiftR curBd 4)
 
 swapHole :: Board3 -> Coord -> Board3
-swapHole bd coord = bd2
+swapHole bd0 coord = bd1
   where
-    holeBitInd = 4 * holeIndex bd
+    holeBitInd = 4 * holeIndex bd0
     tileBitInd = 4 * index coord
-    tileNum = bdGet bd coord
-    -- we need to: set 0xF to tileInd, set tileNum to holeInd
+    tileNum = bdGet bd0 coord
+    holeMask :: Word64
+    holeMask = shiftL 0xF holeBitInd
     bd1 =
-      foldr (\i curBd -> setBit curBd (tileBitInd + i)) bd [0, 1, 2, 3]
-    bd2 = foldr go bd1 [0, 1, 2, 3]
-      where
-        go i curBd =
-          let modify =
-                if testBit tileNum i
-                  then setBit
-                  else clearBit
-           in modify curBd (holeBitInd + i)
+      -- clear mask bits
+      (bd0 .&. complement holeMask)
+        .|.
+        -- set tileNum to what used to be mask bit positions
+        shiftL (fromIntegral tileNum) holeBitInd
+        .|.
+        -- set 0xF (mask) to what used to be tile positions
+        shiftL 0xF tileBitInd
 
 fromBoard :: GB.Board -> Maybe Board3
 fromBoard GB.Board {GB.bdSize, GB.bdTiles} = do
