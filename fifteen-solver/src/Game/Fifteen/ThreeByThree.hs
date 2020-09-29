@@ -2,26 +2,19 @@
 
 module Game.Fifteen.ThreeByThree where
 
-import Control.Applicative
 import Control.Monad
 import Control.Monad.ST
 import Data.Bits
-import qualified Data.DList as DL
 import Data.Function
-import qualified Data.HashSet as HS
 import Data.HashTable.ST.Basic as HT
-import qualified Data.IntSet as IS
 import Data.List
-import qualified Data.Map as M
 import Data.Maybe
+import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Vector as V
 import Data.Word
--- import Game.Fifteen.Common
-
--- GB for general Board
-import qualified Game.Fifteen.Common as GB -- GB for general Board
+import qualified Game.Fifteen.Common as GB
 import Game.Fifteen.Types (Coord)
-import qualified Game.Fifteen.Types as GB
+import qualified Game.Fifteen.Types as GB -- GB for general Board
 
 {-
   a module specialized for solving 3x3 puzzles.
@@ -131,14 +124,30 @@ toBoard bd = bd'
     tileSource = [[convert r c | c <- [0 .. 2]] | r <- [0 .. 2]]
     bd' = GB.mkBoard tileSource
 
+allCoords :: [Coord]
+allCoords = [(r, c) | r <- [0 .. 2], c <- [0 .. 2]]
+
+distance :: Board3 -> Board3 -> Int
+distance bd0 bd1 = sum $ zipWith coordDist sortedCoords0 sortedCoords1
+  where
+    coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
+    mkSortedCoords :: Board3 -> [Coord]
+    mkSortedCoords bd =
+      -- drop last one (which is 0xF)
+      init $ fmap snd $ sortOn fst $ fmap (\c -> let tile = bdGet bd c in (tile, c)) allCoords
+    sortedCoords0 = mkSortedCoords bd0
+    sortedCoords1 = mkSortedCoords bd1
+
 solveBoard :: Board3 -> Board3 -> [[Coord]]
 solveBoard goal initBoard = runST $ do
   visited <- HT.new
-  let initQ = [(initBoard, [])]
+  let goalDistance = distance goal
+      initQ :: PQ.MinPQueue Int (Board3, [Coord], Int)
+      initQ = PQ.singleton (goalDistance initBoard) (initBoard, [], 0)
   fix
-    (\loop dl -> case dl of
-       [] -> pure []
-       (bd, path) : todos -> do
+    (\loop dl -> case PQ.minView dl of
+       Nothing -> pure []
+       Just ((bd, path, pLen), todos) -> do
          if bd == goal
            then pure [path]
            else do
@@ -151,9 +160,9 @@ solveBoard goal initBoard = runST $ do
                  expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
                    r' <- HT.lookup visited nextBd
                    pure $ case r' of
-                     Nothing -> Just (nextBd, coord : path)
+                     Nothing -> Just (pLen + 1 + goalDistance nextBd, (nextBd, coord : path, pLen + 1))
                      Just () -> Nothing
-                 loop (todos <> expanded)
+                 loop (PQ.union todos (PQ.fromList expanded))
                Just () ->
                  loop todos)
     initQ

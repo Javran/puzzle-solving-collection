@@ -16,6 +16,7 @@ dependencies:
 - split
 - dlist
 - hashtables
+- pqueue
 
 library:
   source-dirs: src

@@ -5,3 +5,6 @@ packages:
 - minesweeper-solver
 - takuzu-solver
 - tents-solver
+
+extra-deps:
+- pqueue-1.4.1.3
