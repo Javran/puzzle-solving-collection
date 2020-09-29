@@ -2,6 +2,7 @@
 
 module Game.Fifteen.Human where
 
+import Control.Applicative ((<|>))
 import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.CPS
@@ -176,7 +177,6 @@ rowCornerRotateSolution =
      -}
     (0, -1)
   ]
-
 colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
 {-
@@ -203,28 +203,36 @@ solveBoard goal initBoard =
       solveCoord (0, 1)
       solveCoord (0, 2)
       solveCoord (0, 3)
+
+      -- note that we do want first row to be fully solved before moving to first col
+      -- otherwise a tile meant for col might stuck in a corner that is tricky
+      -- to get out.
       do
         -- move "5" tile to right position
-        let rRect = findRotatingRect (1, 3) (3, 0)
-        performSimpleSolve rRect (3, 0) (1, 3) (5 -1)
+        tryMoveTile (3, 0) (1, 3)
+
       do
         -- move hole to right place
         (bd, pCoords) <- get
         let path : _ = findPathForHole bd (S.singleton (1, 2)) (S.insert (1, 3) pCoords)
         mapM_ play path
-        pure ()
-      -- TODO: corner rotate.
+
       do
+        -- do corner rotate.
         let rotateMoves = fmap tr rowCornerRotateSolution
             tr (r, c) = (r + 1, c + 3)
         mapM_ play rotateMoves
+        -- trivial solve, just marking it protected
+        solveCoord (0, 4)
+
       solveCoord (1, 0)
       solveCoord (2, 0)
       solveCoord (3, 0)
+
       do
         -- move "21" tile to right position
-        let rRect = findRotatingRect (1, 3) (3, 1)
-        performSimpleSolve rRect (1, 3) (3, 1) (21 -1)
+        tryMoveTile (1, 3) (3, 1)
+
       do
         -- move hole to right place
         (bd, pCoords) <- get
@@ -235,6 +243,8 @@ solveBoard goal initBoard =
         let rotateMoves = fmap tr colCornerRotateSolution
             tr (r, c) = (r + 3, c + 1)
         mapM_ play rotateMoves
+        -- trivial solve, just marking it protected
+        solveCoord (4, 0)
 
 play :: Coord -> Sim ()
 play move = do
@@ -261,29 +271,29 @@ rotateUntilFit rect coord expectedTile = do
     initMoves
 
 solveSimpleTile :: Coord -> Int -> Sim ()
-solveSimpleTile coord goalTile = do
-  (bd, pCoords) <- get
+solveSimpleTile goalCoord@(gR, gC) goalTile = do
+  (bd, _) <- get
   let tileCoord = bdNums bd V.! goalTile
-  unless (coord == tileCoord) $ do
-    let rotatingRect = findRotatingRect coord tileCoord
-        rectCoords = rectToCoords rotatingRect
-    if S.null (S.intersection rectCoords pCoords)
-      then do
-        performSimpleSolve rotatingRect tileCoord coord goalTile
-      else do
-        let (r, c) = coord
-            coord' = (r + 1, c + 1)
-            rotatingRect' =
-              findRotatingRect coord' tileCoord
-            rotatingRect'' = findRotatingRect coord' coord
-        performSimpleSolve rotatingRect' tileCoord coord' goalTile
-        performSimpleSolve rotatingRect'' coord' coord goalTile
-  modify (second (S.insert coord))
+  unless (goalCoord == tileCoord) $ do
+    tryMoveTile tileCoord goalCoord
+      <|> do
+        let goalCoord' = (gR + 1, gC + 1)
+        tryMoveTile tileCoord goalCoord'
+        tryMoveTile goalCoord' goalCoord
+  modify (second (S.insert goalCoord))
 
-performSimpleSolve :: Rect -> Coord -> Coord -> Int -> Sim ()
-performSimpleSolve rotatingRect tileCoord watchCoord goalTile = do
-  (bd, pCoords) <- get
-  let rectCoords = rectToCoords rotatingRect
-  moves : _ <- pure $ findPathForHole bd rectCoords (S.insert tileCoord pCoords)
-  mapM_ play moves
-  rotateUntilFit rotatingRect watchCoord goalTile
+-- this function is guaranteed to not do anything if rect hits protected coords.
+tryMoveTile :: Coord -> Coord -> Sim ()
+tryMoveTile srcCoord dstCoord
+  | srcCoord == dstCoord = pure ()
+  | otherwise = do
+    (bd, pCoords) <- get
+    srcTile <- lift $ bdGet bd srcCoord
+    let rotatingRect = findRotatingRect srcCoord dstCoord
+        rectCoords = rectToCoords rotatingRect
+    guard $ S.null (S.intersection rectCoords pCoords)
+    -- move the hole somewhere into the Rect without moving source tile.
+    moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
+    mapM_ play moves
+    -- TODO: do CW or CCW rotation?
+    rotateUntilFit rotatingRect dstCoord srcTile
