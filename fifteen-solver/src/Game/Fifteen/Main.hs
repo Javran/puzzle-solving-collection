@@ -18,7 +18,7 @@ mainSmall = do
 
 main :: IO ()
 main = do
-  let goal = goalBoard 5
-      steps:_ = solveBoard goal demo1
-  Just bd' <- pprSteps demo1 steps
+  let goal = goalBoard 3
+      steps:_ = solveBoard goal demo0
+  Just bd' <- pprSteps demo0 steps
   pprBoard (fromJust $ subBoard bd')

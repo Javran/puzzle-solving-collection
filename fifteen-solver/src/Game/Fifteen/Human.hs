@@ -17,6 +17,7 @@ import qualified Data.Set as S
 import Data.Tuple
 import qualified Data.Vector as V
 import Game.Fifteen.Common
+import qualified Game.Fifteen.ThreeByThree as TBT
 import Game.Fifteen.Types
 
 {-
@@ -182,10 +183,15 @@ rowCornerRotateSolution =
 colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
 solveBoard :: Board -> Board -> [[Coord]]
-solveBoard goal initBoard@Board {bdSize} =
-  case runRWST solveAux () (initBoard, S.empty) of
-    Just ((), _, moves) -> [DL.toList moves]
-    Nothing -> []
+solveBoard goal initBoard@Board {bdSize}
+  | bdSize == 3 =
+    let Just goal' = TBT.fromBoard goal
+        Just bd' = TBT.fromBoard initBoard
+     in TBT.solveBoard goal' bd'
+  | otherwise = do
+    case runRWST solveAux () (initBoard, S.empty) of
+      Just ((), _, moves) -> [DL.toList moves]
+      Nothing -> []
   where
     solveCoord goalCoord@(gR, gC) = do
       guard $ gR == 0 || gC == 0
