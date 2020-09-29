@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Game.Fifteen.Human where
@@ -179,72 +180,31 @@ rowCornerRotateSolution =
   ]
 colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
-{-
-  TODO Step 1: solve horizontal "AAAAA".
-
-  To move a tile to target position:
-  - find a rectangle (both side length must be >= 2)
-  - move the blank tile into rectangle
-  - rotate.
- -}
 solveBoard :: Board -> Board -> [[Coord]]
-solveBoard goal initBoard =
+solveBoard goal initBoard@Board {bdSize} =
   case runRWST solveAux () (initBoard, S.empty) of
     Just ((), _, moves) -> [DL.toList moves]
     Nothing -> []
   where
-    solveCoord coord = do
-      let Just goalTile = bdGet goal coord
-      solveSimpleTile coord goalTile
+    solveCoord goalCoord@(gR, gC) = do
+      guard $ gR == 0 || gC == 0
+      let Just goalTile = bdGet goal goalCoord
+      if
+          | goalCoord == (0, bdSize -1) ->
+            solveLastTile True goalCoord goalTile
+          | goalCoord == (bdSize -1, 0) ->
+            solveLastTile False goalCoord goalTile
+          | otherwise ->
+            solveSimpleTile goalCoord goalTile
 
     solveAux :: Sim ()
-    solveAux = do
-      solveCoord (0, 0)
-      solveCoord (0, 1)
-      solveCoord (0, 2)
-      solveCoord (0, 3)
-
+    solveAux =
       -- note that we do want first row to be fully solved before moving to first col
       -- otherwise a tile meant for col might stuck in a corner that is tricky
       -- to get out.
-      do
-        -- move "5" tile to right position
-        tryMoveTile (3, 0) (1, 3)
-
-      do
-        -- move hole to right place
-        (bd, pCoords) <- get
-        let path : _ = findPathForHole bd (S.singleton (1, 2)) (S.insert (1, 3) pCoords)
-        mapM_ play path
-
-      do
-        -- do corner rotate.
-        let rotateMoves = fmap tr rowCornerRotateSolution
-            tr (r, c) = (r + 1, c + 3)
-        mapM_ play rotateMoves
-        -- trivial solve, just marking it protected
-        solveCoord (0, 4)
-
-      solveCoord (1, 0)
-      solveCoord (2, 0)
-      solveCoord (3, 0)
-
-      do
-        -- move "21" tile to right position
-        tryMoveTile (1, 3) (3, 1)
-
-      do
-        -- move hole to right place
-        (bd, pCoords) <- get
-        let path : _ = findPathForHole bd (S.singleton (2, 1)) (S.insert (3, 1) pCoords)
-        mapM_ play path
-        pure ()
-      do
-        let rotateMoves = fmap tr colCornerRotateSolution
-            tr (r, c) = (r + 3, c + 1)
-        mapM_ play rotateMoves
-        -- trivial solve, just marking it protected
-        solveCoord (4, 0)
+      mapM_ solveCoord $
+        [(0, c) | c <- [0 .. bdSize -1]]
+          <> [(r, 0) | r <- [1 .. bdSize -1]]
 
 play :: Coord -> Sim ()
 play move = do
@@ -269,6 +229,62 @@ rotateUntilFit rect coord expectedTile = do
            Nothing -> loop moves
            Just _ -> play move >> loop moves)
     initMoves
+
+solveLastTile :: Bool -> Coord -> Int -> Sim ()
+solveLastTile isRow goalCoord goalTile = do
+  (bd, _) <- get
+  let tileCoord = bdNums bd V.! goalTile
+      [holeSetupCoord, goalSetupCoord, bestTileCoord] =
+        fmap (coordAdd goalCoord) $
+          if isRow
+            then rowRelativeCoords
+            else colRelativeCoords
+      Board {bdHole} = bd
+      nextToGoal =
+        -- if the hole is where we want to go
+        -- and tileCoord is right next to the hole
+        bdHole == goalCoord && tileCoord == bestTileCoord
+  unless (goalCoord == tileCoord) $
+    if nextToGoal
+      then play tileCoord
+      else do
+        -- move tile to setup position.
+        tryMoveTile tileCoord goalSetupCoord
+
+        -- move hole to right place
+        (bd', pCoords) <- get
+        let path : _ =
+              findPathForHole
+                bd'
+                (S.singleton holeSetupCoord)
+                (S.insert goalSetupCoord pCoords)
+        mapM_ play path
+
+        -- do corner rotate.
+        let rotateMoves =
+              fmap (coordAdd goalSetupCoord) $
+                if isRow
+                  then rowCornerRotateSolution
+                  else colCornerRotateSolution
+        mapM_ play rotateMoves
+  modify (second (S.insert goalCoord))
+  where
+    {-
+      For row. all coords are relative to goalCoord:
+
+      ??? ??? GC
+      HSC GSC BTC
+
+      GC: goalCoord
+      HSC: holeSetupCoord
+      GSC: goalSetupCoord
+      BTC: bestTileCoord
+
+      relative positions are order in [HSC, GSC, BTC]
+     -}
+    rowRelativeCoords = [(1, -2), (1, -1), (1, 0)]
+    colRelativeCoords = fmap swap rowRelativeCoords
+    coordAdd (a, b) (c, d) = (a + c, b + d)
 
 solveSimpleTile :: Coord -> Int -> Sim ()
 solveSimpleTile goalCoord@(gR, gC) goalTile = do
