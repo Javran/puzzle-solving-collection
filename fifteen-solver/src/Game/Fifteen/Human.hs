@@ -5,11 +5,14 @@ module Game.Fifteen.Human where
 import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.CPS
+import Data.Bifunctor
 import qualified Data.DList as DL
 import Data.Function
 import Data.List
 import qualified Data.Set as S
+import Data.Tuple
 import qualified Data.Vector as V
+import Debug.Trace
 import Game.Fifteen.Common
 import Game.Fifteen.Types
 
@@ -54,18 +57,18 @@ minMax a b = if a <= b then (a, b) else (b, a)
 findRotatingRect :: Coord -> Coord -> Rect
 findRotatingRect target@(tr, tc) cur@(cr, cc)
   | target == cur =
-    error "This function should not be called"
+    error "This function should not be called with identical coords"
   | tr == cr =
     let (minR, maxR) = (tr, tr + 1)
-        (minC, maxC) = (tc, cc)
+        (minC, maxC) = minMax tc cc
      in ((minR, minC), (maxR, maxC))
   | tc == cc =
-    let (minR, maxR) = (tr, cr)
+    let (minR, maxR) = minMax tr cr
         (minC, maxC) = (tc, tc + 1)
      in ((minR, minC), (maxR, maxC))
   | otherwise =
-    let (minR, maxR) = (tr, cr)
-        (minC, maxC) = (tc, cc)
+    let (minR, maxR) = minMax tr cr
+        (minC, maxC) = minMax tc cc
      in ((minR, minC), (maxR, maxC))
 
 {-
@@ -75,16 +78,23 @@ findRotatingRect target@(tr, tc) cur@(cr, cc)
  -}
 type ProtectedCoords = S.Set Coord
 
--- plan a path for hole to move to a Rect without touching
+rectToCoords :: Rect -> S.Set Coord
+rectToCoords ((rMin, cMin), (rMax, cMax)) =
+  S.fromList $
+    [(rMin, c) | c <- [cMin .. cMax]]
+      <> [(rMax, c) | c <- [cMin .. cMax]]
+      <> [(r, cMin) | r <- [rMin .. rMax]]
+      <> [(r, cMax) | r <- [rMin .. rMax]]
+
+-- plan a path for hole to move to any targets of a Set without touching
 -- any protected coords.
-findPathForHole :: Board -> Rect -> ProtectedCoords -> [[Coord]]
-findPathForHole bd@Board {bdHole} ((rMin, cMin), (rMax, cMax)) pCoords =
+findPathForHole :: Board -> S.Set Coord -> ProtectedCoords -> [[Coord]]
+findPathForHole bd@Board {bdHole} targetCoordsPre pCoords =
   findPath [(bdHole, [])] S.empty
   where
-    targetCoords =
-      S.fromList [(r, c) | r <- [rMin .. rMax], c <- [cMin .. cMax]]
-        `S.difference` pCoords
+    targetCoords = targetCoordsPre `S.difference` pCoords
     findPath :: [(Coord, [Coord])] -> S.Set Coord -> [[Coord]]
+    findPath [] _ = []
     findPath ((coord, path) : todos) visited
       | S.member coord targetCoords = pure (reverse path)
       | S.member coord visited = findPath todos visited
@@ -103,7 +113,71 @@ findPathForHole bd@Board {bdHole} ((rMin, cMin), (rMax, cMax)) pCoords =
         findPath todos' (S.insert coord visited)
 
 -- Sim for Simulator.
-type Sim = RWST () (DL.DList Coord) Board Maybe
+type Sim = RWST () (DL.DList Coord) (Board, ProtectedCoords) Maybe
+
+{-
+  A sequence of operations moving the center tile (0,0) into corner (-1,1).
+
+  This sequence assumes an initial state:
+
+  a b c
+  E x d
+  ? ? ?
+
+  where:
+  - E is the empty tile
+  - x is the tile we want to move to where c currently is.
+  - the position of a and b must be preserved after this sequence of operations.
+  -  we don't care about where ?,c,d end up being.
+
+ -}
+rowCornerRotateSolution, colCornerRotateSolution :: [Coord]
+rowCornerRotateSolution =
+  [ {-
+      a b c    E b c
+      E x d => a x d
+      ? ? ?    ? ? ?
+     -}
+    (-1, -1)
+  , {-
+      E b c    b E c
+      a x d => a x d
+      ? ? ?    ? ? ?
+     -}
+    (-1, 0)
+  , {-
+      b E c    b x c
+      a x d => a E d
+      ? ? ?    ? ? ?
+     -}
+    (0, 0)
+  , {-
+      b x c    b x c
+      a E d => a d E
+      ? ? ?    ? ? ?
+     -}
+    (0, 1)
+  , {-
+      b x c    b x E
+      a d E => a d c
+      ? ? ?    ? ? ?
+     -}
+    (-1, 1)
+  , {-
+      b x E    E b x
+      a d c => a d c
+      ? ? ?    ? ? ?
+     -}
+    (-1, -1)
+  , {-
+      E b x    a b x
+      a d c => E d c
+      ? ? ?    ? ? ?
+     -}
+    (0, -1)
+  ]
+
+colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
 {-
   TODO Step 1: solve horizontal "AAAAA".
@@ -115,49 +189,101 @@ type Sim = RWST () (DL.DList Coord) Board Maybe
  -}
 solveBoard :: Board -> Board -> [[Coord]]
 solveBoard goal initBoard =
-  if initTileCoord == (0, 0)
-    then []
-    else case runRWST solveAux () initBoard of
-      Just ((), _, moves) -> [DL.toList moves]
-      Nothing -> []
+  case runRWST solveAux () (initBoard, S.empty) of
+    Just ((), _, moves) -> [DL.toList moves]
+    Nothing -> []
   where
-    -- TODO: let's just solve top-left corner first.
-    Just goalTile = bdGet goal (0, 0)
-    initTileCoord = bdNums initBoard V.! goalTile
-
-    play :: Coord -> Sim ()
-    play move = do
-      allMoves <- gets possibleMoves
-      bd' <- lift $ lookup move allMoves
-      put bd'
-      tell $ DL.singleton move
-
-    -- rotate until coord is set to a certain tile
-    rotateUntilFit :: Rect -> Coord -> Int -> Sim ()
-    rotateUntilFit rect coord expectedTile = do
-      let ((rMin, cMin), (rMax, cMax)) = rect
-          initMoves :: [Coord]
-          initMoves = cycle [(rMin, cMin), (rMin, cMax), (rMax, cMax), (rMax, cMin)]
-      fix
-        (\loop (move : moves) -> do
-           bd <- get
-           let tile = bdGet bd coord
-           if tile == Just expectedTile
-             then pure ()
-             else
-               case lookup move (possibleMoves bd) of
-                 Nothing -> loop moves
-                 Just _ -> play move >> loop moves)
-        initMoves
+    solveCoord coord = do
+      let Just goalTile = bdGet goal coord
+      solveSimpleTile coord goalTile
 
     solveAux :: Sim ()
     solveAux = do
-      bd <- get
-      let tileCoord = bdNums bd V.! goalTile
-          rotatingRect =
-            findRotatingRect (0, 0) tileCoord
-      moves : _ <-
-        pure $
-          findPathForHole bd rotatingRect (S.singleton tileCoord)
-      mapM_ play moves
-      rotateUntilFit rotatingRect (0,0) goalTile
+      solveCoord (0, 0)
+      solveCoord (0, 1)
+      solveCoord (0, 2)
+      solveCoord (0, 3)
+      do
+        -- move "5" tile to right position
+        let rRect = findRotatingRect (1, 3) (3, 0)
+        performSimpleSolve rRect (3, 0) (1, 3) (5 -1)
+      do
+        -- move hole to right place
+        (bd, pCoords) <- get
+        let path : _ = findPathForHole bd (S.singleton (1, 2)) (S.insert (1, 3) pCoords)
+        mapM_ play path
+        pure ()
+      -- TODO: corner rotate.
+      do
+        let rotateMoves = fmap tr rowCornerRotateSolution
+            tr (r, c) = (r + 1, c + 3)
+        mapM_ play rotateMoves
+      solveCoord (1, 0)
+      solveCoord (2, 0)
+      solveCoord (3, 0)
+      do
+        -- move "21" tile to right position
+        let rRect = findRotatingRect (1, 3) (3, 1)
+        performSimpleSolve rRect (1, 3) (3, 1) (21 -1)
+      do
+        -- move hole to right place
+        (bd, pCoords) <- get
+        let path : _ = findPathForHole bd (S.singleton (2, 1)) (S.insert (3, 1) pCoords)
+        mapM_ play path
+        pure ()
+      do
+        let rotateMoves = fmap tr colCornerRotateSolution
+            tr (r, c) = (r + 3, c + 1)
+        mapM_ play rotateMoves
+
+play :: Coord -> Sim ()
+play move = do
+  allMoves <- gets (possibleMoves . fst)
+  bd' <- lift $ lookup move allMoves
+  modify (first (const bd'))
+  tell $ DL.singleton move
+
+-- rotate until coord is set to a certain tile
+rotateUntilFit :: Rect -> Coord -> Int -> Sim ()
+rotateUntilFit rect coord expectedTile = do
+  let ((rMin, cMin), (rMax, cMax)) = rect
+      initMoves :: [Coord]
+      initMoves = cycle [(rMin, cMin), (rMin, cMax), (rMax, cMax), (rMax, cMin)]
+  fix
+    (\loop (move : moves) -> do
+       bd <- gets fst
+       let tile = bdGet bd coord
+       if tile == Just expectedTile
+         then pure ()
+         else case lookup move (possibleMoves bd) of
+           Nothing -> loop moves
+           Just _ -> play move >> loop moves)
+    initMoves
+
+solveSimpleTile :: Coord -> Int -> Sim ()
+solveSimpleTile coord goalTile = do
+  (bd, pCoords) <- get
+  let tileCoord = bdNums bd V.! goalTile
+  unless (coord == tileCoord) $ do
+    let rotatingRect = findRotatingRect coord tileCoord
+        rectCoords = rectToCoords rotatingRect
+    if S.null (S.intersection rectCoords pCoords)
+      then do
+        performSimpleSolve rotatingRect tileCoord coord goalTile
+      else do
+        let (r, c) = coord
+            coord' = (r + 1, c + 1)
+            rotatingRect' =
+              findRotatingRect coord' tileCoord
+            rotatingRect'' = findRotatingRect coord' coord
+        performSimpleSolve rotatingRect' tileCoord coord' goalTile
+        performSimpleSolve rotatingRect'' coord' coord goalTile
+  modify (second (S.insert coord))
+
+performSimpleSolve :: Rect -> Coord -> Coord -> Int -> Sim ()
+performSimpleSolve rotatingRect tileCoord watchCoord goalTile = do
+  (bd, pCoords) <- get
+  let rectCoords = rectToCoords rotatingRect
+  moves : _ <- pure $ findPathForHole bd rectCoords (S.insert tileCoord pCoords)
+  mapM_ play moves
+  rotateUntilFit rotatingRect watchCoord goalTile
