@@ -3,6 +3,10 @@
 module Game.Fifteen.Human where
 
 import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.RWS.CPS
+import qualified Data.DList as DL
+import Data.Function
 import Data.List
 import qualified Data.Set as S
 import qualified Data.Vector as V
@@ -98,6 +102,9 @@ findPathForHole bd@Board {bdHole} ((rMin, cMin), (rMax, cMax)) pCoords =
             todos' = todos <> fmap (\x -> (x, x : path)) nextCoords
         findPath todos' (S.insert coord visited)
 
+-- Sim for Simulator.
+type Sim = RWST () (DL.DList Coord) Board Maybe
+
 {-
   TODO Step 1: solve horizontal "AAAAA".
 
@@ -110,11 +117,47 @@ solveBoard :: Board -> Board -> [[Coord]]
 solveBoard goal initBoard =
   if initTileCoord == (0, 0)
     then []
-    else do
-      let rotatingRect = findRotatingRect (0,0) initTileCoord
-      path <- take 1 $ findPathForHole initBoard rotatingRect (S.singleton initTileCoord)
-      [path]
+    else case runRWST solveAux () initBoard of
+      Just ((), _, moves) -> [DL.toList moves]
+      Nothing -> []
   where
     -- TODO: let's just solve top-left corner first.
     Just goalTile = bdGet goal (0, 0)
     initTileCoord = bdNums initBoard V.! goalTile
+
+    play :: Coord -> Sim ()
+    play move = do
+      allMoves <- gets possibleMoves
+      bd' <- lift $ lookup move allMoves
+      put bd'
+      tell $ DL.singleton move
+
+    -- rotate until coord is set to a certain tile
+    rotateUntilFit :: Rect -> Coord -> Int -> Sim ()
+    rotateUntilFit rect coord expectedTile = do
+      let ((rMin, cMin), (rMax, cMax)) = rect
+          initMoves :: [Coord]
+          initMoves = cycle [(rMin, cMin), (rMin, cMax), (rMax, cMax), (rMax, cMin)]
+      fix
+        (\loop (move : moves) -> do
+           bd <- get
+           let tile = bdGet bd coord
+           if tile == Just expectedTile
+             then pure ()
+             else
+               case lookup move (possibleMoves bd) of
+                 Nothing -> loop moves
+                 Just _ -> play move >> loop moves)
+        initMoves
+
+    solveAux :: Sim ()
+    solveAux = do
+      bd <- get
+      let tileCoord = bdNums bd V.! goalTile
+          rotatingRect =
+            findRotatingRect (0, 0) tileCoord
+      moves : _ <-
+        pure $
+          findPathForHole bd rotatingRect (S.singleton tileCoord)
+      mapM_ play moves
+      rotateUntilFit rotatingRect (0,0) goalTile
