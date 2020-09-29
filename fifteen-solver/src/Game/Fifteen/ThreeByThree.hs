@@ -5,6 +5,7 @@ module Game.Fifteen.ThreeByThree where
 import Control.Monad
 import Control.Monad.ST
 import Data.Bits
+import qualified Data.DList as DL
 import Data.Function
 import Data.HashTable.ST.Basic as HT
 import Data.List
@@ -142,14 +143,14 @@ solveBoard :: Board3 -> Board3 -> [[Coord]]
 solveBoard goal initBoard = runST $ do
   visited <- HT.new
   let goalDistance = distance goal
-      initQ :: PQ.MinPQueue Int (Board3, [Coord], Int)
-      initQ = PQ.singleton (goalDistance initBoard) (initBoard, [], 0)
+      initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
+      initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
   fix
     (\loop dl -> case PQ.minView dl of
        Nothing -> pure []
        Just ((bd, path, pLen), todos) -> do
          if bd == goal
-           then pure [path]
+           then pure [DL.toList path]
            else do
              r <- HT.lookup visited bd
              case r of
@@ -160,7 +161,11 @@ solveBoard goal initBoard = runST $ do
                  expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
                    r' <- HT.lookup visited nextBd
                    pure $ case r' of
-                     Nothing -> Just (pLen + 1 + goalDistance nextBd, (nextBd, coord : path, pLen + 1))
+                     Nothing ->
+                       Just
+                         ( pLen + 1 + goalDistance nextBd
+                         , (nextBd, DL.snoc path coord, pLen + 1)
+                         )
                      Just () -> Nothing
                  loop (PQ.union todos (PQ.fromList expanded))
                Just () ->
