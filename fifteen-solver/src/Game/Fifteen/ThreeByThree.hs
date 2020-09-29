@@ -14,11 +14,12 @@ import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Vector as V
 import Data.Word
-import Debug.Trace
 -- import Game.Fifteen.Common
-import Game.Fifteen.Types (Coord)
-import qualified Game.Fifteen.Types as GB -- GB for general Board
+
+-- GB for general Board
 import qualified Game.Fifteen.Common as GB -- GB for general Board
+import Game.Fifteen.Types (Coord)
+import qualified Game.Fifteen.Types as GB
 
 {-
   a module specialized for solving 3x3 puzzles.
@@ -39,16 +40,46 @@ import qualified Game.Fifteen.Common as GB -- GB for general Board
 
  -}
 type Board3 = Word64
-type Tile = Word8
+
+type Tile = Word8 -- only valid values are 0-7 and 15.
 
 index :: Coord -> Int
-index (r,c) = r*3 + c
+index (r, c) = r * 3 + c
+
+unindex :: Int -> Coord
+unindex = (`quotRem` 3)
 
 bdGet :: Board3 -> Coord -> Tile
 bdGet bd coord = fromIntegral $ wide .&. 0xF
- where
-   wide :: Word64
-   wide = bd `shiftR` (4 * index coord)
+  where
+    wide :: Word64
+    wide = bd `shiftR` (4 * index coord)
+
+holeIndex :: Board3 -> Int
+holeIndex bd = go 0 bd
+  where
+    go i curBd =
+      if curBd .&. 0xF == 0xF
+        then i
+        else go (i + 1) (shiftR curBd 4)
+
+swapHole :: Board3 -> Coord -> Board3
+swapHole bd coord = bd2
+  where
+    holeBitInd = 4 * holeIndex bd
+    tileBitInd = 4 * index coord
+    tileNum = bdGet bd coord
+    -- we need to: set 0xF to tileInd, set tileNum to holeInd
+    bd1 =
+      foldr (\i curBd -> setBit curBd (tileBitInd + i)) bd [0, 1, 2, 3]
+    bd2 = foldr go bd1 [0, 1, 2, 3]
+      where
+        go i curBd =
+          let modify =
+                if testBit tileNum i
+                  then setBit
+                  else clearBit
+           in modify curBd (holeBitInd + i)
 
 fromBoard :: GB.Board -> Maybe Board3
 fromBoard GB.Board {GB.bdSize, GB.bdTiles} = do
@@ -69,6 +100,6 @@ toBoard bd = bd'
   where
     convert r c = if x == 0xF then Nothing else Just (fromIntegral x)
       where
-        x = bdGet bd (r,c)
-    tileSource = [ [ convert r c | c<- [0..2]] | r <- [0..2] ]
+        x = bdGet bd (r, c)
+    tileSource = [[convert r c | c <- [0 .. 2]] | r <- [0 .. 2]]
     bd' = GB.mkBoard tileSource
