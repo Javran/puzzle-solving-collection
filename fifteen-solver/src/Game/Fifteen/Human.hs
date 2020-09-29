@@ -5,6 +5,7 @@ module Game.Fifteen.Human where
 import Control.Monad
 import Data.List
 import qualified Data.Set as S
+import qualified Data.Vector as V
 import Game.Fifteen.Common
 import Game.Fifteen.Types
 
@@ -94,7 +95,7 @@ findPathForHole bd@Board {bdHole} ((rMin, cMin), (rMax, cMax)) pCoords =
             nextCoords =
               filter (`S.notMember` visited) $
                 concatMap coordsInOneDir [DUp, DDown, DLeft, DRight]
-            todos' = todos <> fmap (\x -> (x, x:path)) nextCoords
+            todos' = todos <> fmap (\x -> (x, x : path)) nextCoords
         findPath todos' (S.insert coord visited)
 
 {-
@@ -102,8 +103,18 @@ findPathForHole bd@Board {bdHole} ((rMin, cMin), (rMax, cMax)) pCoords =
 
   To move a tile to target position:
   - find a rectangle (both side length must be >= 2)
-  - move the blank tile into circle
+  - move the blank tile into rectangle
   - rotate.
  -}
 solveBoard :: Board -> Board -> [[Coord]]
-solveBoard goal initBoard = []
+solveBoard goal initBoard =
+  if initTileCoord == (0, 0)
+    then []
+    else do
+      let rotatingRect = findRotatingRect (0,0) initTileCoord
+      path <- take 1 $ findPathForHole initBoard rotatingRect (S.singleton initTileCoord)
+      [path]
+  where
+    -- TODO: let's just solve top-left corner first.
+    Just goalTile = bdGet goal (0, 0)
+    initTileCoord = bdNums initBoard V.! goalTile
