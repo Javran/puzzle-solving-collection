@@ -3,7 +3,7 @@
 
 module Game.Fifteen.Human where
 
-import Control.Applicative ((<|>))
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.CPS
@@ -184,13 +184,20 @@ colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
 solveBoard :: Board -> Board -> [[Coord]]
 solveBoard goal initBoard@Board {bdSize}
+  | bdSize <= 1 = [[]]
+  | bdSize < 3 = error "not supported yet."
   | bdSize == 3 =
     let Just goal' = TBT.fromBoard goal
         Just bd' = TBT.fromBoard initBoard
      in TBT.solveBoard goal' bd'
   | otherwise = do
+    -- bdSize > 3
     case runRWST solveAux () (initBoard, S.empty) of
-      Just ((), _, moves) -> [DL.toList moves]
+      Just (bdEnd, _, moves) -> do
+        Just smBd@(Board {bdSize = smBdSize}) <- pure (subBoard bdEnd)
+        let smGoal = goalBoard smBdSize
+        smMoves <- solveBoard smGoal smBd
+        pure $ DL.toList moves <> fmap (\(r, c) -> (r + 1, c + 1)) smMoves
       Nothing -> []
   where
     solveCoord goalCoord@(gR, gC) = do
@@ -204,14 +211,15 @@ solveBoard goal initBoard@Board {bdSize}
           | otherwise ->
             solveSimpleTile goalCoord goalTile
 
-    solveAux :: Sim ()
-    solveAux =
+    solveAux :: Sim Board
+    solveAux = do
       -- note that we do want first row to be fully solved before moving to first col
       -- otherwise a tile meant for col might stuck in a corner that is tricky
       -- to get out.
       mapM_ solveCoord $
         [(0, c) | c <- [0 .. bdSize -1]]
           <> [(r, 0) | r <- [1 .. bdSize -1]]
+      gets fst
 
 play :: Coord -> Sim ()
 play move = do
