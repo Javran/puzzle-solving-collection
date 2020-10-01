@@ -88,6 +88,51 @@ bdParity Board {bdSize, bdTiles} = odd count
           mergeSortFromListN (bdSize * bdSize -1) $
             catMaybes $ V.toList bdTiles
 
+-- TODO: to be tested.
+{-
+  TODO: now I think I understands what wikipedia is saying:
+  - if we treat the empty tile as tile bdSize*bdSize, we actually can compute the parity of permutation
+    of the whole board, rather than just bdSize*bdSize-1 tiles.
+  - now it makes sense:
+    - every move "moves" the empty tile, which means the parity of its row+col changes
+      (we are counting from bottom-right because it is empty tile's "home")
+    - a left or right move changes the number of inversions by one, therefore flips parity
+    - an up or down move changes ... well this is the tricky bit, as it swaps two tiles
+      and I haven't figured it out why the parity changes.
+ -}
+isSolvable :: Board -> Bool
+isSolvable bd@Board {bdSize, bdHole = (row, _c)} =
+  if odd bdSize
+    then -- If the grid width is odd, then the number of inversions in a solvable situation is even.
+      not bp
+    else
+      if {-
+           it's tricky to get it right since we are doing zero-based indexing, so let's do an example:
+           Suppose we have a board of bdSize = 6, we have row #0, #1, #2, #3, #4, #5
+           If we do `bdSize-row` to count from the bottom row:
+
+           - last row is #5, 6-5=1, odd
+           - second-last row is #4, 6-4=2, even
+
+           But bdSize is always an even number in this branch, it doesn't affect parity in any way,
+           so we can just test the parity of row, which should give the same result.
+          -}
+      even row
+        then {-
+                If the grid width is even, and the blank is on an even row
+                counting from the bottom (second-last, fourth-last etc),
+                then the number of inversions in a solvable situation is odd.
+              -}
+          not bp
+        else {-
+                If the grid width is even, and the blank is on an odd row
+                counting from the bottom (last, third-last, fifth-last etc)
+                then the number of inversions in a solvable situation is even.
+             -}
+          bp
+  where
+    bp = bdParity bd
+
 testMergeSort :: IO ()
 testMergeSort = do
   let src :: [Int]

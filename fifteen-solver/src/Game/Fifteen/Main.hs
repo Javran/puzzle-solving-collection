@@ -53,6 +53,7 @@ main = do
               ]
           Just bd = mkBoardFromRaw raw
       demo bd
+      print (isSolvable bd)
     ["stdin"] -> do
       xs <- getContents
       let Just bd = mkBoardFromRaw xs
