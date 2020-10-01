@@ -1,5 +1,6 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -10,12 +11,24 @@ import Control.Monad.ST
 import Control.Monad.Trans.Writer
 import Data.Function
 import Data.List
+import Data.Maybe
 import Data.Monoid
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
+import Game.Fifteen.Types
 
--- Reference: https://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
+{-
+  Reference: https://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
 
+  TODO: I'm still a bit doubtful about the empty cell bit, however:
+  - why does it matter whether we count from *row*, rather than *colum*?
+  - why does it matter we count from last row?
+
+ -}
+
+{-
+  Actually, this is inversion counting and mergeSort is just a side-effect.
+ -}
 mergeSortFromListN :: forall a s. Ord a => Int -> [a] -> WriterT (Sum Int) (ST s) (V.Vector a)
 mergeSortFromListN n xs = do
   -- actually safe to do as this is the only function holding this `v` reference.
@@ -66,10 +79,19 @@ mergeSortFromListN n xs = do
   sortAux 0 (VM.length v -1)
   V.unsafeFreeze v
 
+bdParity :: Board -> Bool
+bdParity Board {bdSize, bdTiles} = odd count
+  where
+    (_, Sum count) =
+      runST $
+        runWriterT $
+          mergeSortFromListN (bdSize * bdSize -1) $
+            catMaybes $ V.toList bdTiles
+
 testMergeSort :: IO ()
 testMergeSort = do
   let src :: [Int]
-      src = [27, 79, 25, 6, 33, 31, 95, 64, 29, 77, 23, 62, 16, 89, 20, 80, 54, 52, 60, 70, 12, 64, 1, 24, 30, 2, 37, 34, 61, 37, 94, 70, 86, 7, 26, 49, 1, 79, 27, 40, 65, 25, 39, 11, 34, 58, 95, 3, 80, 43, 13, 30, 41, 13, 42, 100, 65, 84, 69, 52, 29, 67, 11, 69, 96, 51, 32, 38, 48, 17, 71, 32, 88, 98, 82, 5, 86, 34, 76, 18, 87, 47, 60, 21, 90, 55, 74, 27, 41, 26, 39, 61, 12, 43, 26, 4, 54, 97, 80, 14]
+      src = [27, 79, 25, 6, 33, 31, 95, 64, 29, 77, 23, 62, 16, 89, 20, 80, 54, 52]
       (ys, count) = runST $ runWriterT $ mergeSortFromListN (length src) src
   print (V.toList ys == sort src)
   print count
