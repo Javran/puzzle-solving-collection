@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
 
 module Game.Torus.Main
@@ -31,7 +32,6 @@ data Move
   | MoveUp {mIndex :: Int, mStep :: Int}
   | MoveDown {mIndex :: Int, mStep :: Int}
 
-
 {-
   Normalize a Move in preparation of performing action on the board.
   Note that we only need left and up because for a Board of X rows,
@@ -49,10 +49,14 @@ data Move
  -}
 normalizeMove :: Board -> Move -> Move
 normalizeMove Board {bdDims = (rows, cols)} m = case m of
-  MoveLeft i s -> MoveLeft i (s `mod` rows)
-  MoveRight i s -> MoveLeft i ((- s) `mod` rows)
-  MoveUp i s -> MoveUp i (s `mod` cols)
-  MoveDown i s -> MoveUp i ((- s) `mod` cols)
+  MoveLeft i s ->
+    MoveLeft i (s `mod` rows)
+  MoveRight i s ->
+    MoveLeft i ((- s) `mod` rows)
+  MoveUp i s ->
+    MoveUp i (s `mod` cols)
+  MoveDown i s ->
+    MoveUp i ((- s) `mod` cols)
 
 {-
   basic operation of rotating a list towards left,
@@ -62,6 +66,39 @@ normalizeMove Board {bdDims = (rows, cols)} m = case m of
  -}
 rotateLeft :: Int -> [a] -> [a]
 rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs
+
+{-
+  focus on a row and apply action to it. This action is only allow
+  to re-order elements.
+  note that element presence and list length after the action is not checked.
+ -}
+operateOnRow :: Board -> Int -> (forall a. [a] -> [a]) -> Board
+operateOnRow bd@Board {bdDims = (_, cols), bdTiles} r action =
+  bd {bdTiles = bdTiles V.// zip linearIndices xs'}
+  where
+    -- from (r, 0) to (r, cols-1)
+    linearIndices =
+      [r * cols .. r * cols + cols -1]
+    xs = fmap (bdTiles V.!) linearIndices
+    xs' = action xs
+
+operateOnCol :: Board -> Int -> (forall a. [a] -> [a]) -> Board
+operateOnCol bd@Board {bdDims = (rows, cols), bdTiles} c action =
+  bd {bdTiles = bdTiles V.// zip linearIndices xs'}
+  where
+    -- from (0, c) to (rows-1, c)
+    linearIndices =
+      [c, c + cols .. c + cols * (rows -1)]
+    xs = fmap (bdTiles V.!) linearIndices
+    xs' = action xs
+
+applyMove :: Board -> Move -> Board
+applyMove bd mPre = case m of
+  MoveLeft r s -> operateOnRow bd r (rotateLeft s)
+  MoveUp c s -> operateOnCol bd c (rotateLeft s)
+  _ -> error "unreachable."
+  where
+    m = normalizeMove bd mPre
 
 mkBoard :: BoardRep -> Maybe Board
 mkBoard (bdDims@(rows, cols), tiles) = do
@@ -115,4 +152,8 @@ pprBoard bd@Board {bdDims = (rows, cols)} = do
 main :: IO ()
 main = do
   let Just bd = parseBoard demo0 >>= mkBoard
+      bd1 = applyMove bd (MoveLeft 3 2)
+      bd2 = applyMove bd1 (MoveDown 5 4)
   pprBoard bd
+  pprBoard bd1
+  pprBoard bd2
