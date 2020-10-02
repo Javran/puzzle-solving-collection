@@ -21,6 +21,45 @@ data Board = Board
 
 type Coord = (Int, Int)
 
+{-
+  mIndex describes which row or col it's operation on
+  mStep is, well, steps of the move.
+
+  We only need left and up because for a Board of X rows,
+
+  MLeft r u == MRight r (X-u)
+
+  something similar applies to columns too.
+
+  we can go further to enforce that:
+  - 0 <= mIndex < rows for MLeft
+  - 0 <= mIndex < cols for MRight
+  so that all moves except no-op are uniquely represented.
+ -}
+data Move
+  = MoveLeft {mIndex :: Int, mStep :: Int}
+  | MoveUp {mIndex :: Int, mStep :: Int}
+
+-- smart constructors. avoid using MoveLeft or MoveRight directly.
+moveLeft, moveRight, moveUp, moveDown :: Board -> Int -> Int -> Move
+moveLeft Board {bdDims = (rows, _)} i s =
+  MoveLeft i (s `mod` rows)
+moveRight Board {bdDims = (rows, _)} i s =
+  MoveLeft i ((- s) `mod` rows)
+moveUp Board {bdDims = (_, cols)} i s =
+  MoveUp i (s `mod` cols)
+moveDown Board {bdDims = (_, cols)} i s =
+  MoveUp i ((- s) `mod` cols)
+
+{-
+  basic operation of rotating a list towards left,
+  e.g. rotateLeft 3 "ABCDE" == "DEABC"
+
+  only works when n >= 0.
+ -}
+rotateLeft :: Int -> [a] -> [a]
+rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs
+
 mkBoard :: BoardRep -> Maybe Board
 mkBoard (bdDims@(rows, cols), tiles) = do
   let flat = concat tiles
@@ -61,7 +100,10 @@ pprBoard bd@Board {bdDims = (rows, cols)} = do
   printSep "╔" "╦" "╗"
   forM_ [0 .. rows -1] $ \r -> do
     let lineTiles = fmap (bdGet bd . (r,)) [0 .. cols -1]
-    putStrLn $ "║ " <> intercalate " ║ " (fmap (renderTile . succ) lineTiles) <> " ║ " <> show r
+    putStrLn $
+      "║ " <> intercalate " ║ " (fmap (renderTile . succ) lineTiles)
+        <> " ║ "
+        <> show r
     if r < rows -1
       then printSep "╠" "╬" "╣"
       else printSep "╚" "╩" "╝"
