@@ -12,6 +12,8 @@ dependencies:
 - base
 - containers
 - vector
+- dlist
+- transformers
 
 library:
   source-dirs: src
