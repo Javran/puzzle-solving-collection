@@ -97,6 +97,9 @@ applyMove bd mPre = case m of
   where
     m = normalizeMove bd mPre
 
+applyMoves :: Board -> [Move] -> Board
+applyMoves = foldl' applyMove
+
 mkBoard :: BoardRep -> Maybe Board
 mkBoard (bdDims@(rows, cols), tiles) = do
   let flat = concat tiles
