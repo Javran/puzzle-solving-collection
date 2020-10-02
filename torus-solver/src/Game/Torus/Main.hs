@@ -1,6 +1,9 @@
 module Game.Torus.Main
   ( main
-  ) where
+  )
+where
+
+import Game.Torus.Parser
 
 main :: IO ()
-main = pure ()
+main = print (parseBoard demo0)
