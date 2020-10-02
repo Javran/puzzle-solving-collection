@@ -24,8 +24,17 @@ type Coord = (Int, Int)
 {-
   mIndex describes which row or col it's operation on
   mStep is, well, steps of the move.
+ -}
+data Move
+  = MoveLeft {mIndex :: Int, mStep :: Int}
+  | MoveRight {mIndex :: Int, mStep :: Int}
+  | MoveUp {mIndex :: Int, mStep :: Int}
+  | MoveDown {mIndex :: Int, mStep :: Int}
 
-  We only need left and up because for a Board of X rows,
+
+{-
+  Normalize a Move in preparation of performing action on the board.
+  Note that we only need left and up because for a Board of X rows,
 
   MLeft r u == MRight r (X-u)
 
@@ -35,21 +44,15 @@ type Coord = (Int, Int)
   - 0 <= mIndex < rows for MLeft
   - 0 <= mIndex < cols for MRight
   so that all moves except no-op are uniquely represented.
- -}
-data Move
-  = MoveLeft {mIndex :: Int, mStep :: Int}
-  | MoveUp {mIndex :: Int, mStep :: Int}
 
--- smart constructors. avoid using MoveLeft or MoveRight directly.
-moveLeft, moveRight, moveUp, moveDown :: Board -> Int -> Int -> Move
-moveLeft Board {bdDims = (rows, _)} i s =
-  MoveLeft i (s `mod` rows)
-moveRight Board {bdDims = (rows, _)} i s =
-  MoveLeft i ((- s) `mod` rows)
-moveUp Board {bdDims = (_, cols)} i s =
-  MoveUp i (s `mod` cols)
-moveDown Board {bdDims = (_, cols)} i s =
-  MoveUp i ((- s) `mod` cols)
+  results from normalizeMove always meet those criteria.
+ -}
+normalizeMove :: Board -> Move -> Move
+normalizeMove Board {bdDims = (rows, cols)} m = case m of
+  MoveLeft i s -> MoveLeft i (s `mod` rows)
+  MoveRight i s -> MoveLeft i ((- s) `mod` rows)
+  MoveUp i s -> MoveUp i (s `mod` cols)
+  MoveDown i s -> MoveUp i ((- s) `mod` cols)
 
 {-
   basic operation of rotating a list towards left,
