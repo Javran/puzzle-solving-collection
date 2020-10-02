@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
 
 module Game.Torus.Main
   ( main
@@ -6,6 +7,7 @@ module Game.Torus.Main
 where
 
 import Control.Monad
+import Data.List
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Torus.Parser
@@ -16,6 +18,8 @@ data Board = Board
     bdTiles :: V.Vector Int
   }
   deriving (Show)
+
+type Coord = (Int, Int)
 
 mkBoard :: BoardRep -> Maybe Board
 mkBoard (bdDims@(rows, cols), tiles) = do
@@ -33,5 +37,37 @@ mkBoard (bdDims@(rows, cols), tiles) = do
           V.fromListN (rows * cols) $ fmap pred flat
       }
 
+bdGet :: Board -> Coord -> Int
+bdGet Board {bdDims = (_, cols), bdTiles} (r, c) =
+  bdTiles V.! (r * cols + c)
+
+pprBoard :: Board -> IO ()
+pprBoard bd@Board {bdDims = (rows, cols)} = do
+  let maxLen = length (show $ rows * cols)
+      renderTile n = replicate (maxLen - length content) ' ' <> content
+        where
+          content = show n
+      printSep lS midS rS =
+        putStrLn $
+          concat
+            [ lS
+            , "═"
+            , intercalate ("═" <> midS <> "═") $
+                replicate cols (replicate maxLen '═')
+            , "═"
+            , rS
+            ]
+
+  printSep "╔" "╦" "╗"
+  forM_ [0 .. rows -1] $ \r -> do
+    let lineTiles = fmap (bdGet bd . (r,)) [0 .. cols -1]
+    putStrLn $ "║ " <> intercalate " ║ " (fmap (renderTile . succ) lineTiles) <> " ║ " <> show r
+    if r < rows -1
+      then printSep "╠" "╬" "╣"
+      else printSep "╚" "╩" "╝"
+  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile) [0 .. cols -1]
+
 main :: IO ()
-main = print (parseBoard demo0 >>= mkBoard)
+main = do
+  let Just bd = parseBoard demo0 >>= mkBoard
+  pprBoard bd
