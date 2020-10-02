@@ -1,0 +1,6 @@
+.stack-work/
+torus-solver.cabal
+stack.yaml.lock
+*~
+
+z

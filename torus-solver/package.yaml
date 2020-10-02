@@ -1,0 +1,31 @@
+name: torus-solver
+version: 0.1.0.0
+github: Javran/torus-solver
+license: BSD3
+author: Javran Cheng
+maintainer: javran.c@gmail.com
+copyright: "Copyright: (c) 2020 Javran Cheng"
+
+description: description
+
+dependencies:
+- base
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+
+executables:
+  torus-demo:
+    main: Main.hs
+    source-dirs: exe
+    dependencies:
+      - torus-solver
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
