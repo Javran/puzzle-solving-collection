@@ -14,4 +14,3 @@ main = do
   pprBoard bd
   putStrLn $ "Moves: " <> show (length moves)
   pprBoard bd'
-  pprBoard (applyMoves bd' $ terW 5 5 1 1 <> terW 5 1 1 1 <> terW 5 3 1 1 <> [east 5 1])

@@ -52,9 +52,8 @@ solveBoard bd@Board {bdDims = (rows, cols)} = (DL.toList moves, bdFin)
   where
     ((), (_, bdFin), moves) = runRWS solveAux () (0, bd)
     solveAux :: Sim ()
-    solveAux = do
-      -- solve all but last row.
-      replicateM_ ((rows -1)* cols + 3) solveFocusSimple
+    solveAux =
+      replicateM_ (rows*cols) solveFocus
 
 {-
   Sim for simulator.
@@ -85,11 +84,9 @@ bdIndexToCoord Board {bdDims = (_, cols)} i = i `quotRem` cols
 
 {-
   move the right tile to the current focus.
-  note that this function is only supposed to work
-  on all but last row.
  -}
-solveFocusSimple :: Sim ()
-solveFocusSimple = do
+solveFocus :: Sim ()
+solveFocus = do
   (focus, bd@Board {bdDims = (rows, cols), bdTiles}) <- get
   unless (bdTiles V.! focus == focus) $ do
     let (fR, fC) = bdIndexToCoord bd focus
