@@ -48,13 +48,13 @@ data Move
 normalizeMove :: Board -> Move -> Move
 normalizeMove Board {bdDims = (rows, cols)} m = case m of
   MoveLeft i s ->
-    MoveLeft i (s `mod` rows)
+    MoveLeft i (s `mod` cols)
   MoveRight i s ->
-    MoveLeft i ((- s) `mod` rows)
+    MoveLeft i ((- s) `mod` cols)
   MoveUp i s ->
-    MoveUp i (s `mod` cols)
+    MoveUp i (s `mod` rows)
   MoveDown i s ->
-    MoveUp i ((- s) `mod` cols)
+    MoveUp i ((- s) `mod` rows)
 
 {-
   Try to pack a sequence of moves into smaller sequences.
