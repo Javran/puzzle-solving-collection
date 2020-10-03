@@ -4,9 +4,11 @@ module Game.Torus.Main
 where
 
 import Control.Monad
+import Data.List
 import Game.Torus.Amano
 import Game.Torus.Board
 import Game.Torus.Parser
+import System.Environment
 import System.Exit
 import System.IO
 
@@ -31,7 +33,17 @@ solveAndVerifyFromRaw raw = do
 
 main :: IO ()
 main = do
-  solveAndVerifyFromRaw demo0
-  solveAndVerifyFromRaw demo1
-  solveAndVerifyFromRaw demo2
-  putStrLn "All verified."
+  args <- getArgs
+  case args of
+    [] -> do
+      solveAndVerifyFromRaw demo0
+      solveAndVerifyFromRaw demo1
+      solveAndVerifyFromRaw demo2
+      putStrLn "All verified."
+    ["stdin"] -> do
+      raw <- getContents
+      (moves, _) <- solveAndVerifyFromRaw raw
+      let moveToStr m = case m of
+            MoveUp i s -> "u," <> show i <> "," <> show s
+            MoveLeft i s -> "l," <> show i <> "," <> show s
+      putStrLn $ intercalate "|" $ fmap moveToStr moves
