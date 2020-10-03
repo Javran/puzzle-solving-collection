@@ -16,6 +16,26 @@ demo0 =
     , "20 17 7 13 30 12"
     ]
 
+demo1 :: String
+demo1 =
+  unlines
+    [ "3 7"
+    , "21 20 19 18 17 16 15"
+    , "14 13 12 11 10 9 8"
+    , "7 6 5 4 3 2 1"
+    ]
+
+demo2 :: String
+demo2 =
+  unlines
+    [ "4 6"
+    , "24 23 22 21 20 19"
+    , "17 18 16 15 14 12"
+    , "13 11 10 9 8 7"
+    , "5 6 4 2 3 1"
+    ]
+
+
 type BoardRep = ((Int, Int), [[Int]])
 
 intLine :: ReadP [Int]

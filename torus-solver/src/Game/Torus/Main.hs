@@ -11,7 +11,7 @@ import System.Exit
 
 main :: IO ()
 main = do
-  let Just bd = parseBoard demo0 >>= mkBoard
+  let Just bd = parseBoard demo1 >>= mkBoard
       (moves, bd') = solveBoard bd
       moves' = simplifyMoves bd moves
   pprBoard bd
