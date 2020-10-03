@@ -50,10 +50,8 @@ terE i j p q =
 solveBoard :: Board -> ([Move], Board)
 solveBoard bd@Board {bdDims = (rows, cols)} = (DL.toList moves, bdFin)
   where
-    ((), (_, bdFin), moves) = runRWS solveAux () (0, bd)
-    solveAux :: Sim ()
-    solveAux =
-      replicateM_ (rows*cols) solveFocus
+    ((), (_, bdFin), moves) =
+      runRWS (replicateM_ (rows * cols) solveFocus) () (0, bd)
 
 {-
   Sim for simulator.
@@ -110,9 +108,10 @@ solveFocus = do
                        -}
                     error "should not be reachable in theory."
                   else -- we can do a swap here since col is even.
-                    let centers = take (cols `quot` 2) [cols-1, cols+1..]
+
+                    let centers = take (cols `quot` 2) [cols -1, cols + 1 ..]
                         twMoves = concatMap (\c -> terW fR (c `rem` cols) 1 1) centers
-                    in playMoves $ twMoves <> [east fR 1]
+                     in playMoves $ twMoves <> [east fR 1]
               | otherwise ->
                 if sC == cols - 1
                   then playMoves $ terE fR (sC -1) (sC -1 - fC) 1
@@ -120,7 +119,6 @@ solveFocus = do
         | -- when they share the same row.
           fR == sR ->
           {-
-
             since we know fC < sC,
             ccwB should do.
            -}
