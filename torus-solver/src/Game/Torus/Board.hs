@@ -155,6 +155,10 @@ bdGet :: Board -> Coord -> Int
 bdGet Board {bdDims = (_, cols), bdTiles} (r, c) =
   bdTiles V.! (r * cols + c)
 
+isSolved :: Board -> Bool
+isSolved Board {bdTiles} =
+  and (zipWith (==) [0..] (V.toList bdTiles))
+
 pprBoard :: Board -> IO ()
 pprBoard bd@Board {bdDims = (rows, cols)} = do
   let maxLen = length (show $ rows * cols)
