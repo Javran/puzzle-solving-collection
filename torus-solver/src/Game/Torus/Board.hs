@@ -15,7 +15,7 @@ data Board = Board
   , -- row*col, row-major.
     bdTiles :: V.Vector Int
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 type Coord = (Int, Int)
 
@@ -28,6 +28,7 @@ data Move
   | MoveRight {mIndex :: Int, mStep :: Int}
   | MoveUp {mIndex :: Int, mStep :: Int}
   | MoveDown {mIndex :: Int, mStep :: Int}
+  deriving (Show)
 
 {-
   Normalize a Move in preparation of performing action on the board.
@@ -54,6 +55,40 @@ normalizeMove Board {bdDims = (rows, cols)} m = case m of
     MoveUp i (s `mod` cols)
   MoveDown i s ->
     MoveUp i ((- s) `mod` cols)
+
+{-
+  Try to pack a sequence of moves into smaller sequences.
+  This is done by
+  - normalization (so we only have MoveLeft and MoveUp to deal with)
+  - combining consecutive moves that operate on the same row or col into one.
+    (currently resulting moves are order-preserving, for now I don't want to
+    go the extra mile to deal with merge-able moves that happens to multiple rows or columns.
+  - remove moves that end up having 0 steps.
+ -}
+simplifyMoves :: Board -> [Move] -> [Move]
+simplifyMoves bd = go [] . fmap (normalizeMove bd)
+  where
+    Board {bdDims = (rows, cols)} = bd
+    go acc [] = reverse acc
+    go acc (m : ms)
+      | mStep m == 0 = go acc ms
+      | otherwise =
+        case acc of
+          [] -> go (m : acc) ms
+          x : xs -> case (x, m) of
+            (MoveLeft i a, MoveLeft j b)
+              | i == j ->
+                let s = (a + b) `rem` cols
+                 in if s == 0
+                      then go xs ms
+                      else go (MoveLeft i s : xs) ms
+            (MoveUp i a, MoveUp j b)
+              | i == j ->
+                let s = (a + b) `rem` rows
+                 in if s == 0
+                      then go xs ms
+                      else go (MoveUp i s : xs) ms
+            _ -> go (m : acc) ms
 
 {-
   basic operation of rotating a list towards left,
