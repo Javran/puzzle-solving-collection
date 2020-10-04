@@ -1,1 +1,8 @@
-cradle: {stack: {component: "torus-solver:exe:torus-demo"}}
+cradle:
+  stack:
+    - path: "./src"
+      component: "torus-solver:lib"
+    - path: "./test"
+      component: "torus-solver:test:hspec"
+    - path: "./exe"
+      component: "torus-solver:exe:torus-demo"
