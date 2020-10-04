@@ -20,11 +20,9 @@ where
 
 import Control.Monad
 import Data.List
-import qualified Data.List.Split
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Torus.Parser
-import Test.QuickCheck
 
 data Board = Board
   { bdDims :: (Int, Int)
@@ -36,21 +34,6 @@ data Board = Board
     bdTiles :: V.Vector Int
   }
   deriving (Show, Eq)
-
-newtype SmallBoard = SmallBoard Board
-
-instance Arbitrary SmallBoard where
-  arbitrary = do
-    rows <- choose (3, 8)
-    cols <- choose (3, 8)
-    let xs = [1 .. rows * cols]
-    xs' <- shuffle xs
-    let Just bd =
-          mkBoard
-            ( (rows, cols)
-            , Data.List.Split.chunksOf cols xs'
-            )
-    pure $ SmallBoard $ bd
 
 type Coord = (Int, Int)
 
@@ -165,8 +148,10 @@ operateOnCol bd@Board {bdDims = (rows, cols), bdTiles} c action =
 
 applyMove :: Board -> Move -> Board
 applyMove bd mPre = case m of
-  MoveLeft r s -> operateOnRow bd r (rotateLeft s)
-  MoveUp c s -> operateOnCol bd c (rotateLeft s)
+  MoveLeft r s ->
+    operateOnRow bd r (rotateLeft s)
+  MoveUp c s ->
+    operateOnCol bd c (rotateLeft s)
   _ -> error "unreachable."
   where
     m = normalizeMove bd mPre
