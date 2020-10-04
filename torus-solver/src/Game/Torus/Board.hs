@@ -12,6 +12,7 @@ module Game.Torus.Board
   , rotateLeft
   , applyMove
   , applyMoves
+  , bdIndex
   , bdGet
   , isSolved
   , pprBoard
@@ -172,9 +173,11 @@ mkBoard (bdDims@(rows, cols), tiles) = do
           V.fromListN (rows * cols) $ fmap pred flat
       }
 
+bdIndex :: Board -> Coord -> Int
+bdIndex Board {bdDims = (_, cols)} (r, c) = r * cols + c
+
 bdGet :: Board -> Coord -> Int
-bdGet Board {bdDims = (_, cols), bdTiles} (r, c) =
-  bdTiles V.! (r * cols + c)
+bdGet bd@Board {bdTiles} (r, c) = bdTiles V.! bdIndex bd (r, c)
 
 isSolved :: Board -> Bool
 isSolved Board {bdTiles} =

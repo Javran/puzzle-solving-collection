@@ -26,6 +26,28 @@ north, south, west, east :: Int -> Int -> Move
 type Rotation3 =
   Int -> Int -> Int -> Int -> [Move]
 
+{-
+  The A,B,C,D are right triangle rotations described in the paper, namely:
+
+  row / col --->
+   |
+   |     /  |  \
+   |    /D  p  A\
+   v        |
+       --q--c--q--
+            |
+        \C  p  B/
+         \  |  /
+
+   where p and q are lengths of legs.
+   This kind of rotation only rotates 3 points of the triangle with all other tiles
+   unchanged. Rotation can occur in two directions:
+
+   - clockwise (prefixed by cw-)
+   - counterclockwise (prefixed by ccw-)
+
+ -}
+
 cwA, ccwA, cwB, ccwB, cwC, ccwC, cwD, ccwD :: Rotation3
 cwA i j p q =
   [west i q, south j p, east i q, north j p]
