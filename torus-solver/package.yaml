@@ -42,6 +42,7 @@ tests:
     dependencies:
       - torus-solver
       - hspec
+      - QuickCheck
     ghc-options:
       - -Wall
       - -O2

@@ -2,7 +2,21 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
 
-module Game.Torus.Board where
+module Game.Torus.Board
+  ( Board (..)
+  , Move (..)
+  , Coord
+  , normalizeMove
+  , mkBoard
+  , simplifyMoves
+  , rotateLeft
+  , applyMove
+  , applyMoves
+  , bdGet
+  , isSolved
+  , pprBoard
+  )
+where
 
 import Control.Monad
 import Data.List
@@ -98,7 +112,7 @@ simplifyMoves bd = go [] . fmap (normalizeMove bd)
   basic operation of rotating a list towards left,
   e.g. rotateLeft 3 "ABCDE" == "DEABC"
 
-  only works when n >= 0.
+  only works when n >= 0. and xs non-empty
  -}
 rotateLeft :: Int -> [a] -> [a]
 rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs
@@ -161,7 +175,7 @@ bdGet Board {bdDims = (_, cols), bdTiles} (r, c) =
 
 isSolved :: Board -> Bool
 isSolved Board {bdTiles} =
-  and (zipWith (==) [0..] (V.toList bdTiles))
+  and (zipWith (==) [0 ..] (V.toList bdTiles))
 
 pprBoard :: Board -> IO ()
 pprBoard bd@Board {bdDims = (rows, cols)} = do
