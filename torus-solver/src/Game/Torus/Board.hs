@@ -20,9 +20,11 @@ where
 
 import Control.Monad
 import Data.List
+import qualified Data.List.Split
 import qualified Data.Set as S
 import qualified Data.Vector as V
 import Game.Torus.Parser
+import Test.QuickCheck
 
 data Board = Board
   { bdDims :: (Int, Int)
@@ -34,6 +36,21 @@ data Board = Board
     bdTiles :: V.Vector Int
   }
   deriving (Show, Eq)
+
+newtype SmallBoard = SmallBoard Board
+
+instance Arbitrary SmallBoard where
+  arbitrary = do
+    rows <- choose (3, 8)
+    cols <- choose (3, 8)
+    let xs = [1 .. rows * cols]
+    xs' <- shuffle xs
+    let Just bd =
+          mkBoard
+            ( (rows, cols)
+            , Data.List.Split.chunksOf cols xs'
+            )
+    pure $ SmallBoard $ bd
 
 type Coord = (Int, Int)
 
@@ -112,7 +129,11 @@ simplifyMoves bd = go [] . fmap (normalizeMove bd)
   basic operation of rotating a list towards left,
   e.g. rotateLeft 3 "ABCDE" == "DEABC"
 
-  only works when n >= 0. and xs non-empty
+  only works when n >= 0. and xs non-empty.
+
+  (while it's quite easy to support empty list,
+  i decided to go against it as it's just an extra branching
+  that we'll never go)
  -}
 rotateLeft :: Int -> [a] -> [a]
 rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs

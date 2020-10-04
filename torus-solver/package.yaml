@@ -14,6 +14,8 @@ dependencies:
 - vector
 - dlist
 - transformers
+- QuickCheck
+- split
 
 library:
   source-dirs: src
@@ -42,7 +44,6 @@ tests:
     dependencies:
       - torus-solver
       - hspec
-      - QuickCheck
     ghc-options:
       - -Wall
       - -O2
