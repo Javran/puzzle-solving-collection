@@ -18,13 +18,7 @@ unsolvableWorkaround :: Board -> Board
 unsolvableWorkaround bd =
   if odd cols
     then
-      bd
-        { bdTiles =
-            vs
-              V.// [ (lastInd -1, vs V.! lastInd)
-                   , (lastInd, vs V.! (lastInd -1))
-                   ]
-        }
+      operateOnIndices bd [lastInd-1, lastInd] reverse
     else bd
   where
     lastInd = rows * cols -1
