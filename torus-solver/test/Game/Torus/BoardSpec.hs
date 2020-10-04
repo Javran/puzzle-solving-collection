@@ -50,9 +50,9 @@ spec = do
          in rotateLeft a xs === rotateLeft (a + len) xs
 
   describe "simplifyMoves" $ do
-    prop "result preserving & non-increasing" $
+    prop "result-preserving & non-increasing" $
       \(SmallBoard bd) (xs :: [(Int, Int, Int)]) ->
         let moves = fmap (convertToMove bd) xs
             moves' = simplifyMoves bd moves
-         in applyMoves bd moves === applyMoves bd moves'
-              .&&. length moves >= length moves'
+         in label "result-preserving" (applyMoves bd moves === applyMoves bd moves')
+              .&&. label "non-increasing" (length moves >= length moves')
