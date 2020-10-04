@@ -15,6 +15,7 @@ module Game.Torus.Board
   , bdGet
   , isSolved
   , pprBoard
+  , operateOnIndices
   )
 where
 
@@ -122,36 +123,32 @@ rotateLeft :: Int -> [a] -> [a]
 rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs
 
 {-
-  focus on a row and apply action to it. This action is only allowed
-  to re-order elements.
+  focus on a sequence of linear indices and apply action on them.
+  This action is only allowed to re-order existing elements.
   note that element presence and list length after the action is not checked.
  -}
-operateOnRow :: Board -> Int -> (forall a. [a] -> [a]) -> Board
-operateOnRow bd@Board {bdDims = (_, cols), bdTiles} r action =
+operateOnIndices :: Board -> [Int] -> (forall a. [a] -> [a]) -> Board
+operateOnIndices bd@Board {bdTiles} linearIndices action =
   bd {bdTiles = bdTiles V.// zip linearIndices xs'}
   where
     -- from (r, 0) to (r, cols-1)
-    linearIndices =
-      [r * cols .. r * cols + cols -1]
-    xs = fmap (bdTiles V.!) linearIndices
-    xs' = action xs
-
-operateOnCol :: Board -> Int -> (forall a. [a] -> [a]) -> Board
-operateOnCol bd@Board {bdDims = (rows, cols), bdTiles} c action =
-  bd {bdTiles = bdTiles V.// zip linearIndices xs'}
-  where
-    -- from (0, c) to (rows-1, c)
-    linearIndices =
-      [c, c + cols .. c + cols * (rows -1)]
+    -- linearIndices =
+    -- [r * cols .. r * cols + cols -1]
     xs = fmap (bdTiles V.!) linearIndices
     xs' = action xs
 
 applyMove :: Board -> Move -> Board
-applyMove bd mPre = case m of
+applyMove bd@Board {bdDims = (rows, cols)} mPre = case m of
   MoveLeft r s ->
-    operateOnRow bd r (rotateLeft s)
+    let -- from (r, 0) to (r, cols-1)
+        linearIndices =
+          [r * cols .. r * cols + cols -1]
+     in operateOnIndices bd linearIndices (rotateLeft s)
   MoveUp c s ->
-    operateOnCol bd c (rotateLeft s)
+    let -- from (0, c) to (rows-1, c)
+        linearIndices =
+          [c, c + cols .. c + cols * (rows -1)]
+     in operateOnIndices bd linearIndices (rotateLeft s)
   _ -> error "unreachable."
   where
     m = normalizeMove bd mPre
