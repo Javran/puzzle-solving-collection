@@ -26,14 +26,29 @@ unsolvableWorkaround bd =
 
 data Triangle = TA | TB | TC | TD deriving (Show)
 
+fixCoord :: Board -> Coord -> Coord
+fixCoord Board {bdDims = (rows, cols)} (r, c) = (r `mod` rows, c `mod` cols)
+
 intendedRotationEffect :: Board -> Bool -> Int -> Int -> Int -> Int -> Triangle -> Board
-intendedRotationEffect bd clockwise r c p q t =
-  operateOnIndices bd (fmap (bdIndex bd) coords) op
+intendedRotationEffect bd clockwise r c p q t
+  | p `rem` rows == 0 || q `rem` cols == 0 =
+    {-
+      We need to make a special case here as when either effective p and q are 0, the rotation
+      is effectively no-op. and it is unexpected for operateOnIndices to handle cases
+      with duplicated indices.
+     -}
+    bd
+  | otherwise = operateOnIndices bd (fmap (bdIndex bd) coords) op
   where
+    Board {bdDims = (rows, cols)} = bd
     [center, up, down, left, right] =
-      [(r, c), (r - p, c), (r + p, c), (r, c - q), (r, c + q)]
-    -- 3 coordinates of the triangle in clockwise order,
-    -- center is always the 2nd one.
+      fmap
+        (fixCoord bd)
+        [(r, c), (r - p, c), (r + p, c), (r, c - q), (r, c + q)]
+    {-
+      3 coordinates of the triangle in clockwise order,
+      center is always the 2nd one.
+     -}
     coords = case t of
       TA -> [up, center, right]
       TB -> [right, center, down]
@@ -41,12 +56,22 @@ intendedRotationEffect bd clockwise r c p q t =
       TD -> [left, center, up]
     op = rotateLeft (if clockwise then 1 else 2)
 
+newtype LargerBoard
+  = LargerBoard Board
+  deriving (Show)
+
+instance Arbitrary LargerBoard where
+  arbitrary = LargerBoard <$> mkArbitraryBoard (11, 17)
+
 spec :: Spec
 spec = do
   describe "triangle rotations" $ do
     describe "small examples" $ do
-      -- examples on a fixed-size board to verify that
-      -- those rotations do achieve intended effects.
+      {-
+        examples on a fixed-size board to verify that
+        those rotations do achieve intended effects.
+        also to confirm that intendedRotationEffect is implemented correctly.
+       -}
       let initBd = Board (3, 5) $ V.fromListN 15 [0 ..]
           bdExample xs = Board (3, 5) $ V.fromListN 15 (concat xs)
       forM_
@@ -97,6 +122,24 @@ spec = do
               applyMoves initBd (cwOp 1 2 1 2) `shouldBe` cwExpected
             specify "counterclockwise" $
               applyMoves cwExpected (ccwOp 1 2 1 2) `shouldBe` initBd
+    describe "properties" $
+      forM_
+        [ (TA, cwA, ccwA)
+        , (TB, cwB, ccwB)
+        , (TC, cwC, ccwC)
+        , (TD, cwD, ccwD)
+        ]
+        $ \(t, cwOp, ccwOp) -> do
+          let tagPre = "triangle " <> drop 1 (show t)
+          forM_
+            [ (cwOp, True, tagPre <> ", clockwise")
+            , (ccwOp, False, tagPre <> ", counterclockwise")
+            ]
+            $ \(rOp, isCw, tag) ->
+              prop tag $
+                \(LargerBoard bd) (rPre :: Int) (cPre :: Int) (p :: Int) (q :: Int) ->
+                  let (r, c) = fixCoord bd (rPre, cPre)
+                   in applyMoves bd (rOp r c p q) === intendedRotationEffect bd isCw r c p q t
   describe "solveBoard" $
     prop "SmallBoard" $
       \(SmallBoard bd) ->
@@ -104,6 +147,7 @@ spec = do
          in label
               "moves are consistent"
               (applyMoves bd moves === bdFin)
-              .&&. label
-                "final state is solved (or can be fixed to solved)"
-                (isSolved bdFin || isSolved (unsolvableWorkaround bdFin))
+              .&&. (label "solvable" (isSolved bdFin)
+                      .||. label
+                        "not solvable but can be fixed"
+                        (isSolved (unsolvableWorkaround bdFin)))

@@ -12,10 +12,10 @@ newtype SmallBoard
   = SmallBoard Board
   deriving (Show)
 
-instance Arbitrary SmallBoard where
-  arbitrary = do
-    rows <- choose (3, 8)
-    cols <- choose (3, 8)
+mkArbitraryBoard :: (Int, Int) -> Gen Board
+mkArbitraryBoard range = do
+    rows <- choose range
+    cols <- choose range
     let xs = [1 .. rows * cols]
     xs' <- shuffle xs
     let Just bd =
@@ -23,7 +23,10 @@ instance Arbitrary SmallBoard where
             ( (rows, cols)
             , Data.List.Split.chunksOf cols xs'
             )
-    pure $ SmallBoard $ bd
+    pure bd
+
+instance Arbitrary SmallBoard where
+  arbitrary = SmallBoard <$> mkArbitraryBoard (3, 8)
 
 -- convert a triple to a random move restricted to Board range. useful for testing.
 convertToMove :: Board -> (Int, Int, Int) -> Move
