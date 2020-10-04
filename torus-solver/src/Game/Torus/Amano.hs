@@ -6,6 +6,7 @@ module Game.Torus.Amano where
 {-
   This solution is described by Amano et al. "How to Solve the Torus Puzzle", Published Jan 13, 2012.
  -}
+
 import Control.Monad
 import Control.Monad.Trans.RWS.CPS
 import Data.Bifunctor
@@ -18,6 +19,10 @@ north, south, west, east :: Int -> Int -> Move
 [north, south, west, east] =
   [MoveUp, MoveDown, MoveLeft, MoveRight]
 
+{-
+  This includes triangle rotations and the "three element rotation" built on top it.
+  It so happens that both kinds of rotation rotates 3 tile, there the name Rotation3.
+ -}
 type Rotation3 =
   Int -> Int -> Int -> Int -> [Move]
 
@@ -81,7 +86,7 @@ bdIndexToCoord :: Board -> Int -> Coord
 bdIndexToCoord Board {bdDims = (_, cols)} i = i `quotRem` cols
 
 {-
-  move the right tile to the current focus.
+  move the right tile to the current focus, and advance the focus.
  -}
 solveFocus :: Sim ()
 solveFocus = do

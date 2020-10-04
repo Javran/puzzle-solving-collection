@@ -13,6 +13,10 @@ import Game.Torus.Parser
 data Board = Board
   { bdDims :: (Int, Int)
   , -- row*col, row-major.
+    -- note that stored numbers are ranged from
+    -- [0 .. row*col-1], rather than [1 .. row*col].
+    -- so pretty printing function is actually
+    -- performing +1 to each tile when rendering.
     bdTiles :: V.Vector Int
   }
   deriving (Show, Eq)
@@ -100,7 +104,7 @@ rotateLeft :: Int -> [a] -> [a]
 rotateLeft n xs = fmap fst $ zip (drop n (cycle xs)) xs
 
 {-
-  focus on a row and apply action to it. This action is only allow
+  focus on a row and apply action to it. This action is only allowed
   to re-order elements.
   note that element presence and list length after the action is not checked.
  -}
