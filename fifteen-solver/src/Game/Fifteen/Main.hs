@@ -3,12 +3,12 @@
 
 module Game.Fifteen.Main where
 
+import Data.List
 import Game.Fifteen.Common
 import Game.Fifteen.Human
+import Game.Fifteen.Solvability
 import Game.Fifteen.Types
 import System.Environment
-import Data.List
-import Game.Fifteen.Solvability
 
 demo :: Board -> IO ()
 demo bd = do
@@ -59,6 +59,6 @@ main = do
       let Just bd = mkBoardFromRaw xs
           goal = goalBoard (bdSize bd)
           steps : _ = solveBoard goal bd
-      putStrLn $ intercalate "|" $ fmap (\(x,y) -> show x <> ","<> show y) steps
+      putStrLn $ intercalate "|" $ fmap (\(x, y) -> show x <> "," <> show y) steps
     ["dev"] -> do
       testMergeSort
