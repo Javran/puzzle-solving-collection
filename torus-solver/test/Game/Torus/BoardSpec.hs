@@ -14,23 +14,24 @@ newtype SmallBoard
 
 mkArbitraryBoard :: (Int, Int) -> Gen Board
 mkArbitraryBoard range = do
-    rows <- choose range
-    cols <- choose range
-    let xs = [1 .. rows * cols]
-    xs' <- shuffle xs
-    let Just bd =
-          mkBoard
-            ( (rows, cols)
-            , Data.List.Split.chunksOf cols xs'
-            )
-    pure bd
+  rows <- choose range
+  cols <- choose range
+  let xs = [1 .. rows * cols]
+  xs' <- shuffle xs
+  let Just bd =
+        mkBoard
+          ( (rows, cols)
+          , Data.List.Split.chunksOf cols xs'
+          )
+  pure bd
 
 instance Arbitrary SmallBoard where
   arbitrary = SmallBoard <$> mkArbitraryBoard (3, 8)
 
 -- convert a triple to a random move restricted to Board range. useful for testing.
-convertToMove :: Board -> (Int, Int, Int) -> Move
-convertToMove Board {bdDims = (rows, cols)} (ty, ind, st) = cons (ind `mod` restrict) st
+convertToMove :: Board -> (NonNegative Int, Int, Int) -> Move
+convertToMove Board {bdDims = (rows, cols)} (NonNegative ty, ind, st) =
+  cons (ind `mod` restrict) st
   where
     (cons, restrict) = case ty `mod` 4 of
       0 -> (MoveLeft, rows)
@@ -54,7 +55,7 @@ spec = do
 
   describe "simplifyMoves" $ do
     prop "result-preserving & non-increasing" $
-      \(SmallBoard bd) (xs :: [(Int, Int, Int)]) ->
+      \(SmallBoard bd) xs ->
         let moves = fmap (convertToMove bd) xs
             moves' = simplifyMoves bd moves
          in label "result-preserving" (applyMoves bd moves === applyMoves bd moves')
