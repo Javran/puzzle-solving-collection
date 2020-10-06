@@ -9,6 +9,7 @@ module Game.Fifteen.Solvability where
 import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Trans.Writer
+import Data.Bifunctor
 import Data.Function
 import Data.List
 import Data.Maybe
@@ -29,8 +30,8 @@ import Game.Fifteen.Types
 {-
   Actually, this is inversion counting and mergeSort is just a side-effect.
  -}
-mergeSortFromListN :: forall a s. Ord a => Int -> [a] -> WriterT (Sum Int) (ST s) (V.Vector a)
-mergeSortFromListN n xs = do
+mergeSortFromListNImpl :: forall a s. Ord a => Int -> [a] -> WriterT (Sum Int) (ST s) (V.Vector a)
+mergeSortFromListNImpl n xs = do
   -- actually safe to do as this is the only function holding this `v` reference.
   v <- V.unsafeThaw (V.fromListN n xs)
   tmp <- VM.unsafeNew (VM.length v)
@@ -79,14 +80,16 @@ mergeSortFromListN n xs = do
   sortAux 0 (VM.length v -1)
   V.unsafeFreeze v
 
+mergeSortFromListN :: forall a. Ord a => Int -> [a] -> (V.Vector a, Int)
+mergeSortFromListN n xs =
+  second getSum $ runST $ runWriterT $ mergeSortFromListNImpl n xs
+
 bdParity :: Board -> Bool
 bdParity Board {bdSize, bdTiles} = odd count
   where
-    (_, Sum count) =
-      runST $
-        runWriterT $
-          mergeSortFromListN (bdSize * bdSize -1) $
-            catMaybes $ V.toList bdTiles
+    (_, count) =
+      mergeSortFromListN (bdSize * bdSize -1) $
+        catMaybes $ V.toList bdTiles
 
 -- TODO: to be tested.
 {-
@@ -137,10 +140,10 @@ testMergeSort :: IO ()
 testMergeSort = do
   let src :: [Int]
       src = [27, 79, 25, 6, 33, 31, 95, 64, 29, 77, 23, 62, 16, 89, 20, 80, 54, 52]
-      (ys, count) = runST $ runWriterT $ mergeSortFromListN (length src) src
+      (ys, count) = mergeSortFromListN (length src) src
   print (V.toList ys == sort src)
   print count
   -- sanity check against example in https://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
   let v = [12 :: Int, 1, 10, 2, 7, 11, 4, 14, 5, 9, 15, 8, 13, 6, 3]
-      (_, count') = runST $ runWriterT $ mergeSortFromListN (length v) v
+      (_, count') = mergeSortFromListN (length v) v
   print (count' == 49)
