@@ -68,15 +68,18 @@ mergeSortFromListNImpl n xs = do
               l
               (mid + 1)
               l
-          fix
-            (\loop xInd tmpInd ->
-               unless (tmpInd > r) $ do
-                 VM.unsafeRead v xInd >>= VM.unsafeWrite tmp tmpInd
-                 loop (xInd + 1) (tmpInd + 1))
-            leftoverInd
-            tmpInd0
-          forM_ [l .. r] $ \i ->
-            VM.unsafeRead tmp i >>= VM.unsafeWrite v i
+          do
+            -- [tmpInd0 .. r] needs to be filled from source [leftoverInd  ..]
+            let remainingLen = r - tmpInd0 + 1
+                dst = VM.unsafeSlice tmpInd0 remainingLen tmp
+                src = VM.unsafeSlice leftoverInd remainingLen v
+            VM.unsafeCopy dst src
+          -- copy back from tmp.
+          do
+            let len = r - l + 1
+                src = VM.slice l len tmp
+                dst = VM.slice l len v
+            VM.unsafeCopy dst src
   sortAux 0 (VM.length v -1)
   V.unsafeFreeze v
 
