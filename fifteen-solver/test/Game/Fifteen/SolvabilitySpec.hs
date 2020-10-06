@@ -2,6 +2,7 @@
 
 module Game.Fifteen.SolvabilitySpec where
 
+import Control.Monad
 import Data.List
 import qualified Data.List.Split
 import qualified Data.Vector as V
@@ -24,10 +25,11 @@ genBoard range = do
 newtype SmallBoard = SmallBoard Board deriving (Show)
 
 instance Arbitrary SmallBoard where
-  arbitrary = SmallBoard <$> genBoard (3, 3)
+  arbitrary = SmallBoard <$> genBoard (3, 6)
 
 spec :: Spec
 spec = do
+  let allowSlowTests = False
   describe "mergeSortFromListN" $ do
     specify "small example" $ do
       {-
@@ -42,13 +44,48 @@ spec = do
         let n = length xs
             (ys, _) = mergeSortFromListN n xs
          in V.toList ys == sort xs
-  -- commented out for now as it runs extremely slow even on 3x3 board.
-  {-
-  describe "isSolvable" $
-    prop "SmallBoard" $
-      \(SmallBoard bd) ->
-        let goal = goalBoard (bdSize bd)
-            solutions = solveBoard goal bd
-         in if isSolvable bd
-              then label "solvable" $ not (null solutions)
-              else label "not solvable" $ null solutions -}
+
+  describe "isSolvable" $ do
+    let verifyBoardFromRaw rawSource expectSolvable = do
+          let bd = mkBoard rawSource
+              goal = goalBoard (bdSize bd)
+              solutions = solveBoard goal bd
+          isSolvable bd `shouldBe` expectSolvable
+          if isSolvable bd
+            then solutions `shouldSatisfy` not . null
+            else solutions `shouldSatisfy` null
+
+    specify "examples (odd size, solvable)" $ do
+      verifyBoardFromRaw
+        [ [Just 6, Just 1, Just 0]
+        , [Just 5, Just 7, Just 3]
+        , [Just 2, Nothing, Just 4]
+        ] True
+    specify "examples (odd size, unsolvable)" $
+      verifyBoardFromRaw
+        [ [Just 1, Just 6, Just 0]
+        , [Just 5, Just 7, Just 3]
+        , [Just 2, Nothing, Just 4]
+        ] False
+    specify "examples (even size, solvable)" $
+      verifyBoardFromRaw
+        [ [Just 11, Just 12, Just 14, Just 4]
+        , [Just 7, Just 8, Just 2, Just 9]
+        , [Just 1, Just 3, Just 13, Nothing]
+        , [Just 6, Just 5, Just 10, Just 0]
+        ] True
+    specify "examples (even size, unsolvable)" $
+      verifyBoardFromRaw
+        [ [Just 11, Just 12, Just 14, Just 4]
+        , [Just 7, Just 8, Just 2, Just 9]
+        , [Just 1, Just 3, Just 13, Just 6]
+        , [Nothing, Just 5, Just 10, Just 0]
+        ] False
+    when allowSlowTests $
+      prop "SmallBoard" $
+        \(SmallBoard bd) ->
+          let goal = goalBoard (bdSize bd)
+              solutions = solveBoard goal bd
+           in if isSolvable bd
+                then label "solvable" $ not (null solutions)
+                else label "not solvable" $ null solutions

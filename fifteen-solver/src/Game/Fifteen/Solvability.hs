@@ -120,7 +120,7 @@ isSolvable bd@Board {bdSize, bdHole = (row, _c)} =
            - last row is #5, 6-5=1, odd
            - second-last row is #4, 6-4=2, even
 
-           But bdSize is always an even number in this branch, it doesn't affect parity in any way,
+           Since bdSize is always an even number in this branch, it doesn't affect parity in any way,
            so we can just test the parity of row, which should give the same result.
           -}
       even row
@@ -129,12 +129,12 @@ isSolvable bd@Board {bdSize, bdHole = (row, _c)} =
                 counting from the bottom (second-last, fourth-last etc),
                 then the number of inversions in a solvable situation is odd.
               -}
-          not bp
+          bp
         else {-
                 If the grid width is even, and the blank is on an odd row
                 counting from the bottom (last, third-last, fifth-last etc)
                 then the number of inversions in a solvable situation is even.
              -}
-          bp
+          not bp
   where
     bp = bdParity bd
