@@ -60,5 +60,4 @@ main = do
           goal = goalBoard (bdSize bd)
           steps : _ = solveBoard goal bd
       putStrLn $ intercalate "|" $ fmap (\(x, y) -> show x <> "," <> show y) steps
-    ["dev"] -> do
-      testMergeSort
+    ["dev"] -> pure ()

@@ -28,7 +28,15 @@ instance Arbitrary SmallBoard where
 
 spec :: Spec
 spec = do
-  describe "mergeSortFromListN" $
+  describe "mergeSortFromListN" $ do
+    specify "small example" $ do
+      {-
+        check against example in
+        https://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
+       -}
+      let v = [12 :: Int, 1, 10, 2, 7, 11, 4, 14, 5, 9, 15, 8, 13, 6, 3]
+          (_, count) = mergeSortFromListN (length v) v
+      count `shouldBe` 49
     prop "compare with library sort" $
       \(xs :: [Int]) ->
         let n = length xs

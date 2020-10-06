@@ -138,15 +138,3 @@ isSolvable bd@Board {bdSize, bdHole = (row, _c)} =
           bp
   where
     bp = bdParity bd
-
-testMergeSort :: IO ()
-testMergeSort = do
-  let src :: [Int]
-      src = [27, 79, 25, 6, 33, 31, 95, 64, 29, 77, 23, 62, 16, 89, 20, 80, 54, 52]
-      (ys, count) = mergeSortFromListN (length src) src
-  print (V.toList ys == sort src)
-  print count
-  -- sanity check against example in https://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
-  let v = [12 :: Int, 1, 10, 2, 7, 11, 4, 14, 5, 9, 15, 8, 13, 6, 3]
-      (_, count') = mergeSortFromListN (length v) v
-  print (count' == 49)
