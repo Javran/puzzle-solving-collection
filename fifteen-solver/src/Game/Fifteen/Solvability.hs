@@ -11,11 +11,12 @@ import Control.Monad.ST
 import Control.Monad.Trans.Writer
 import Data.Bifunctor
 import Data.Function
-import Data.List
+import qualified Data.List.Split
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
+import Game.Fifteen.Board
 import Game.Fifteen.Types
 
 {-
@@ -138,3 +139,28 @@ isSolvable bd@Board {bdSize, bdHole = (row, _c)} =
           not bp
   where
     bp = bdParity bd
+
+{-
+  Modify a board so that its solvabilty flips.
+
+  There are many ways to achieve this: we just need to make an illegal move that breaks the invariant
+  so we can flip to the other equivalence class.
+
+  For this implementation we simply swap first two non-empty tile.
+ -}
+flipSolvability :: Board -> Board
+flipSolvability Board {bdTiles = tiles, bdSize} =
+  mkBoard $ Data.List.Split.chunksOf bdSize tiles'
+  where
+    {-
+      Find two indices that point to Justs, and swap their values.
+      We can safely asssume that board size is at least 2, making index 2 always available.
+     -}
+    (i, j) =
+      if tiles V.! 0 == Nothing
+        then (1, 2)
+        else
+          if tiles V.! 1 == Nothing
+            then (0, 2)
+            else (0, 1)
+    tiles' = V.toList $ tiles V.// [(i, tiles V.! j), (j, tiles V.! i)]
