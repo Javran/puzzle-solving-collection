@@ -1,1 +1,8 @@
-cradle: {stack: {component: "fifteen-solver:exe:fifteen-demo"}}
+cradle:
+  stack:
+    - path: "./src"
+      component: "fifteen-solver:lib"
+    - path: "./test"
+      component: "fifteen-solver:test:hspec"
+    - path: "./exe"
+      component: "fifteen-solver:exe:fifteen-demo"
