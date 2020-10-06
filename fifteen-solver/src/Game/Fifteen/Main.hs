@@ -4,7 +4,7 @@
 module Game.Fifteen.Main where
 
 import Data.List
-import Game.Fifteen.Common
+import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.Solvability
 import Game.Fifteen.Types

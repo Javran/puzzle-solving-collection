@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
-module Game.Fifteen.Common where
+module Game.Fifteen.Board where
 
 import Control.Monad
 import Data.Bifunctor

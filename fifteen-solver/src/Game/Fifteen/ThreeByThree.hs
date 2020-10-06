@@ -13,7 +13,7 @@ import Data.Maybe
 import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Vector as V
 import Data.Word
-import qualified Game.Fifteen.Common as GB
+import qualified Game.Fifteen.Board as GB
 import Game.Fifteen.Types (Coord)
 import qualified Game.Fifteen.Types as GB -- GB for general Board
 

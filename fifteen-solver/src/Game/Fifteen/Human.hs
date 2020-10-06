@@ -16,7 +16,7 @@ import Data.Maybe
 import qualified Data.Set as S
 import Data.Tuple
 import qualified Data.Vector as V
-import Game.Fifteen.Common
+import Game.Fifteen.Board
 import qualified Game.Fifteen.ThreeByThree as TBT
 import Game.Fifteen.Types
 
