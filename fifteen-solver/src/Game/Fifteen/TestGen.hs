@@ -19,12 +19,11 @@ import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.Solvability
 import Game.Fifteen.Types
-import System.Environment (getArgs)
+import System.Environment
 import Test.QuickCheck
 import System.IO
 import Data.Maybe
-import Data.Either (partitionEithers)
-import Debug.Trace
+import Data.Either
 
 genBoardOfSize :: Int -> Gen Board
 genBoardOfSize sz = do
@@ -55,7 +54,7 @@ testGenBundle = do
       genTestBoard sz =
         (,) <$> UUID.nextRandom
           <*> generate (genSolvableBoardOfSize sz)
-  pairs <- fmap concat <$> for [3 .. 24] $ \sz -> replicateM 2 (genTestBoard sz)
+  pairs <- fmap concat <$> for [3 .. 10] $ \sz -> replicateM 2 (genTestBoard sz)
   mapM_ putStrLn $ concatMap renderBoard pairs
 
 testGenSolveAll :: FilePath -> IO ()
@@ -73,7 +72,7 @@ testGenSolveAll fp = do
       solveFromRaw :: (String, [String]) -> (String, Maybe Int)
       solveFromRaw (boardId, xs) = (boardId,) $ do
         bd@Board {bdSize} <- mkBoardFromRaw (unlines xs)
-        let goal = traceShow boardId (goalBoard bdSize)
+        let goal = goalBoard bdSize
         moves <- listToMaybe $ solveBoard goal bd
         pure (length moves)
       (unsolvedResults, solvedResults) = partitionEithers . fmap (toEither . solveFromRaw) $ rawPairs
