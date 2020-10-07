@@ -8,6 +8,7 @@ import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.Solvability
 import Game.Fifteen.Types
+import Game.Fifteen.TestGen
 import System.Environment
 
 demo :: Board -> IO ()
@@ -61,3 +62,4 @@ main = do
           steps : _ = solveBoard goal bd
       putStrLn $ intercalate "|" $ fmap (\(x, y) -> show x <> "," <> show y) steps
     ["dev"] -> pure ()
+    ["testgen"] -> testGen
