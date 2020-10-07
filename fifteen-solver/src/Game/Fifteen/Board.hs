@@ -126,6 +126,13 @@ possibleMoves bd =
           bd' <- bdMoveHole curBd d
           pure ((bdHole bd', bd'), bd')
 
+applyMoves :: Board -> [Coord] -> Maybe Board
+applyMoves bd xs = case xs of
+  [] -> Just bd
+  m:ms -> do
+    bd' <- lookup m (possibleMoves bd)
+    applyMoves bd' ms
+
 -- https://en.wikipedia.org/wiki/Box-drawing_character
 pprBoard :: Board -> IO ()
 pprBoard bd@Board {bdSize} = do

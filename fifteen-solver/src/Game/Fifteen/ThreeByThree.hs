@@ -131,6 +131,7 @@ allCoords = [(r, c) | r <- [0 .. 2], c <- [0 .. 2]]
 distance :: Board3 -> Board3 -> Int
 distance bd0 bd1 = sum $ zipWith coordDist sortedCoords0 sortedCoords1
   where
+    -- TODO: goalBoard is known, and tileNum = index number, so some of those are unnecessary.
     coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
     mkSortedCoords :: Board3 -> [Coord]
     mkSortedCoords bd =
