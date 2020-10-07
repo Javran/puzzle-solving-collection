@@ -1,10 +1,17 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Game.Fifteen.TestGen where
 
 {-
   Generate random boards for testing and benchmarking.
  -}
 
+import Control.Monad
+import Data.List
 import qualified Data.List.Split
+import qualified Data.UUID as UUID
+import qualified Data.UUID.V4 as UUID
+import qualified Data.Vector as V
 import Game.Fifteen.Board
 import Game.Fifteen.Solvability
 import Game.Fifteen.Types
@@ -26,4 +33,20 @@ genSolvableBoardOfSize sz = do
       else flipSolvability bd
 
 testGen :: IO ()
-testGen = pure ()
+testGen = do
+  let renderBoard :: (UUID.UUID, Board) -> [String]
+      renderBoard (tag, Board {bdSize, bdTiles}) = commentLine : fmap renderRow tiles
+        where
+          renderTile m = case m of
+            Nothing -> "_"
+            Just v -> show v
+          renderRow = unwords . fmap renderTile
+          commentLine = "# " <> UUID.toString tag
+          tiles = Data.List.Split.chunksOf bdSize $ V.toList bdTiles
+      genTestBoard sz =
+        (,) <$> UUID.nextRandom
+          <*> generate (genSolvableBoardOfSize sz)
+
+  pairs <- fmap concat <$> forM [3 .. 32] $ \sz ->
+    (replicateM 5 (genTestBoard sz))
+  mapM_ putStrLn $ concatMap renderBoard pairs

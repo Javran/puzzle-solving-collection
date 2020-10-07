@@ -19,6 +19,7 @@ dependencies:
 - pqueue
 - transformers
 - QuickCheck
+- uuid
 
 library:
   source-dirs: src
