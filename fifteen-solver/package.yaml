@@ -18,6 +18,7 @@ dependencies:
 - hashtables
 - pqueue
 - transformers
+- QuickCheck
 
 library:
   source-dirs: src
@@ -44,7 +45,6 @@ tests:
     source-dirs:
       - test
     dependencies:
-      - QuickCheck
       - fifteen-solver
       - hspec
     ghc-options:

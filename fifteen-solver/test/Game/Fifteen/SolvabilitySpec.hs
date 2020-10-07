@@ -2,25 +2,19 @@
 
 module Game.Fifteen.SolvabilitySpec where
 
-import Control.Monad
 import Data.List
-import qualified Data.List.Split
 import qualified Data.Vector as V
 import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.Solvability
+import Game.Fifteen.TestGen
 import Game.Fifteen.Types
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
 
 genBoard :: (Int, Int) -> Gen Board
-genBoard range = do
-  sz <- choose range
-  let lastNum = sz * sz -1
-      tr x = if x == lastNum then Nothing else Just x
-  xs <- shuffle [0 .. lastNum]
-  pure $ mkBoard $ (fmap . fmap) tr $ Data.List.Split.chunksOf sz xs
+genBoard range = choose range >>= genBoardOfSize
 
 newtype SmallBoard = SmallBoard Board deriving (Show)
 
