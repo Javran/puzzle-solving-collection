@@ -134,7 +134,7 @@ possibleMoves bd =
 applyMoves :: Board -> [Coord] -> Maybe Board
 applyMoves bd xs = case xs of
   [] -> Just bd
-  m:ms -> do
+  m : ms -> do
     bd' <- lookup m (possibleMoves bd)
     applyMoves bd' ms
 
@@ -171,12 +171,12 @@ goalBoard sz = mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
 
 pprSteps :: Board -> [Coord] -> IO (Maybe Board)
 pprSteps initBd allMoves = do
-    putStrLn "Initial board:"
-    pprBoard initBd
-    pprStepsAux (1 :: Int) initBd allMoves
+  putStrLn "Initial board:"
+  pprBoard initBd
+  pprStepsAux (1 :: Int) initBd allMoves
   where
     pprStepsAux _ bd [] = Just bd <$ putStrLn "Done."
-    pprStepsAux step bd (coord:ms) = do
+    pprStepsAux step bd (coord : ms) = do
       putStrLn $ "Step #" <> show step <> ": " <> show coord
       case lookup coord (possibleMoves bd) of
         Nothing -> do
@@ -184,4 +184,4 @@ pprSteps initBd allMoves = do
           pure Nothing
         Just nextBd -> do
           pprBoard nextBd
-          pprStepsAux (step+1) nextBd ms
+          pprStepsAux (step + 1) nextBd ms
