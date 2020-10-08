@@ -130,33 +130,37 @@ toBoard bd = bd'
 allCoords :: [Coord]
 allCoords = [(r, c) | r <- [0 .. 2], c <- [0 .. 2]]
 
-distance :: Board3 -> Board3 -> Int
-distance bd0 bd1 = sum $ zipWith coordDist sortedCoords0 sortedCoords1
-  where
-    -- TODO: goalBoard is known, and tileNum = index number, so some of those are unnecessary.
-    coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
-    mkSortedCoords :: Board3 -> [Coord]
-    mkSortedCoords bd =
-      -- drop last one (which is 0xF)
-      init $ fmap snd $ sortOn fst $ fmap (\c -> let tile = bdGet bd c in (tile, c)) allCoords
-    sortedCoords0 = mkSortedCoords bd0
-    sortedCoords1 = mkSortedCoords bd1
-
 goalDistance :: Board3 -> Int
-goalDistance bd = getSum $ foldMap (\coord -> if coord == holeCoord then 0 else Sum $ getDist coord) allCoords
+goalDistance bd =
+  getSum $
+    foldMap
+      (\coord ->
+         if coord == holeCoord
+           then -- ignore distance between hole.
+             0
+           else -- calculate distance of this coord
+             Sum $ getDist coord)
+      allCoords
   where
-    getDist coord@(r, c) = coordDist coord targetCoord
+    getDist coord = coordDist coord targetCoord
       where
+        {-
+          since in target goal board, tileNum == index number,
+          we can directly calculate target coord of current curTile
+          without actually looking at the goal board.
+         -}
         targetCoord = unindex (fromIntegral curTile)
         curTile = bdGet bd coord
     holeCoord = unindex $ holeIndex bd
     coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
 
+goal :: Board3
+Just goal = fromBoard $ GB.goalBoard 3
+
 solveBoard :: Board3 -> [[Coord]]
 solveBoard initBoard = runST $ do
   visited <- HT.new
-  let Just goal = fromBoard $ GB.goalBoard 3
-      initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
+  let initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
       initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
   fix
     (\loop dl -> case PQ.minView dl of

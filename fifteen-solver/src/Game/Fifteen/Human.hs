@@ -207,10 +207,15 @@ solveBoard initBoard@Board {bdSize}
         pure $ DL.toList moves <> fmap (\(r, c) -> (r + 1, c + 1)) smMoves
       Nothing -> []
   where
-    goal = goalBoard bdSize
     solveCoord goalCoord@(gR, gC) = do
       guard $ gR == 0 || gC == 0
-      let Just goalTile = bdGet goal goalCoord
+      let goalTile =
+            {-
+              Because our tile in Board starts at 0,
+              we have this nice property that number on a goalTile coincides
+              with its linear index.
+             -}
+            gR * bdSize + gC
       if
           | goalCoord == (0, bdSize -1) ->
             solveLastTile True goalCoord goalTile
