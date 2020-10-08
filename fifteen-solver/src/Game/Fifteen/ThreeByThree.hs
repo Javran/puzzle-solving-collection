@@ -10,12 +10,14 @@ import Data.Function
 import Data.HashTable.ST.Basic as HT
 import Data.List
 import Data.Maybe
+-- GB for general Board
+import Data.Monoid
 import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Vector as V
 import Data.Word
 import qualified Game.Fifteen.Board as GB
 import Game.Fifteen.Types (Coord)
-import qualified Game.Fifteen.Types as GB -- GB for general Board
+import qualified Game.Fifteen.Types as GB
 
 {-
   a module specialized for solving 3x3 puzzles.
@@ -140,11 +142,20 @@ distance bd0 bd1 = sum $ zipWith coordDist sortedCoords0 sortedCoords1
     sortedCoords0 = mkSortedCoords bd0
     sortedCoords1 = mkSortedCoords bd1
 
+goalDistance :: Board3 -> Int
+goalDistance bd = getSum $ foldMap (\coord -> if coord == holeCoord then 0 else Sum $ getDist coord) allCoords
+  where
+    getDist coord@(r, c) = coordDist coord targetCoord
+      where
+        targetCoord = unindex (fromIntegral curTile)
+        curTile = bdGet bd coord
+    holeCoord = unindex $ holeIndex bd
+    coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
+
 solveBoard :: Board3 -> [[Coord]]
 solveBoard initBoard = runST $ do
   visited <- HT.new
-  let goalDistance = distance goal
-      Just goal = fromBoard $ GB.goalBoard 3
+  let Just goal = fromBoard $ GB.goalBoard 3
       initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
       initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
   fix
