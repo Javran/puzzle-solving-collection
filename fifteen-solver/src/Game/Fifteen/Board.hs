@@ -166,8 +166,9 @@ pprBoard bd@Board {bdSize} = do
       else printSep "╚" "╩" "╝"
   putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [-1 .. bdSize -2]
 
-goalBoard :: Int -> Board
-goalBoard sz = mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
+mkGoalBoard :: Int -> Board
+mkGoalBoard sz =
+  mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
 
 pprSteps :: Board -> [Coord] -> IO (Maybe Board)
 pprSteps initBd allMoves = do

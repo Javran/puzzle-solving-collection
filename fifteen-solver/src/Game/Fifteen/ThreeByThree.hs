@@ -155,7 +155,7 @@ goalDistance bd =
     coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
 
 goal :: Board3
-Just goal = fromBoard $ GB.goalBoard 3
+Just goal = fromBoard $ GB.mkGoalBoard 3 -- TODO: should we use mkGoalBoard here?
 
 solveBoard :: Board3 -> [[Coord]]
 solveBoard initBoard = runST $ do

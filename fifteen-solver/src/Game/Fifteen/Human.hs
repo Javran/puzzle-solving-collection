@@ -348,24 +348,23 @@ tryMoveTile srcCoord dstCoord
  -}
 subBoard :: Board -> Maybe Board
 subBoard bd@Board {bdSize} = do
-  let goal = goalBoard bdSize
-      smallGoal = goalBoard (bdSize -1)
-  guard $ bdGet goal (bdSize -1, bdSize -1) == Nothing
-  guard $ bdGet smallGoal (bdSize -2, bdSize -2) == Nothing
   do
     -- check size and expect first row and col to be solved.
     guard $ bdSize > 1
     let expectSolvedCoords =
           [(0, c) | c <- [0 .. bdSize -1]] <> [(r, 0) | r <- [1 .. bdSize -1]]
-    forM_ expectSolvedCoords $ \coord ->
-      guard $ bdGet goal coord == bdGet bd coord
+    forM_ expectSolvedCoords $ \coord@(r, c) -> do
+      let goalTile = Just $ r * bdSize + c
+      guard $ bdGet bd coord == goalTile
   let tileMap =
         M.fromList
           . fmap
-            (\coord@(r, c) ->
-               ( fromJust $ bdGet goal coord
-               , fromJust $ bdGet smallGoal (r -1, c -1)
-               ))
+            (\(r, c) ->
+               let goalTile = Just $ r * bdSize + c
+                   smallGoalTile = Just $ (r -1) * (bdSize -1) + (c -1)
+                in ( fromJust $ goalTile
+                   , fromJust $ smallGoalTile
+                   ))
           . init -- drop last one, which is Nothing.
           $ [(r, c) | r <- [1 .. bdSize -1], c <- [1 .. bdSize -1]]
       tileSource =
