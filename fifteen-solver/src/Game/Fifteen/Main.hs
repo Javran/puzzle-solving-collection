@@ -7,14 +7,13 @@ import Data.List
 import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.Solvability
-import Game.Fifteen.Types
 import Game.Fifteen.TestGen
+import Game.Fifteen.Types
 import System.Environment
 
 demo :: Board -> IO ()
 demo bd = do
-  let goal = goalBoard (bdSize bd)
-      steps : _ = solveBoard goal bd
+  let steps : _ = solveBoard bd
   Just bd' <- pprSteps bd steps
   pprBoard bd'
 
@@ -58,8 +57,7 @@ main = do
     ["stdin"] -> do
       xs <- getContents
       let Just bd = mkBoardFromRaw xs
-          goal = goalBoard (bdSize bd)
-          steps : _ = solveBoard goal bd
+          steps : _ = solveBoard bd
       putStrLn $ intercalate "|" $ fmap (\(x, y) -> show x <> "," <> show y) steps
     ["dev"] -> pure ()
-    "testgen":_ -> testGen
+    "testgen" : _ -> testGen

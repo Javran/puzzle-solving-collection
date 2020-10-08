@@ -41,7 +41,6 @@ spec = do
   describe "isSolvable" $ do
     let verifyBoardFromRaw rawSource expectSolvable = do
           let bd = mkBoard rawSource
-              goal = goalBoard (bdSize bd)
           isSolvable bd `shouldBe` expectSolvable
           {-
             Note that an unsolvable board will take tooo loooong to finish its search,
@@ -50,8 +49,8 @@ spec = do
             with our heuristic search fairly quickly.
            -}
           if isSolvable bd
-            then solveBoard goal bd `shouldSatisfy` not . null
-            else solveBoard goal (flipSolvability bd) `shouldSatisfy` not . null
+            then solveBoard bd `shouldSatisfy` not . null
+            else solveBoard (flipSolvability bd) `shouldSatisfy` not . null
 
     specify "examples (odd size, solvable)" $ do
       verifyBoardFromRaw
@@ -85,11 +84,10 @@ spec = do
         False
     prop "SmallBoard" $
       \(SmallBoard bd) ->
-        let goal = goalBoard (bdSize bd)
-         in if isSolvable bd
-              then
-                label "solvable" $
-                  not . null $ solveBoard goal bd
-              else
-                label "not solvable" $
-                  not . null $ solveBoard goal (flipSolvability bd)
+        if isSolvable bd
+          then
+            label "solvable" $
+              not . null $ solveBoard bd
+          else
+            label "not solvable" $
+              not . null $ solveBoard (flipSolvability bd)

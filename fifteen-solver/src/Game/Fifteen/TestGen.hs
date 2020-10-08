@@ -71,9 +71,8 @@ testGenSolveAll fp = do
           isCommentLine = (== "# ") . take 2
       solveFromRaw :: (String, [String]) -> (String, Maybe Int)
       solveFromRaw (boardId, xs) = (boardId,) $ do
-        bd@Board {bdSize} <- mkBoardFromRaw (unlines xs)
-        let goal = goalBoard bdSize
-        moves <- listToMaybe $ solveBoard goal bd
+        bd <- mkBoardFromRaw (unlines xs)
+        moves <- listToMaybe $ solveBoard bd
         pure (length moves)
       (unsolvedResults, solvedResults) = partitionEithers . fmap (toEither . solveFromRaw) $ rawPairs
         where

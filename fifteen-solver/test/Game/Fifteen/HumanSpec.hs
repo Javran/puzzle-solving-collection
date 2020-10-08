@@ -21,7 +21,7 @@ spec =
     prop "correctness on generated boards" $
       \(SolvableBoard bd) ->
         let goal = goalBoard size
-            solutions = solveBoard goal bd
+            solutions = solveBoard bd
             size = bdSize bd
             tag = "size: " <> show size
          in label tag $

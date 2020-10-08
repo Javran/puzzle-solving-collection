@@ -140,10 +140,11 @@ distance bd0 bd1 = sum $ zipWith coordDist sortedCoords0 sortedCoords1
     sortedCoords0 = mkSortedCoords bd0
     sortedCoords1 = mkSortedCoords bd1
 
-solveBoard :: Board3 -> Board3 -> [[Coord]]
-solveBoard goal initBoard = runST $ do
+solveBoard :: Board3 -> [[Coord]]
+solveBoard initBoard = runST $ do
   visited <- HT.new
   let goalDistance = distance goal
+      Just goal = fromBoard $ GB.goalBoard 3
       initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
       initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
   fix

@@ -182,24 +182,32 @@ rowCornerRotateSolution =
   ]
 colCornerRotateSolution = fmap swap rowCornerRotateSolution
 
-solveBoard :: Board -> Board -> [[Coord]]
-solveBoard goal initBoard@Board {bdSize}
+{-
+  For a board with tiles numbered [0..sz*sz-2] on it,
+  the board is considered solved if tiles arranged in row-major
+  linear array are numbered [0..sz*sz-2] with last tile being empty.
+
+  There are some variants that the solved state has empty tile
+  put on top-left corner, which is still solvable if we translate
+  that goal board into ours and translate our solutions back.
+ -}
+solveBoard :: Board -> [[Coord]]
+solveBoard initBoard@Board {bdSize}
   | bdSize <= 1 = [[]]
   | bdSize < 3 = error "not supported yet."
   | bdSize == 3 =
-    let Just goal' = TBT.fromBoard goal
-        Just bd' = TBT.fromBoard initBoard
-     in TBT.solveBoard goal' bd'
+    let Just bd' = TBT.fromBoard initBoard
+     in TBT.solveBoard bd'
   | otherwise = do
     -- bdSize > 3
     case runRWST solveAux () (initBoard, S.empty) of
       Just (bdEnd, _, moves) -> do
-        Just smBd@(Board {bdSize = smBdSize}) <- pure (subBoard bdEnd)
-        let smGoal = goalBoard smBdSize
-        smMoves <- solveBoard smGoal smBd
+        Just smBd <- pure (subBoard bdEnd)
+        smMoves <- solveBoard smBd
         pure $ DL.toList moves <> fmap (\(r, c) -> (r + 1, c + 1)) smMoves
       Nothing -> []
   where
+    goal = goalBoard bdSize
     solveCoord goalCoord@(gR, gC) = do
       guard $ gR == 0 || gC == 0
       let Just goalTile = bdGet goal goalCoord
