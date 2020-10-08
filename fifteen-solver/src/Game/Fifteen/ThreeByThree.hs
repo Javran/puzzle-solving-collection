@@ -155,7 +155,13 @@ goalDistance bd =
     coordDist (a, b) (c, d) = abs (a - c) + abs (b - d)
 
 goal :: Board3
-Just goal = fromBoard $ GB.mkGoalBoard 3 -- TODO: should we use mkGoalBoard here?
+goal =
+  {-
+    it so happens that 4 bits can be represented as 1 hex digit,
+    this is just F, then 7,6,5 .. 0.
+    this is backwards because we encode from least significant bits.
+   -}
+  0xF76543210
 
 solveBoard :: Board3 -> [[Coord]]
 solveBoard initBoard = runST $ do
