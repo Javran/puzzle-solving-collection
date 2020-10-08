@@ -35,6 +35,11 @@ mkBoard tileSource =
 mkBoardFromRaw :: String -> Maybe Board
 mkBoardFromRaw = fmap mkBoard . parseRaw
 
+isSolved :: Board -> Bool
+isSolved Board {bdTiles, bdSize, bdHole} =
+  bdHole == (bdSize -1, bdSize -1)
+    && and (zipWith (==) (V.toList bdTiles) (Just <$> [0 .. bdSize * bdSize -2]))
+
 demo0Raw :: String
 demo0Raw =
   unlines

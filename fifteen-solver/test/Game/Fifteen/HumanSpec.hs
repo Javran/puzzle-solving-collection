@@ -20,8 +20,7 @@ spec =
   describe "solveBoard" $
     prop "correctness on generated boards" $
       \(SolvableBoard bd) ->
-        let goal = goalBoard size
-            solutions = solveBoard bd
+        let solutions = solveBoard bd
             size = bdSize bd
             tag = "size: " <> show size
          in label tag $
@@ -30,4 +29,4 @@ spec =
                       in case applyMoves bd moves of
                            Nothing -> False
                            Just bdFin ->
-                             bdTiles bdFin == bdTiles goal
+                             isSolved bdFin
