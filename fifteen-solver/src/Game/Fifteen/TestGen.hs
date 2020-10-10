@@ -60,19 +60,9 @@ testGenBundle = do
   pairs <- fmap concat <$> for [3 .. 10] $ \sz -> replicateM 2 (genTestBoard sz)
   mapM_ putStrLn $ concatMap renderBoard pairs
 
-{-
-  load a bundle of puzzles together with its moves file.
-  it is assumed that the moves file is simply adding "-moves" to puzzle file's base name.
-  for example, a puzzle bundle and its moves file might looks like:
-
-  - /foo/bar/puzzle-bundle.txt
-  - /foo/bar/puzzle-bundle-moves.txt
-
- -}
-loadPuzzleBundle :: FilePath -> IO (M.Map String (Board, Maybe Int))
+loadPuzzleBundle :: FilePath -> IO (M.Map String Board)
 loadPuzzleBundle fpPuzzle = do
   let (fpBase, ext) = splitExtension fpPuzzle
-      _movesFile = (fpBase <> "-moves") <.> ext
   rawLines <- lines <$> readFile fpPuzzle
   let rawPairs :: [(String, [String])]
       rawPairs =
@@ -84,17 +74,17 @@ loadPuzzleBundle fpPuzzle = do
           extract [] = []
           extract _ = error "input file is ill-formed"
           isCommentLine = (== "# ") . take 2
-  pure . M.fromList . (fmap . second) (fromJust . fmap (,Nothing) . mkBoardFromRaw . unlines) $ rawPairs
+  pure . M.fromList . (fmap . second) (fromJust . mkBoardFromRaw . unlines) $ rawPairs
 
 testGenSolveAll :: FilePath -> IO ()
 testGenSolveAll fp = do
-  boardsPre <- loadPuzzleBundle fp
-  let boards = M.toList boardsPre
-      solveFromRaw :: (String, Board) -> (String, Maybe Int)
+  boards <- loadPuzzleBundle fp
+  let solveFromRaw :: (String, Board) -> (String, Maybe Int)
       solveFromRaw (boardId, bd) = (boardId,) $ do
         moves <- listToMaybe $ solveBoard bd
         pure (length moves)
-      (unsolvedResults, solvedResults) = partitionEithers . fmap (toEither . solveFromRaw) $ (fmap . second) fst boards
+      (unsolvedResults, solvedResults) =
+        partitionEithers . fmap (toEither . solveFromRaw) . M.toList $ boards
         where
           toEither (boardId, m) = case m of
             Nothing -> Left boardId
