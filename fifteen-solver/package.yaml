@@ -21,6 +21,10 @@ dependencies:
 - QuickCheck
 - uuid
 
+data-files:
+  - data/puzzle-bundle.txt
+  - data/puzzle-bundle-moves.txt
+
 library:
   source-dirs: src
   ghc-options:
