@@ -20,6 +20,7 @@ dependencies:
 - transformers
 - QuickCheck
 - uuid
+- filepath
 
 data-files:
   - data/puzzle-bundle.txt

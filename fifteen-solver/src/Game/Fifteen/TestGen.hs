@@ -1,5 +1,5 @@
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
 
 module Game.Fifteen.TestGen where
 
@@ -8,9 +8,13 @@ module Game.Fifteen.TestGen where
  -}
 
 import Control.Monad
+import Data.Bifunctor
+import Data.Either
 import Data.Function
 import Data.List
 import qualified Data.List.Split
+import qualified Data.Map as M
+import Data.Maybe
 import Data.Traversable
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
@@ -20,10 +24,9 @@ import Game.Fifteen.Human
 import Game.Fifteen.Solvability
 import Game.Fifteen.Types
 import System.Environment
-import Test.QuickCheck
+import System.FilePath.Posix
 import System.IO
-import Data.Maybe
-import Data.Either
+import Test.QuickCheck
 
 genBoardOfSize :: Int -> Gen Board
 genBoardOfSize sz = do
@@ -57,10 +60,22 @@ testGenBundle = do
   pairs <- fmap concat <$> for [3 .. 10] $ \sz -> replicateM 2 (genTestBoard sz)
   mapM_ putStrLn $ concatMap renderBoard pairs
 
-testGenSolveAll :: FilePath -> IO ()
-testGenSolveAll fp = do
-  rawLines <- lines <$> readFile fp
-  let rawPairs =
+{-
+  load a bundle of puzzles together with its moves file.
+  it is assumed that the moves file is simply adding "-moves" to puzzle file's base name.
+  for example, a puzzle bundle and its moves file might looks like:
+
+  - /foo/bar/puzzle-bundle.txt
+  - /foo/bar/puzzle-bundle-moves.txt
+
+ -}
+loadPuzzleBundle :: FilePath -> IO (M.Map String (Board, Maybe Int))
+loadPuzzleBundle fpPuzzle = do
+  let (fpBase, ext) = splitExtension fpPuzzle
+      _movesFile = (fpBase <> "-moves") <.> ext
+  rawLines <- lines <$> readFile fpPuzzle
+  let rawPairs :: [(String, [String])]
+      rawPairs =
         extract $
           groupBy ((==) `on` isCommentLine) rawLines
         where
@@ -69,21 +84,25 @@ testGenSolveAll fp = do
           extract [] = []
           extract _ = error "input file is ill-formed"
           isCommentLine = (== "# ") . take 2
-      solveFromRaw :: (String, [String]) -> (String, Maybe Int)
-      solveFromRaw (boardId, xs) = (boardId,) $ do
-        bd <- mkBoardFromRaw (unlines xs)
+  pure . M.fromList . (fmap . second) (fromJust . fmap (,Nothing) . mkBoardFromRaw . unlines) $ rawPairs
+
+testGenSolveAll :: FilePath -> IO ()
+testGenSolveAll fp = do
+  boardsPre <- loadPuzzleBundle fp
+  let boards = M.toList boardsPre
+      solveFromRaw :: (String, Board) -> (String, Maybe Int)
+      solveFromRaw (boardId, bd) = (boardId,) $ do
         moves <- listToMaybe $ solveBoard bd
         pure (length moves)
-      (unsolvedResults, solvedResults) = partitionEithers . fmap (toEither . solveFromRaw) $ rawPairs
+      (unsolvedResults, solvedResults) = partitionEithers . fmap (toEither . solveFromRaw) $ (fmap . second) fst boards
         where
           toEither (boardId, m) = case m of
             Nothing -> Left boardId
             Just v -> Right (boardId, v)
-  hPutStrLn stderr $ "Puzzles found: " <> show (length rawPairs)
+  hPutStrLn stderr $ "Puzzles found: " <> show (length boards)
   hPutStrLn stderr $ "Solved: " <> show (length solvedResults) <> ", unsolved: " <> show (length unsolvedResults)
   forM_ solvedResults $ \(boardId, moveCount) -> do
     putStrLn $ boardId <> ", " <> show moveCount
-
 
 testGen :: IO ()
 testGen = do
