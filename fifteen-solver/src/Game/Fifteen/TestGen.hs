@@ -82,7 +82,7 @@ loadPuzzleBundleMoves fp = do
   xs <- lines <$> readFile fp
   let parseRawLine ys = (boardId, read countRaw)
         where
-          [boardId, countRaw] = Data.List.Split.splitOn ", " ys
+          boardId : countRaw : _ = Data.List.Split.splitOn ", " ys
   pure . M.fromList . fmap parseRawLine $ xs
 
 testGenSolveAll :: FilePath -> IO ()
@@ -109,7 +109,12 @@ testGenSolveAll fpPuzzle = do
     let mOldMoveCount = knownMoves M.!? boardId
         desc = case mOldMoveCount of
           Nothing -> show moveCount
-          Just oldMoveCount -> show oldMoveCount <> " -> " <> show moveCount
+          Just oldMoveCount ->
+            show moveCount <> ", was " <> show oldMoveCount <> ", "
+              <> case compare moveCount oldMoveCount of
+                EQ -> "same"
+                LT -> "less"
+                GT -> "more"
     putStrLn $ boardId <> ", " <> desc
   pure ()
 
