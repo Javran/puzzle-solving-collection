@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Game.Fifteen.TestGen where
 
@@ -7,6 +8,7 @@ module Game.Fifteen.TestGen where
   Generate random boards for testing and benchmarking.
  -}
 
+import Control.Exception
 import Control.Monad
 import Data.Bifunctor
 import Data.Either
@@ -86,7 +88,7 @@ loadPuzzleBundleMoves fp = do
 testGenSolveAll :: FilePath -> IO ()
 testGenSolveAll fpPuzzle = do
   let (fpBase, ext) = splitExtension fpPuzzle
-      fpPuzzleMoves = (fpBase <> "-moves")  <.> ext
+      fpPuzzleMoves = (fpBase <> "-moves") <.> ext
   boards <- loadPuzzleBundle fpPuzzle
   let solveFromRaw :: (String, Board) -> (String, Maybe Int)
       solveFromRaw (boardId, bd) = (boardId,) $ do
@@ -100,9 +102,15 @@ testGenSolveAll fpPuzzle = do
             Just v -> Right (boardId, v)
   hPutStrLn stderr $ "Puzzles found: " <> show (length boards)
   hPutStrLn stderr $ "Solved: " <> show (length solvedResults) <> ", unsolved: " <> show (length unsolvedResults)
+  mKnownMoves <- try @IOException $ loadPuzzleBundleMoves fpPuzzleMoves
+  let knownMoves :: M.Map String Int
+      knownMoves = fromRight M.empty $ mKnownMoves
   forM_ solvedResults $ \(boardId, moveCount) -> do
-    putStrLn $ boardId <> ", " <> show moveCount
-  loadPuzzleBundleMoves fpPuzzleMoves >>= print
+    let mOldMoveCount = knownMoves M.!? boardId
+        desc = case mOldMoveCount of
+          Nothing -> show moveCount
+          Just oldMoveCount -> show oldMoveCount <> " -> " <> show moveCount
+    putStrLn $ boardId <> ", " <> desc
   pure ()
 
 testGen :: IO ()
