@@ -61,9 +61,8 @@ testGenBundle = do
   mapM_ putStrLn $ concatMap renderBoard pairs
 
 loadPuzzleBundle :: FilePath -> IO (M.Map String Board)
-loadPuzzleBundle fpPuzzle = do
-  let (fpBase, ext) = splitExtension fpPuzzle
-  rawLines <- lines <$> readFile fpPuzzle
+loadPuzzleBundle fp = do
+  rawLines <- lines <$> readFile fp
   let rawPairs :: [(String, [String])]
       rawPairs =
         extract $
@@ -76,9 +75,19 @@ loadPuzzleBundle fpPuzzle = do
           isCommentLine = (== "# ") . take 2
   pure . M.fromList . (fmap . second) (fromJust . mkBoardFromRaw . unlines) $ rawPairs
 
+loadPuzzleBundleMoves :: FilePath -> IO (M.Map String Int)
+loadPuzzleBundleMoves fp = do
+  xs <- lines <$> readFile fp
+  let parseRawLine ys = (boardId, read countRaw)
+        where
+          [boardId, countRaw] = Data.List.Split.splitOn ", " ys
+  pure . M.fromList . fmap parseRawLine $ xs
+
 testGenSolveAll :: FilePath -> IO ()
-testGenSolveAll fp = do
-  boards <- loadPuzzleBundle fp
+testGenSolveAll fpPuzzle = do
+  let (fpBase, ext) = splitExtension fpPuzzle
+      fpPuzzleMoves = (fpBase <> "-moves")  <.> ext
+  boards <- loadPuzzleBundle fpPuzzle
   let solveFromRaw :: (String, Board) -> (String, Maybe Int)
       solveFromRaw (boardId, bd) = (boardId,) $ do
         moves <- listToMaybe $ solveBoard bd
@@ -93,6 +102,8 @@ testGenSolveAll fp = do
   hPutStrLn stderr $ "Solved: " <> show (length solvedResults) <> ", unsolved: " <> show (length unsolvedResults)
   forM_ solvedResults $ \(boardId, moveCount) -> do
     putStrLn $ boardId <> ", " <> show moveCount
+  loadPuzzleBundleMoves fpPuzzleMoves >>= print
+  pure ()
 
 testGen :: IO ()
 testGen = do
