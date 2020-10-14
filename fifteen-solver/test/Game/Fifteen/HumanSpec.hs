@@ -1,9 +1,12 @@
 module Game.Fifteen.HumanSpec where
 
+import Data.Foldable
+import qualified Data.Map.Strict as M
 import Game.Fifteen.Board
 import Game.Fifteen.Human
 import Game.Fifteen.TestGen
 import Game.Fifteen.Types
+import Paths_fifteen_solver
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
@@ -16,8 +19,8 @@ instance Arbitrary SolvableBoard where
       <$> (choose (3, 8) >>= genSolvableBoardOfSize)
 
 spec :: Spec
-spec =
-  describe "solveBoard" $
+spec = do
+  describe "solveBoard" $ do
     prop "correctness on generated boards" $
       \(SolvableBoard bd) ->
         let solutions = solveBoard bd
@@ -30,3 +33,12 @@ spec =
                            Nothing -> False
                            Just bdFin ->
                              isSolved bdFin
+    describe "examples from data files" $ do
+      bundle <-
+        runIO $
+          getDataFileName "data/puzzle-bundle.txt"
+            >>= loadPuzzleBundle
+      for_ (M.toList bundle) $ \(boardId, bd) -> do
+        specify boardId $ do
+          let solutions = solveBoard bd
+          solutions `shouldSatisfy` not . null

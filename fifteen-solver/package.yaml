@@ -27,6 +27,7 @@ data-files:
   - data/puzzle-bundle-moves.txt
 
 library:
+  generated-exposed-modules: Paths_fifteen_solver
   source-dirs: src
   ghc-options:
     - -Wall
