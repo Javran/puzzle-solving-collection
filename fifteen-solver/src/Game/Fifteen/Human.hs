@@ -82,7 +82,6 @@ findRotatingRect target@(tr, tc) cur@(cr, cc)
  -}
 type ProtectedCoords = S.Set Coord
 
-
 -- TODO: this is not necessary: we always know this is a rectangle
 -- so we just need some boundary check rather than creating a Coord set.
 rectToCoords :: Rect -> S.Set Coord
@@ -321,6 +320,9 @@ solveLastTile isRow goalCoord goalTile = do
     colRelativeCoords = fmap swap rowRelativeCoords
     coordAdd (a, b) (c, d) = (a + c, b + d)
 
+distance :: Coord -> Coord -> Int
+distance (a, b) (c, d) = abs (a - c) + abs (b - d)
+
 {-
   This function deals with situations that the target tile is
   not the last one in row or column.
@@ -351,14 +353,20 @@ tryMoveTile srcCoord dstCoord
   | otherwise = do
     (bd, pCoords) <- get
     srcTile <- lift $ bdGet bd srcCoord
-    let rotatingRect = findRotatingRect srcCoord dstCoord
-        rectCoords = rectToCoords rotatingRect
-    guard $ S.null (S.intersection rectCoords pCoords)
-    -- move the hole somewhere into the Rect without moving source tile.
-    moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
-    mapM_ play moves
-    -- TODO: do CW or CCW rotation?
-    rotateUntilFit rotatingRect dstCoord srcTile
+    let holeCoord = bdHole bd
+    if dstCoord == holeCoord
+      && distance srcCoord dstCoord == 1
+      then -- if it only takes one step, we can't do anything better than this
+        play srcCoord
+      else do
+        let rotatingRect = findRotatingRect srcCoord dstCoord
+            rectCoords = rectToCoords rotatingRect
+        guard $ S.null (S.intersection rectCoords pCoords)
+        -- move the hole somewhere into the Rect without moving source tile.
+        moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
+        mapM_ play moves
+        -- TODO: do CW or CCW rotation?
+        rotateUntilFit rotatingRect dstCoord srcTile
 
 {-
   for a n x n board (n > 1), check that first row and col are solved,
