@@ -82,6 +82,9 @@ findRotatingRect target@(tr, tc) cur@(cr, cc)
  -}
 type ProtectedCoords = S.Set Coord
 
+
+-- TODO: this is not necessary: we always know this is a rectangle
+-- so we just need some boundary check rather than creating a Coord set.
 rectToCoords :: Rect -> S.Set Coord
 rectToCoords ((rMin, cMin), (rMax, cMax)) =
   S.fromList $
@@ -242,6 +245,10 @@ play move = do
   tell $ DL.singleton move
 
 -- rotate until coord is set to a certain tile
+{-
+  TODO: this is clearly not the best thing we can do.
+  Perhaps we can perform some small-scale search with distance-related functions as heuristic.
+ -}
 rotateUntilFit :: Rect -> Coord -> Int -> Sim ()
 rotateUntilFit rect coord expectedTile = do
   let ((rMin, cMin), (rMax, cMax)) = rect
@@ -314,6 +321,10 @@ solveLastTile isRow goalCoord goalTile = do
     colRelativeCoords = fmap swap rowRelativeCoords
     coordAdd (a, b) (c, d) = (a + c, b + d)
 
+{-
+  This function deals with situations that the target tile is
+  not the last one in row or column.
+ -}
 solveSimpleTile :: Coord -> Int -> Sim ()
 solveSimpleTile goalCoord@(gR, gC) goalTile = do
   (bd, _) <- get
@@ -321,7 +332,14 @@ solveSimpleTile goalCoord@(gR, gC) goalTile = do
   unless (goalCoord == tileCoord) $ do
     tryMoveTile tileCoord goalCoord
       <|> do
-        let goalCoord' = (gR + 1, gC + 1)
+        let goalCoord' =
+              {-
+                This is just a lazy way of getting the job done,
+                since (gR+1, gC+1) is always available regardless of row or column.
+                To do better, we need to actually identify we are
+                working on first row or first column.
+               -}
+              (gR + 1, gC + 1)
         tryMoveTile tileCoord goalCoord'
         tryMoveTile goalCoord' goalCoord
   modify (second (S.insert goalCoord))
