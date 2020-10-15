@@ -34,6 +34,12 @@ spec = do
                            Just bdFin ->
                              isSolved bdFin
     describe "examples from data files" $ do
+      {-
+        The main purpose of this section is to show whether
+        a change in solving tactic has a positive overall effect.
+        This is done by running the solver against existing bundle of puzzles,
+        and then have their results compared.
+       -}
       bundle <-
         runIO $
           getDataFileName "data/puzzle-bundle.txt"
