@@ -335,13 +335,16 @@ solveSimpleTile goalCoord@(gR, gC) goalTile = do
     tryMoveTile tileCoord goalCoord
       <|> do
         let goalCoord' =
-              {-
-                This is just a lazy way of getting the job done,
-                since (gR+1, gC+1) is always available regardless of row or column.
-                To do better, we need to actually identify we are
-                working on first row or first column.
-               -}
-              (gR + 1, gC + 1)
+              if
+                  | gR == 0 -> (1, gC)
+                  | gC == 0 -> (gR, 1)
+                  | otherwise ->
+                    {-
+                      This is always available,
+                      but it is likely that we will never hit this branch
+                      since we are only working on first row or column.
+                     -}
+                    (gR + 1, gC + 1)
         tryMoveTile tileCoord goalCoord'
         tryMoveTile goalCoord' goalCoord
   modify (second (S.insert goalCoord))
