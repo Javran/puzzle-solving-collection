@@ -38,9 +38,21 @@ spec = do
         runIO $
           getDataFileName "data/puzzle-bundle.txt"
             >>= loadPuzzleBundle
+      bundleMoves <-
+        runIO $
+          getDataFileName "data/puzzle-bundle-moves.txt"
+            >>= loadPuzzleBundleMoves
+
       for_ (M.toList bundle) $ \(boardId, bd) -> do
         describe boardId $ do
           let moves : _ = solveBoard bd
-              l = length moves
-          specify ("moves: " <> show l) $
+              moveCount = length moves
+              desc = case bundleMoves M.!? boardId of
+                Nothing -> show moveCount <> " (?)"
+                Just oldMoveCount ->
+                  case compare moveCount oldMoveCount of
+                    EQ -> show moveCount <> " (=)"
+                    LT -> show oldMoveCount <> " -> " <> show moveCount <> " (less)"
+                    GT -> show oldMoveCount <> " -> " <> show moveCount <> " (more)"
+          specify ("moves: " <> desc) $
             () `shouldBe` ()
