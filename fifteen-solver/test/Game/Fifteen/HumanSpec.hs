@@ -39,6 +39,8 @@ spec = do
           getDataFileName "data/puzzle-bundle.txt"
             >>= loadPuzzleBundle
       for_ (M.toList bundle) $ \(boardId, bd) -> do
-        specify boardId $ do
-          let solutions = solveBoard bd
-          solutions `shouldSatisfy` not . null
+        describe boardId $ do
+          let moves : _ = solveBoard bd
+              l = length moves
+          specify ("moves: " <> show l) $
+            () `shouldBe` ()
