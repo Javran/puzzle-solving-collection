@@ -18,6 +18,86 @@ import Game.Fifteen.Types
  -}
 type SimplePartialBoard = (Coord, Coord)
 
+
+{-
+  The implementation is a bit involved when curCoord and holdCoord share a row or col.
+  let's explain one case, and all other cases can be produced by mirror.
+
+  Notation:
+  - `C` for cur coord, `H` for hole coord, `M` for coord.
+  - `X` is the tile `M` points at before this move.
+    (note that we don't actually care about the number on `X`)
+  - `<-- x -->`: there are x tiles in between.
+
+  Say the move happens in a row, and hole is on the left side of cur tile.
+
+     H           C
+   ^     ^       ^  ^
+   1     2       3  4
+
+  There are 4 places M can go, which are marked above.
+  (note that M=H is not possible)
+
+  Note that in all cases H is always moved to M so we don't
+  need to mention that.
+
+  case 1: M is on the left side of H.
+
+    before:
+    X <-- u --> H <-- v --> C
+    ^
+    M
+
+    after:
+    H X <-- u --> <-- v --> C
+    ^
+    M
+
+    therefore no change to C
+
+  case 2: M is between H and C
+
+    before:
+    H <-- u --> X <-- v --> C
+                ^
+                M
+
+    after:
+    <-- u --> X H <-- v --> C
+                ^
+                M
+
+    therefore no change to C
+
+  case 3: M = C
+
+    before:
+    H <-- u --> C
+                ^
+                M
+
+    after
+    <-- u --> C H
+                ^
+                M
+
+    therefore C moved one unit towards left
+
+  case 3: M is on the right side of C
+
+    before:
+    H <-- u --> C <-- v --> X
+                            ^
+                            M
+
+    after
+    <-- u --> C <-- v --> X H
+                            ^
+                            M
+
+    therefore C moved one unit towards left
+
+ -}
 makeMove :: SimplePartialBoard -> Coord -> Maybe SimplePartialBoard
 makeMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
   | curCoord == holeCoord =
