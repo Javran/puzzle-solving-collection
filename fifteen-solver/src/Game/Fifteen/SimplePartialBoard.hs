@@ -20,6 +20,9 @@ type SimplePartialBoard = (Coord, Coord)
 
 makeMove :: SimplePartialBoard -> Coord -> Maybe SimplePartialBoard
 makeMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
+  | curCoord == holeCoord =
+    -- impossible case
+    Nothing
   | mCoord == holeCoord =
     -- invalid move if hole is already at that coord.
     Nothing
@@ -39,8 +42,11 @@ makeMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
           if cC < mC
             then Just (curCoord, mCoord)
             else Just ((cR, cC + 1), mCoord)
-        | otherwise -> error "unreachable"
+        | otherwise ->
+          -- the move is orthogonal
+          Just (curCoord, mCoord)
   | mC == hC =
+    -- same col
     if
         | hR < cR ->
           -- hole is on the up side of cur tile.
@@ -52,5 +58,7 @@ makeMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
           if cR < mR
             then Just (curCoord, mCoord)
             else Just ((cR + 1, cC), mCoord)
-        | otherwise -> error "unreachable"
+        | otherwise ->
+          -- the move is orthogonal
+          Just (curCoord, mCoord)
   | otherwise = error "unreachable"
