@@ -2,10 +2,13 @@
 
 module Game.Fifteen.SimplePartialBoard where
 
-import Game.Fifteen.Types
+import Control.Monad
+import qualified Data.DList as DL
+import Data.Maybe
+import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Set as S
 import Game.Fifteen.Human
-import Control.Monad
+import Game.Fifteen.Types
 
 {-
   A SimplePartialBoard is simply
@@ -157,32 +160,41 @@ applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
           Just (curCoord, mCoord)
   | otherwise = error "unreachable"
 
+type PQ = PQ.MinPQueue Int PQElem
+
+type PQElem = (SPBoard, Int {- length of moves -}, DL.DList Coord)
+
 {-
   Search to find a way inside boundingRect, that avoids all coords in pCoords
   and moves tile in srcCoord to dstCoord.
  -}
-searchMoveTile :: Rect -> S.Set Coord -> Coord -> Coord -> Coord -> [] [Coord]
+searchMoveTile :: Rect -> S.Set Coord -> Coord -> Coord -> Coord -> Maybe [Coord]
 searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
-  doSearch [((srcCoord, initHoleCoord), [])] S.empty
+  doSearch initQ S.empty
   where
+    initQ = PQ.singleton (distance srcCoord dstCoord) ((srcCoord, initHoleCoord), 0, DL.empty)
     ((minR, minC), (maxR, maxC)) = boundingRect
-    doSearch :: [] (SPBoard, [Coord]) -> S.Set SPBoard -> [] [Coord]
-    doSearch [] _ = []
-    doSearch ((coordPair, revMoves) : todos) visited =
-      if coordPair `elem` visited
-        then doSearch todos visited
-        else do
-          let (curCoord, holeCoord) = coordPair
-          if curCoord == dstCoord
-            then pure (reverse revMoves)
-            else do
-              let directTileMoves = do
-                    guard $ distance curCoord holeCoord == 1
-                    -- tap current coord, effectively swaping the state pair.
-                    pure ((holeCoord, curCoord), curCoord : revMoves)
-                  holeMoves = do
-                    -- TODO: well this turns out to be complicated when curCoord and holeCoord share
-                    -- a row or col.
-                    undefined
-                  extraTodos = directTileMoves <> holeMoves
-              doSearch (todos <> extraTodos) (S.insert coordPair visited)
+    doSearch :: PQ -> S.Set SPBoard -> Maybe [Coord]
+    doSearch q visited = do
+      ((spBoard@(curCoord, holeCoord), moveLen, moves), todos) <- PQ.minView q
+      if
+          | spBoard `elem` visited ->
+            doSearch todos visited
+          | curCoord == dstCoord ->
+            pure (DL.toList moves)
+          | otherwise -> do
+            let (hR, hC) = holeCoord
+                ext :: PQ
+                ext = PQ.fromList $ do
+                  {-
+                    a move is allowed if and only if
+                    it's within boundingRect and is not in pCoords.
+                    note that the definition does not involve the validity of a move,
+                    which should be taken care of by `applyMove`.
+                   -}
+                  move <- [(hR, c) | c <- [minC .. maxC]] <> [(r, hC) | r <- [minR .. maxR]]
+                  guard $ move `notElem` pCoords
+                  spBoard'@(curCoord', _) <- maybeToList (applyMove spBoard move)
+                  let dist' = distance curCoord' dstCoord
+                  pure (dist' + moveLen + 1, (spBoard', moveLen + 1, DL.snoc moves move))
+            doSearch (PQ.union todos ext) (S.insert spBoard visited)
