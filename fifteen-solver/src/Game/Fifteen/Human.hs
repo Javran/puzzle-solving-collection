@@ -399,32 +399,3 @@ subBoard bd@Board {bdSize} = do
         ]
   pure $ mkBoard tileSource
 
-{-
-  Search to find a way inside boundingRect, that avoids all coords in pCoords
-  and moves tile in srcCoord to dstCoord.
- -}
-searchMoveTile :: Rect -> S.Set Coord -> Coord -> Coord -> Coord -> [] [Coord]
-searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
-  doSearch [((srcCoord, initHoleCoord), [])] S.empty
-  where
-    ((minR, minC), (maxR, maxC)) = boundingRect
-    doSearch :: [] ((Coord, Coord), [Coord]) -> S.Set (Coord, Coord) -> [] [Coord]
-    doSearch [] _ = []
-    doSearch ((coordPair, revMoves) : todos) visited =
-      if coordPair `elem` visited
-        then doSearch todos visited
-        else do
-          let (curCoord, holeCoord) = coordPair
-          if curCoord == dstCoord
-            then pure (reverse revMoves)
-            else do
-              let directTileMoves = do
-                    guard $ distance curCoord holeCoord == 1
-                    -- tap current coord, effectively swaping the state pair.
-                    pure ((holeCoord, curCoord), curCoord : revMoves)
-                  holeMoves = do
-                    -- TODO: well this turns out to be complicated when curCoord and holeCoord share
-                    -- a row or col.
-                    undefined
-                  extraTodos = directTileMoves <> holeMoves
-              doSearch (todos <> extraTodos) (S.insert coordPair visited)
