@@ -34,7 +34,7 @@ instance Arbitrary DemoBoard where
 
 spec :: Spec
 spec =
-  describe "makeMove" $ do
+  describe "applyMove" $ do
     describe "4x4 move examples" $ do
       let bd =
             mkBoard
@@ -50,7 +50,7 @@ spec =
           forM_ tilesToCheck $ \tileNum -> do
             let spBd = (bdNums bd V.! tileNum, bdHole bd)
                 expectedSpBd = (bdNums bd' V.! tileNum, bdHole bd')
-            makeMove spBd mv `shouldBe` Just expectedSpBd
+            applyMove spBd mv `shouldBe` Just expectedSpBd
     describe "correctness check against Board module with generated boards" $
       prop "DemoBoard" $
         \(DemoBoard bd) -> conjoin $ do
@@ -61,4 +61,4 @@ spec =
           tileNum <- tilesToCheck
           let bdToSpBd = (,) <$> ((V.! tileNum) . bdNums) <*> bdHole
               [spBd, expectedSpBd] = fmap bdToSpBd [bd, bd']
-          pure $ makeMove spBd mv === Just expectedSpBd
+          pure $ applyMove spBd mv === Just expectedSpBd

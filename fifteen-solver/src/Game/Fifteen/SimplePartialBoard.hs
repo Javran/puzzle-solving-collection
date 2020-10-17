@@ -109,8 +109,8 @@ type SimplePartialBoard = (Coord, Coord)
     otherwise there is no complication
 
  -}
-makeMove :: SimplePartialBoard -> Coord -> Maybe SimplePartialBoard
-makeMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
+applyMove :: SimplePartialBoard -> Coord -> Maybe SimplePartialBoard
+applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
   | curCoord == holeCoord =
     -- impossible case
     Nothing
