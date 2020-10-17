@@ -41,11 +41,6 @@ import Game.Fifteen.Types
 
  -}
 
-{-
-  Top-left coord and bottom-right coord.
-  the height and width of a Rect must be >= 2.
- -}
-type Rect = (Coord, Coord)
 
 minMax :: Ord a => a -> a -> (a, a)
 minMax a b = if a <= b then (a, b) else (b, a)
