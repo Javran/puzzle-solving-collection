@@ -18,7 +18,6 @@ import Game.Fifteen.Types
  -}
 type SimplePartialBoard = (Coord, Coord)
 
-
 {-
   The implementation is a bit involved when curCoord and holdCoord share a row or col.
   let's explain one case, and all other cases can be produced by mirror.
@@ -96,6 +95,18 @@ type SimplePartialBoard = (Coord, Coord)
                             M
 
     therefore C moved one unit towards left
+
+  To summarize:
+
+  - no complication if:
+    + H and C does not share row or col.
+    + if H and C share a row but the move happens in col
+    + if H and C share a col but the move happens in row
+  - if H and C share a row or col:
+    let's say moving from H to C is the "positive direction".
+    if moving from C to M is "non-negative" (i.e. C=M or M is more "positive" than C),
+    then C needs to be shifted one unit in negative direction,
+    otherwise there is no complication
 
  -}
 makeMove :: SimplePartialBoard -> Coord -> Maybe SimplePartialBoard
