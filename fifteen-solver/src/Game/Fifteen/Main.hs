@@ -4,6 +4,7 @@
 module Game.Fifteen.Main where
 
 import Data.List
+import qualified Data.Set as S
 import Game.Fifteen.Board
 import Game.Fifteen.Human
 import qualified Game.Fifteen.SimplePartialBoard as SPB
@@ -59,7 +60,7 @@ main = do
               , [Just 3, Just 4, Just 5]
               , [Just 6, Just 7, Nothing]
               ]
-      case SPB.searchMoveTile ((0, 0), (2, 2)) mempty (0, 0) (2, 2) (1, 2) of
+      case SPB.searchMoveTile ((1, 2), (2, 2)) (S.fromList [(2, 0), (2,1)]) (1, 2) (2, 2) (2, 2) of
         Nothing -> pure ()
         Just moves -> do
           _ <- pprSteps bd moves
