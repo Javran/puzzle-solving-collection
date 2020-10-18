@@ -114,6 +114,7 @@ type SPBoard = (Coord, Coord)
     then C needs to be shifted one unit in negative direction,
     otherwise there is no complication
 
+  TODO: we need test coverage for when M and H are on the same row / col but C is not.
  -}
 applyMove :: SPBoard -> Coord -> Maybe SPBoard
 applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
@@ -129,6 +130,9 @@ applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
   | mR == hR =
     -- same row
     if
+        | hR /= cR ->
+          -- curCoord and holeCoord is not on the same row
+          Just (curCoord, mCoord)
         | hC < cC ->
           -- hole is on the left side of cur tile.
           if mC < cC
@@ -140,11 +144,13 @@ applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
             then Just (curCoord, mCoord)
             else Just ((cR, cC + 1), mCoord)
         | otherwise ->
-          -- the move is orthogonal
-          Just (curCoord, mCoord)
+          error "unreachable"
   | mC == hC =
     -- same col
     if
+        | hC /= cC ->
+          -- curCoord and holeCoord is not on the same col
+          Just (curCoord, mCoord)
         | hR < cR ->
           -- hole is on the up side of cur tile.
           if mR < cR
@@ -156,8 +162,7 @@ applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
             then Just (curCoord, mCoord)
             else Just ((cR + 1, cC), mCoord)
         | otherwise ->
-          -- the move is orthogonal
-          Just (curCoord, mCoord)
+          error "unreachable"
   | otherwise = error "unreachable"
 
 type PQ = PQ.MinPQueue Int PQElem
