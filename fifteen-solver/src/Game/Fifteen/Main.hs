@@ -54,17 +54,10 @@ main = do
   args <- getArgs
   case args of
     [] -> do
-      let bd =
-            mkBoard
-              [ [Just 0, Just 1, Just 2]
-              , [Just 3, Just 4, Just 5]
-              , [Just 6, Just 7, Nothing]
-              ]
-      case SPB.searchMoveTile ((1, 2), (2, 2)) (S.fromList [(2, 0), (2,1)]) (1, 2) (2, 2) (2, 2) of
-        Nothing -> pure ()
-        Just moves -> do
-          _ <- pprSteps bd moves
-          pure ()
+      let Just bd =
+            mkBoardFromRaw raw5
+          steps : _ = solveBoard bd
+      print steps
     ["stdin"] -> do
       xs <- getContents
       let Just bd = mkBoardFromRaw xs

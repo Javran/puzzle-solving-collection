@@ -7,8 +7,8 @@ import qualified Data.DList as DL
 import Data.Maybe
 import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Set as S
-import Game.Fifteen.Human
 import Game.Fifteen.Types
+import Game.Fifteen.Board
 
 {-
   A SimplePartialBoard is simply

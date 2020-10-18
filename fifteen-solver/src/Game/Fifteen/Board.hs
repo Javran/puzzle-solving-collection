@@ -186,3 +186,6 @@ pprSteps initBd allMoves = do
         Just nextBd -> do
           pprBoard nextBd
           pprStepsAux (step + 1) nextBd ms
+
+distance :: Coord -> Coord -> Int
+distance (a, b) (c, d) = abs (a - c) + abs (b - d)

@@ -9,7 +9,6 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.CPS
 import Data.Bifunctor
 import qualified Data.DList as DL
-import Data.Function
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -17,6 +16,7 @@ import qualified Data.Set as S
 import Data.Tuple
 import qualified Data.Vector as V
 import Game.Fifteen.Board
+import qualified Game.Fifteen.SimplePartialBoard as SPB
 import qualified Game.Fifteen.ThreeByThree as TBT
 import Game.Fifteen.Types
 
@@ -238,27 +238,6 @@ play move = do
   modify (first (const bd'))
   tell $ DL.singleton move
 
--- rotate until coord is set to a certain tile
-{-
-  TODO: this is clearly not the best thing we can do.
-  Perhaps we can perform some small-scale search with distance-related functions as heuristic.
- -}
-rotateUntilFit :: Rect -> Coord -> Int -> Sim ()
-rotateUntilFit rect coord expectedTile = do
-  let ((rMin, cMin), (rMax, cMax)) = rect
-      initMoves :: [Coord]
-      initMoves = cycle [(rMin, cMin), (rMin, cMax), (rMax, cMax), (rMax, cMin)]
-  fix
-    (\loop (move : moves) -> do
-       bd <- gets fst
-       let tile = bdGet bd coord
-       if tile == Just expectedTile
-         then pure ()
-         else case lookup move (possibleMoves bd) of
-           Nothing -> loop moves
-           Just _ -> play move >> loop moves)
-    initMoves
-
 solveLastTile :: Bool -> Coord -> Int -> Sim ()
 solveLastTile isRow goalCoord goalTile = do
   (bd, _) <- get
@@ -315,9 +294,6 @@ solveLastTile isRow goalCoord goalTile = do
     colRelativeCoords = fmap swap rowRelativeCoords
     coordAdd (a, b) (c, d) = (a + c, b + d)
 
-distance :: Coord -> Coord -> Int
-distance (a, b) (c, d) = abs (a - c) + abs (b - d)
-
 {-
   This function deals with situations that the target tile is
   not the last one in row or column.
@@ -350,7 +326,6 @@ tryMoveTile srcCoord dstCoord
   | srcCoord == dstCoord = pure ()
   | otherwise = do
     (bd, pCoords) <- get
-    srcTile <- lift $ bdGet bd srcCoord
     let holeCoord = bdHole bd
     if dstCoord == holeCoord
       && distance srcCoord dstCoord == 1
@@ -363,8 +338,9 @@ tryMoveTile srcCoord dstCoord
         -- move the hole somewhere into the Rect without moving source tile.
         moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
         mapM_ play moves
-        -- TODO: do CW or CCW rotation?
-        rotateUntilFit rotatingRect dstCoord srcTile
+        curHoleCoord <- gets (bdHole . fst)
+        moves' <- lift $ SPB.searchMoveTile rotatingRect pCoords srcCoord curHoleCoord dstCoord
+        mapM_ play moves'
 
 {-
   for a n x n board (n > 1), check that first row and col are solved,
