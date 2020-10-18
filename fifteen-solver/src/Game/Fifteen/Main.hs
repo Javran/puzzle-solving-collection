@@ -6,7 +6,7 @@ module Game.Fifteen.Main where
 import Data.List
 import Game.Fifteen.Board
 import Game.Fifteen.Human
-import Game.Fifteen.Solvability
+import qualified Game.Fifteen.SimplePartialBoard as SPB
 import Game.Fifteen.TestGen
 import Game.Fifteen.Types
 import System.Environment
@@ -16,6 +16,14 @@ demo bd = do
   let steps : _ = solveBoard bd
   Just bd' <- pprSteps bd steps
   pprBoard bd'
+
+raw3 :: String
+raw3 =
+  unlines
+    [ "8 6 7"
+    , "2 5 4"
+    , "3 _ 1"
+    ]
 
 raw5 :: String
 raw5 =
@@ -45,15 +53,17 @@ main = do
   args <- getArgs
   case args of
     [] -> do
-      let raw =
-            unlines
-              [ "8 6 7"
-              , "2 5 4"
-              , "3 _ 1"
+      let bd =
+            mkBoard
+              [ [Just 0, Just 1, Just 2]
+              , [Just 3, Just 4, Just 5]
+              , [Just 6, Just 7, Nothing]
               ]
-          Just bd = mkBoardFromRaw raw
-      demo bd
-      print (isSolvable bd)
+      case SPB.searchMoveTile ((0, 0), (2, 2)) mempty (0, 0) (2, 2) (1, 2) of
+        Nothing -> pure ()
+        Just moves -> do
+          _ <- pprSteps bd moves
+          pure ()
     ["stdin"] -> do
       xs <- getContents
       let Just bd = mkBoardFromRaw xs

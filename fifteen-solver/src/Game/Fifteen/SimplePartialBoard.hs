@@ -113,8 +113,6 @@ type SPBoard = (Coord, Coord)
     if moving from C to M is "non-negative" (i.e. C=M or M is more "positive" than C),
     then C needs to be shifted one unit in negative direction,
     otherwise there is no complication
-
-  TODO: we need test coverage for when M and H are on the same row / col but C is not.
  -}
 applyMove :: SPBoard -> Coord -> Maybe SPBoard
 applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
