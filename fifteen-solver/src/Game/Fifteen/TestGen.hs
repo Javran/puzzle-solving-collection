@@ -59,7 +59,7 @@ testGenBundle = do
       genTestBoard sz =
         (,) <$> UUID.nextRandom
           <*> generate (genSolvableBoardOfSize sz)
-  pairs <- fmap concat <$> for [3 .. 10] $ \sz -> replicateM 2 (genTestBoard sz)
+  pairs <- fmap concat <$> for [3 .. 12] $ \sz -> replicateM 5 (genTestBoard sz)
   mapM_ putStrLn $ concatMap renderBoard pairs
 
 loadPuzzleBundle :: FilePath -> IO (M.Map String Board)
