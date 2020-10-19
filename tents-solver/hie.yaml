@@ -1,1 +1,8 @@
-cradle: {stack: {component: "tents-solver:exe:tents-demo"}}
+cradle:
+  stack:
+    - path: "./src"
+      component: "tents-solver:lib"
+    - path: "./exe"
+      component: "tents-solver:exe:tents-demo"
+    - path: "./test"
+      component: "tents-solver:test:hspec"
