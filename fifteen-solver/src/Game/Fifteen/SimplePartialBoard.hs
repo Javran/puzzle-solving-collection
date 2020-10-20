@@ -173,16 +173,15 @@ type PQElem = (SPBoard, Int {- length of moves -}, DL.DList Coord)
  -}
 searchMoveTile :: Rect -> S.Set Coord -> Coord -> Coord -> Coord -> Maybe [Coord]
 searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
-  doSearch initQ S.empty
+  doSearch initQ (S.singleton initBd)
   where
-    initQ = PQ.singleton (distance srcCoord dstCoord) ((srcCoord, initHoleCoord), 0, DL.empty)
+    initBd = (srcCoord, initHoleCoord)
+    initQ = PQ.singleton (distance srcCoord dstCoord) (initBd, 0, DL.empty)
     ((minR, minC), (maxR, maxC)) = boundingRect
     doSearch :: PQ -> S.Set SPBoard -> Maybe [Coord]
-    doSearch q visited = do
+    doSearch q discovered = do
       ((spBoard@(curCoord, holeCoord), moveLen, moves), todos) <- PQ.minView q
       if
-          | spBoard `elem` visited ->
-            doSearch todos visited
           | curCoord == dstCoord ->
             pure (DL.toList moves)
           | otherwise -> do
@@ -198,6 +197,8 @@ searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
                   move <- [(hR, c) | c <- [minC .. maxC]] <> [(r, hC) | r <- [minR .. maxR]]
                   guard $ move `notElem` pCoords
                   spBoard'@(curCoord', _) <- maybeToList (applyMove spBoard move)
+                  guard $ spBoard' `notElem` discovered
                   let dist' = distance curCoord' dstCoord
                   pure (dist' + moveLen + 1, (spBoard', moveLen + 1, DL.snoc moves move))
-            doSearch (PQ.union todos ext) (S.insert spBoard visited)
+                discovered' = S.union discovered (S.fromList . fmap ((\(x,_,_) -> x) .  snd) $ PQ.toListU ext)
+            doSearch (PQ.union todos ext) discovered'
