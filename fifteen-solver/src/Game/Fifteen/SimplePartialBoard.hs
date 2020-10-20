@@ -7,8 +7,8 @@ import qualified Data.DList as DL
 import Data.Maybe
 import qualified Data.PQueue.Prio.Min as PQ
 import qualified Data.Set as S
-import Game.Fifteen.Types
 import Game.Fifteen.Board
+import Game.Fifteen.Types
 
 {-
   A SimplePartialBoard is simply
@@ -186,8 +186,8 @@ searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
             pure (DL.toList moves)
           | otherwise -> do
             let (hR, hC) = holeCoord
-                ext :: PQ
-                ext = PQ.fromList $ do
+                ext :: [(Int, PQElem)]
+                ext = do
                   {-
                     a move is allowed if and only if
                     it's within boundingRect and is not in pCoords.
@@ -200,5 +200,8 @@ searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
                   guard $ spBoard' `notElem` discovered
                   let dist' = distance curCoord' dstCoord
                   pure (dist' + moveLen + 1, (spBoard', moveLen + 1, DL.snoc moves move))
-                discovered' = S.union discovered (S.fromList . fmap ((\(x,_,_) -> x) .  snd) $ PQ.toListU ext)
-            doSearch (PQ.union todos ext) discovered'
+                discovered' =
+                  S.union
+                    discovered
+                    (S.fromList . fmap ((\(x, _, _) -> x) . snd) $ ext)
+            doSearch (PQ.union todos (PQ.fromList ext)) discovered'
