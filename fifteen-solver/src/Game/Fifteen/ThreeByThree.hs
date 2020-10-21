@@ -165,9 +165,10 @@ goal =
 
 solveBoard :: Board3 -> [[Coord]]
 solveBoard initBoard = runST $ do
-  visited <- HT.new
+  discovered <- HT.new
   let initQ :: PQ.MinPQueue Int (Board3, DL.DList Coord, Int)
       initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
+  HT.insert discovered initBoard ()
   fix
     (\loop dl -> case PQ.minView dl of
        Nothing -> pure []
@@ -175,22 +176,18 @@ solveBoard initBoard = runST $ do
          if bd == goal
            then pure [DL.toList path]
            else do
-             r <- HT.lookup visited bd
-             case r of
-               Nothing -> do
-                 HT.insert visited bd ()
-                 let nextMoves :: [(Coord, Board3)]
-                     nextMoves = possibleMoves bd
-                 expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
-                   r' <- HT.lookup visited nextBd
-                   pure $ case r' of
-                     Nothing ->
-                       Just
-                         ( pLen + 1 + goalDistance nextBd
-                         , (nextBd, DL.snoc path coord, pLen + 1)
-                         )
-                     Just () -> Nothing
-                 loop (PQ.union todos (PQ.fromList expanded))
-               Just () ->
-                 loop todos)
+             let nextMoves :: [(Coord, Board3)]
+                 nextMoves = possibleMoves bd
+             expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
+               r' <- HT.lookup discovered nextBd
+               case r' of
+                 Nothing -> do
+                   HT.insert discovered nextBd ()
+                   pure $
+                     Just
+                       ( pLen + 1 + goalDistance nextBd
+                       , (nextBd, DL.snoc path coord, pLen + 1)
+                       )
+                 Just () -> pure Nothing
+             loop (PQ.union todos (PQ.fromList expanded)))
     initQ
