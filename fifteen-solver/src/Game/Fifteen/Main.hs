@@ -4,13 +4,12 @@
 module Game.Fifteen.Main where
 
 import Data.List
-import qualified Data.Set as S
 import Game.Fifteen.Board
 import Game.Fifteen.Human
-import qualified Game.Fifteen.SimplePartialBoard as SPB
 import Game.Fifteen.TestGen
 import Game.Fifteen.Types
 import System.Environment
+import System.Exit
 
 demo :: Board -> IO ()
 demo bd = do
@@ -53,15 +52,19 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [] -> do
-      let Just bd =
-            mkBoardFromRaw raw5
-          steps : _ = solveBoard bd
-      print steps
     ["stdin"] -> do
       xs <- getContents
       let Just bd = mkBoardFromRaw xs
           steps : _ = solveBoard bd
       putStrLn $ intercalate "|" $ fmap (\(x, y) -> show x <> "," <> show y) steps
-    ["dev"] -> pure ()
+    ["dev"] -> do
+      let Just bd =
+            mkBoardFromRaw raw5
+          steps : _ = solveBoard bd
+      print steps
     "testgen" : _ -> testGen
+    _ -> do
+      putStrLn "<prog> dev: for manual debugging"
+      putStrLn "<prog> stdin: read inputs from stdin and return solutions in an easily parsable format."
+      putStrLn "<prog> testgen: generate test bundle or solve an eixsting bundle."
+      exitFailure
