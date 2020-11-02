@@ -9,7 +9,15 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Vector as V
 import Game.Tents.Types
+import Paths_tents_solver
 import Text.ParserCombinators.ReadP
+
+loadPuzzles :: IO [(String, BoardRep)]
+loadPuzzles = do
+  fName <- getDataFileName "data/puzzles.txt"
+  raw <- readFile fName
+  let bds = parseBatchBoards raw
+  pure bds
 
 {-
   syntax draft:

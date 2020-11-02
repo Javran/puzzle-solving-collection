@@ -23,7 +23,8 @@ main = do
       let Just br = parseBoard rawPuzzle2
           Just bd = mkBoard br
           Just bd' = solve bd
-      pprBoard term bd'
+      -- pprBoard term bd'
+      loadPuzzles >>= mapM_ print
     ["stdin"] -> do
       -- stdin mode reads data from stdin
       -- and output tent positions in a format that can be easily parsed.
