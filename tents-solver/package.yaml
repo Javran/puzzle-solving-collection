@@ -18,6 +18,9 @@ dependencies:
 - uuid
 - mtl
 
+data-files:
+  - data/puzzles.txt
+
 library:
   source-dirs: src
   ghc-options:
