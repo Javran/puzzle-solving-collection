@@ -93,7 +93,7 @@ directNeighbors c = fmap (\d -> applyDir d c) allDirs
 
   In this datatype, we establish an invariant:
 
-   all empty cells that can be inferred from this implication will be inferred and put in bdCells
+    all empty cells that can be inferred from this implication will be inferred and put in bdCells
 
   this invariant allows us to never worry about cells that are not close to trees (and therefore must be empty)
   after this datatype is created.
@@ -121,6 +121,19 @@ data Board = Board
     -- in terms of algorithm, but it does provide us with better debugging potentials.
     bdTodoTrees :: !(M.Map Coord [Coord])
   , bdTodoCoords :: !(S.Set Coord)
+    {-
+      Note that we are not recording a tree-tent map here for the finished part of the board,
+      this is because this mapping can be ambiguous. for example:
+
+        ETE
+        T T
+        ETE
+
+      can have two valid ways of mapping.
+
+      Also note that this decision is not final as by recording mappings we do have
+      the benefit of verifying a solved board more easily.
+     -}
   }
 
 -- TODO: verify that boards with impossible candidates result in Nothing.
