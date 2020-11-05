@@ -33,12 +33,12 @@ verifyBoard dims cells = isJust $ do
   -- make sure all coords are assigned Cell values.
   guard $ allCoords == M.keysSet cells
   -- make sure the count is correct to make pairs.
-  guard $ S.size treeCoords == S.size tentCoords
-  -- trees should not near each other.
+  -- guard $ S.size treeCoords == S.size tentCoords
+  -- tents should not near each other.
   guard $
     all
-      (\coord -> S.null (S.union (surroundingCells coord) treeCoords))
-      treeCoords
+      (\coord -> S.null (S.intersection (surroundingCells coord) tentCoords))
+      tentCoords
   -- TODO: pairing to be implemented
   Just ()
   where
