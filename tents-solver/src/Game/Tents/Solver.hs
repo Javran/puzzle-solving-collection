@@ -121,20 +121,21 @@ data Board = Board
     -- in terms of algorithm, but it does provide us with better debugging potentials.
     bdTodoTrees :: !(M.Map Coord [Coord])
   , bdTodoCoords :: !(S.Set Coord)
-    {-
-      Note that we are not recording a tree-tent map here for the finished part of the board,
-      this is because this mapping can be ambiguous. for example:
+  {-
+    Note that we are not recording a tree-tent map here for the finished part of the board,
+    this is because this mapping can be ambiguous. for example:
 
-        ETE
-        T T
-        ETE
+      ETE
+      T T
+      ETE
 
-      can have two valid ways of mapping.
+    can have two valid ways of mapping.
 
-      Also note that this decision is not final as by recording mappings we do have
-      the benefit of verifying a solved board more easily.
-     -}
+    Also note that this decision is not final as by recording mappings we do have
+    the benefit of verifying a solved board more easily.
+   -}
   }
+  deriving (Show)
 
 -- TODO: verify that boards with impossible candidates result in Nothing.
 {-

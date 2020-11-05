@@ -1,11 +1,16 @@
 module Game.Tents.SolverSpec where
 
+import Control.Monad
+import Data.Maybe
+import Game.Tents.Parser
+import Game.Tents.ParserSpec
 import Game.Tents.Solver
 import Game.Tents.Types
+import Game.Tents.Verify
 import Test.Hspec
 
 spec :: Spec
-spec =
+spec = do
   describe "fillLine" $ do
     specify "already completed" $ do
       fillLine 1 [Just Empty, Just Tree, Just Tent]
@@ -45,3 +50,12 @@ spec =
         `shouldBe` [replicate 10 Empty]
       fillLine 2 [Just Tent, Nothing, Nothing, Nothing, Just Tree, Just Tent, Nothing, Nothing, Nothing]
         `shouldBe` [[Tent, Empty, Empty, Empty, Tree, Tent, Empty, Empty, Empty]]
+  describe "solve" $ do
+    boards <- runIO $ parseBatchBoards <$> loadPuzzlesDataFile
+    forM_ boards $ \(bdId, bdRep) ->
+      specify bdId $ do
+        let Just board = mkBoard bdRep
+            r = solve board
+        r `shouldSatisfy` isJust
+        let Just bd = r
+        verifyBoard (bdDims bd) (bdCells bd) `shouldBe` True
