@@ -23,10 +23,23 @@ verifyBoard dims cells = isJust $ do
           go (x, Tent) = (S.empty, S.singleton x)
           go (x, Tree) = (S.singleton x, S.empty)
           go _ = (S.empty, S.empty)
+      surroundingCells (r, c) =
+        S.fromList
+          [ (r + dr, c + dc)
+          | dr <- [-1, 0, 1]
+          , dc <- [-1, 0, 1]
+          , (dr, dc) /= (0, 0)
+          ]
   -- make sure all coords are assigned Cell values.
   guard $ allCoords == M.keysSet cells
   -- make sure the count is correct to make pairs.
   guard $ S.size treeCoords == S.size tentCoords
-  Nothing
+  -- trees should not near each other.
+  guard $
+    all
+      (\coord -> S.null (S.union (surroundingCells coord) treeCoords))
+      treeCoords
+  -- TODO: pairing to be implemented
+  Just ()
   where
     (rows, cols) = dims
