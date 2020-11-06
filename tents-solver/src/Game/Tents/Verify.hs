@@ -30,6 +30,20 @@ verifyBoard dims cells = isJust $ do
           , dc <- [-1, 0, 1]
           , (dr, dc) /= (0, 0)
           ]
+      altTreeTentPairs :: M.Map Coord [Coord]
+      altTreeTentPairs = M.fromList . fmap mkPair . S.toList $ treeCoords
+        where
+          mkPair :: Coord -> (Coord, [Coord])
+          mkPair coord@(r, c) = (coord, pairingTents)
+            where
+              pairingTents = [coord' | coord' <- possibleTentCoords, coord' `elem` tentCoords]
+              possibleTentCoords =
+                {-
+                  those might be out-of-bound, but since we are just looking for matches
+                  in region already constrainted by dims, there is no impact in terms of correctness.
+                 -}
+                [(r -1, c), (r + 1, c), (r, c -1), (r, c + 1)]
+
   -- make sure all coords are assigned Cell values.
   guard $ allCoords == M.keysSet cells
   -- make sure the count is correct to make pairs.
@@ -39,6 +53,16 @@ verifyBoard dims cells = isJust $ do
     all
       (\coord -> S.null (S.intersection (surroundingCells coord) tentCoords))
       tentCoords
+  {-
+    each tree must pair with exactly one tent.
+    altTreeTentPairs shows all possible tents one tree can be pair with.
+    Here we first verify that all trees have at least one tent to be paired with.
+    TODO: a proper check will involve bipartite graph matching algorithm
+   -}
+  guard $
+    all
+      (not . null)
+      (M.elems altTreeTentPairs)
   -- TODO: pairing to be implemented
   Just ()
   where
