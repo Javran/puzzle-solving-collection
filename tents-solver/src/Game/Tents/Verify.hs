@@ -1,6 +1,10 @@
-module Game.Tents.Verify where
+module Game.Tents.Verify
+  ( verifyBoard
+  )
+where
 
 import Control.Monad
+import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
@@ -9,6 +13,27 @@ import Game.Tents.Types
 {-
   Verify that a game board is solved
  -}
+
+{-
+  In general we don't want to do a search for maximum bipartite matching for performance concerns,
+  but in this case this is fine since one tree gets only up to 4 potential tent matches,
+  the branching factor is quite small to begin with.
+  Plus on the use site, we only need to find one full match to verify a solution.
+ -}
+doMatch :: M.Map Coord [Coord] -> [] [(Coord, Coord)]
+doMatch m =
+  doMatchAux
+    S.empty
+    -- by sorting we make sure that unique pairs are resolved first to reduce branching factor.
+    (sortOn (length . snd) $ M.toList m)
+  where
+    doMatchAux tentsTaken todoTreeTentPairs =
+      case todoTreeTentPairs of
+        [] -> pure []
+        (treeCoord, tentCoordsPre) : todo' -> do
+          let tentCoords = filter (`notElem` tentsTaken) tentCoordsPre
+          tentCoord <- tentCoords
+          ((treeCoord, tentCoord) :) <$> doMatchAux (S.insert tentCoord tentsTaken) todo'
 
 verifyBoard :: (Int, Int) -> M.Map Coord Cell -> Bool
 verifyBoard dims cells = isJust $ do
@@ -57,13 +82,12 @@ verifyBoard dims cells = isJust $ do
     each tree must pair with exactly one tent.
     altTreeTentPairs shows all possible tents one tree can be pair with.
     Here we first verify that all trees have at least one tent to be paired with.
-    TODO: a proper check will involve bipartite graph matching algorithm
    -}
   guard $
     all
       (not . null)
       (M.elems altTreeTentPairs)
-  -- TODO: pairing to be implemented
-  Just ()
+  -- as long as we can establish one valid full match, this solution is valid.
+  listToMaybe $ doMatch altTreeTentPairs
   where
     (rows, cols) = dims
