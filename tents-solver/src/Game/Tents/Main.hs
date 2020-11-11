@@ -13,27 +13,20 @@ import System.Environment
 import System.Exit
 import System.IO
 
-rawX =
-  unlines
-    [ "5 7"
-    , "_______ 0"
-    , "_?R?R?_ 3"
-    , "_R___R_ 0"
-    , "_?R?R?_ 3"
-    , "_______ 0"
-    , "0 2 0 2 0 2 0"
-    ]
-
 main :: IO ()
 main = do
   args <- getArgs
   term <- setupTermFromEnv
   case args of
     [] -> do
+      puzzles <- loadPuzzles
       -- give no argument to test builtin puzzles
-      let Just br = parseBoard rawX
+      let puzzleId = "circular"
+          Just br = lookup puzzleId puzzles
           Just bd = mkBoard br
           Just bd' = solve bd
+      -- TODO: pprBoard on bd is generating some unexpected exceptions.
+      -- pprBoard term bd
       pprBoard term bd'
     ["stdin"] -> do
       -- stdin mode reads data from stdin
