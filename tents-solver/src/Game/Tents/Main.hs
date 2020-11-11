@@ -13,6 +13,17 @@ import System.Environment
 import System.Exit
 import System.IO
 
+rawX =
+  unlines
+    [ "5 7"
+    , "_______ 0"
+    , "_?R?R?_ 3"
+    , "_R___R_ 0"
+    , "_?R?R?_ 3"
+    , "_______ 0"
+    , "0 2 0 2 0 2 0"
+    ]
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -20,11 +31,10 @@ main = do
   case args of
     [] -> do
       -- give no argument to test builtin puzzles
-      let Just br = parseBoard rawPuzzle2
+      let Just br = parseBoard rawX
           Just bd = mkBoard br
           Just bd' = solve bd
-      -- pprBoard term bd'
-      loadPuzzles >>= mapM_ print
+      pprBoard term bd'
     ["stdin"] -> do
       -- stdin mode reads data from stdin
       -- and output tent positions in a format that can be easily parsed.
