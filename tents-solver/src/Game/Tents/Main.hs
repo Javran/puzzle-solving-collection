@@ -19,14 +19,11 @@ main = do
   term <- setupTermFromEnv
   case args of
     [] -> do
-      puzzles <- loadPuzzles
       -- give no argument to test builtin puzzles
-      let puzzleId = "circular"
-          Just br = lookup puzzleId puzzles
+      puzzles <- loadPuzzles
+      let Just br = lookup "circular" puzzles
           Just bd = mkBoard br
           Just bd' = solve bd
-      -- TODO: pprBoard on bd is generating some unexpected exceptions.
-      -- pprBoard term bd
       pprBoard term bd'
     ["stdin"] -> do
       -- stdin mode reads data from stdin

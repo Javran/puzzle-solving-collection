@@ -189,6 +189,11 @@ mkBoard
       genRowOrColCandidates
         [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
         (V.toList bdColTentCounts)
+    let todoCandidateCleanup :: [Candidates] -> [Candidates]
+        todoCandidateCleanup = filter shouldKeep
+          where
+            shouldKeep [v] | M.null v = False
+            shouldKeep _ = True
     bdTodoTrees <- do
       let candidateTentCoords :: Coord -> Maybe [Coord]
           candidateTentCoords coord = do
@@ -219,7 +224,7 @@ mkBoard
             -- TODO: investigate whether it is desirable
             -- to merge candidates when their sets of coordinates are exactly the same.
             -- this might or might not happen when putting row and col candidates together.
-            todoRowCandidates <> todoColCandidates
+            todoCandidateCleanup $ todoRowCandidates <> todoColCandidates
         , bdTodoTrees
         , bdTodoCoords
         }
@@ -639,7 +644,12 @@ pprBoard
             -- the invariant is that pieces in `cs` share the same set of coordinates.
             case cs of
               v : _ | v' <- M.keys v, not . null $ v' -> v'
-              _ -> error "invalid: candidates or pieces cannot be empty"
+              _ ->
+                {-
+                  TODO: this case is still possible should an already satisfied candidate
+                  be part of the input Board.
+                 -}
+                error "invalid: candidates or pieces cannot be empty"
           ( (Just (Min minRow), Just (Max maxRow))
             , (Just (Min minCol), Just (Max maxCol))
             ) =
