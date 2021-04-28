@@ -10,6 +10,7 @@ description: description
 
 dependencies:
 - base
+- containers
 
 library:
   source-dirs: src
