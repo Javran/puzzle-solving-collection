@@ -11,6 +11,8 @@ description: description
 dependencies:
 - base
 - containers
+- monad-loops
+- utility-ht
 
 library:
   source-dirs: src

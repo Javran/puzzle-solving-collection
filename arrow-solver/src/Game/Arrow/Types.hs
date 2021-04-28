@@ -3,7 +3,8 @@ module Game.Arrow.Types
   , SqCoord
   , CubeCoord
   , PuzzleType
-  , Puzzle(..)
+  , Puzzle (..)
+  , Err (..)
   )
 where
 
@@ -35,4 +36,11 @@ data Puzzle = Puzzle
   , pzType :: PuzzleType
   , grid :: [[Int]]
   }
+  deriving (Show, Eq)
+
+data Err i
+  = NoMultInv i
+  | Underdetermined
+  | Todo String
+  | Gaussian String
   deriving (Show, Eq)
