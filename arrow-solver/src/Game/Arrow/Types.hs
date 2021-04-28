@@ -1,12 +1,16 @@
 module Game.Arrow.Types
   ( PuzzleShape (..)
-  , SqCoord, CubeCoord
+  , SqCoord
+  , CubeCoord
+  , PuzzleType
+  , Puzzle(..)
   )
 where
 
 data PuzzleShape
   = Square
   | Hexagon
+  deriving (Show, Eq)
 
 type SqCoord = (Int, Int)
 
@@ -21,3 +25,14 @@ type SqCoord = (Int, Int)
 
 type CubeCoord = (Int, Int, Int)
 
+{-
+  The integer represents side length of a puzzle and must be positive.
+ -}
+type PuzzleType = (PuzzleShape, Int)
+
+data Puzzle = Puzzle
+  { opMod :: Int
+  , pzType :: PuzzleType
+  , grid :: [[Int]]
+  }
+  deriving (Show, Eq)
