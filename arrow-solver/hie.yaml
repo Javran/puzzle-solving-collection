@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "arrow-solver:lib"
+    - path: "./test"
+      component: "arrow-solver:test:hspec"
+    - path: "./exe"
+      component: "arrow-solver:exe:arrow-demo"

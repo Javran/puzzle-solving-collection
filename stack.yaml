@@ -6,6 +6,7 @@ packages:
 - takuzu-solver
 - tents-solver
 - torus-solver
+- arrow-solver
 
 extra-deps:
 - pqueue-1.4.1.3
