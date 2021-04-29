@@ -42,6 +42,7 @@ tests:
       - arrow-solver
       - QuickCheck
       - hspec
+      - arithmoi
     ghc-options:
       - -Wall
       - -O2

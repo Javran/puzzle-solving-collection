@@ -11,7 +11,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Game.Arrow.Gaussian
-  ( solveMat
+  ( extEuclidean
+  , multInv
+  , solveMat
   , solveMatOne
   , shuffler
   )
