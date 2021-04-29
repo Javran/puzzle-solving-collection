@@ -1,9 +1,9 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TypeApplications, ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Game.Arrow.Solver
   (
@@ -21,19 +21,6 @@ hexSplit :: Int -> [a] -> [[a]]
 hexSplit n = splitPlaces $ [n .. n + n -1] <> reverse (init splits)
   where
     splits = [n .. n + n -1]
-
-data SingPuzzleShape (s :: PuzzleShape) where
-  SHexagon :: SingPuzzleShape 'Hexagon
-  SSquare :: SingPuzzleShape 'Square
-
-class SingPuzzleShapeI (s :: PuzzleShape) where
-  sing :: SingPuzzleShape s
-
-instance SingPuzzleShapeI 'Hexagon where
-  sing = SHexagon
-
-instance SingPuzzleShapeI 'Square where
-  sing = SSquare
 
 solve :: Puzzle -> Either (Err Int) [[Int]]
 solve Puzzle {opMod, pzType = (pzShape@Hexagon, sz), grid} = do

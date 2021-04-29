@@ -1,3 +1,10 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+
 module Game.Arrow.Types
   ( PuzzleShape (..)
   , SqCoord
@@ -5,13 +12,23 @@ module Game.Arrow.Types
   , PuzzleType
   , Puzzle (..)
   , Err (..)
+  , module Game.Arrow.Types
   )
 where
 
-data PuzzleShape
-  = Square
-  | Hexagon
-  deriving (Show, Eq)
+import Data.Singletons.TH
+
+$( singletons
+     [d|
+       data PuzzleShape
+         = Square
+         | Hexagon
+       |]
+ )
+
+deriving instance Show PuzzleShape
+
+deriving instance Eq PuzzleShape
 
 type SqCoord = (Int, Int)
 
