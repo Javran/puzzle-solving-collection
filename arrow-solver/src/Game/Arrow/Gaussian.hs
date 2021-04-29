@@ -1,3 +1,12 @@
+{-
+  This module implements Gaussian elimination under some modulo M,
+  which does not work in general because any number that does not have
+  a multiplicative inverse modulo M cannot be cancelled by multiplication.
+
+  Fortunately for the purpose of solving simple puzzles,
+  we only have M = 2, 4, 6 to worry about, and this method of solving seems to work
+  after some workaround.
+ -}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -27,8 +36,10 @@ extEuclidean a0 b0 = aux (a0, 1, 0) (b0, 0, 1)
       where
         (q, r) = r0 `quotRem` r1
 
--- computes multiplicative inverse modulo p.
--- returns input value on failure.
+{-
+  Computes multiplicative inverse modulo p.
+  returns input value on failure.
+ -}
 multInv :: Integral i => i -> i -> Either i i
 multInv p x =
   if comm == 1
@@ -50,6 +61,9 @@ solveMat' fallback m mat = do
 solveMat :: Integral i => i -> [[i]] -> Either (Err i) [i]
 solveMat = solveMat' (\_ _ -> Left Underdetermined)
 
+{-
+  Uses `underDetFallback` to fix an underdetermined system.
+ -}
 solveMatOne :: Integral i => i -> [[i]] -> Either (Err i) [i]
 solveMatOne = solveMat' underDetFallback
 
@@ -69,7 +83,8 @@ underDetFallback m eqns
     case fstNonZeroInd of
       Nothing ->
         {-
-          Making this determined by fixing underdetermined variables to 0.
+          On this branch, we have a square full of zeros modulo `m`, we can
+          make this determined by fixing all underdetermined variables to 0.
          -}
         let (hdL : tlL) =
               fmap
@@ -77,17 +92,24 @@ underDetFallback m eqns
                 [[if r == c then 1 else 0 | c <- [1 .. l]] | r <- [1 .. l]]
          in Right $ Just (hdL, fmap (drop 1) tlL)
       Just nzInd -> do
+        {-
+          On this branch, we have some non-zero columns that we can swap to the front
+          so that we can keep making more progress, after the swapped matrix is solved,
+          we swap the resulting values back and move on.
+         -}
         let common = foldr gcd m (concat eqns)
             m' = m `div` common
             eqns' = (fmap . fmap) (`div` common) eqns
             (doShuffle, unShuffle) = shuffler nzInd
             eqns'' = fmap doShuffle eqns'
         {-
-          This might seem to be a potential for infinite loop,
-          but we have prevented that by moving a column that contains
-          non-zero element to the front to make sure it's making progress.
-
-          Update: another case is when gcd is 1, in which case we leave it unhandled for now.
+          It seems that by moving a column that contains
+          non-zero element to the front, we can make sure it's making progress,
+          therefore we don't actually have a potential of infinte loop here.
+          But that is not true: if `gcd m` through the equations gives 1,
+          it can be shown that we will run into an infinite loop.
+          For now we just throw a `Left` here and leave it be,
+          as we doesn't seem to run into this case for simple puzzles.
          -}
         when (common == 1) $
           Left $ Todo (show nzInd)
@@ -147,6 +169,11 @@ solveStep m (xs, hd : tl) = do
       lhs = init ys
   pure (x, (x : xs, tl))
 
+{-
+  Provides a pair of function, `(f, g)` such that:
+  - `f` shuffles i-th element to the front
+  - `g` recovers the original ordering of the list
+ -}
 shuffler :: Int -> ([a] -> [a], [a] -> [a])
 shuffler i =
   if i <= 0
