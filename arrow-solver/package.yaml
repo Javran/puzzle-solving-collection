@@ -13,6 +13,7 @@ dependencies:
 - containers
 - monad-loops
 - utility-ht
+- split
 
 library:
   source-dirs: src

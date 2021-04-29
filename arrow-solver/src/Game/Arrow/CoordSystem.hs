@@ -11,9 +11,11 @@ module Game.Arrow.CoordSystem
   ( gCoords
   , sqCoords
   , hexCoords
+  , CoordSystem (..)
   )
 where
 
+import Data.List.Split
 import qualified Data.Map.Strict as M
 import Data.Proxy
 import Game.Arrow.Types
@@ -27,6 +29,7 @@ class CoordSystem (k :: PuzzleShape) where
    -}
   surrounding :: forall p. p k -> Int -> Coord k -> [Coord k]
   shapedCoords :: forall p. p k -> Int -> [[Coord k]]
+  toChunks :: forall p e. p k -> Int -> [e] -> [[e]]
 
 instance CoordSystem 'Square where
   type Coord 'Square = SqCoord
@@ -41,6 +44,7 @@ instance CoordSystem 'Square where
       isInside (u, v) = u >= 0 && u < sz && v >= 0 && v < sz
 
   shapedCoords _ sz = [[(r, c) | c <- [0 .. sz -1]] | r <- [0 .. sz -1]]
+  toChunks _ = chunksOf
 
 instance CoordSystem 'Hexagon where
   type Coord 'Hexagon = CubeCoord
@@ -63,6 +67,10 @@ instance CoordSystem 'Hexagon where
       <> [[(x, y, z) | x <- [-3 .. 3 - z], let y = - x - z] | z <- [1 .. mx]]
     where
       mx = sz -1
+
+  toChunks _ sz = splitPlaces $ [sz .. sz + sz -1] <> reverse (init splits)
+    where
+      splits = [sz .. sz + sz -1]
 
 gCoords
   :: forall p cs.
