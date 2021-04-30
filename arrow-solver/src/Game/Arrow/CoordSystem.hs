@@ -4,7 +4,9 @@
  -}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Game.Arrow.CoordSystem
@@ -12,6 +14,7 @@ module Game.Arrow.CoordSystem
   , sqCoords
   , hexCoords
   , CoordSystem (..)
+  , withShape
   )
 where
 
@@ -68,6 +71,7 @@ instance CoordSystem 'Hexagon where
     where
       mx = sz -1
 
+  -- Split a list into lines of a flat-top hexagon whose side length is sz.
   toChunks _ sz = splitPlaces $ [sz .. sz + sz -1] <> reverse (init splits)
     where
       splits = [sz .. sz + sz -1]
@@ -96,3 +100,13 @@ hexCoords = gCoords (Proxy :: Proxy 'Hexagon)
 
 sqCoords :: Int -> ([[Int]], [[(Int, Int)]])
 sqCoords = gCoords (Proxy :: Proxy 'Square)
+
+-- https://stackoverflow.com/a/67319945/315302
+withShape
+  :: forall r.
+     PuzzleShape
+  -> (forall k. (CoordSystem k, Ord (Coord k)) => Proxy k -> r)
+  -> r
+withShape sp a = case sp of
+  Square -> a (Proxy @'Square)
+  Hexagon -> a (Proxy @'Hexagon)
