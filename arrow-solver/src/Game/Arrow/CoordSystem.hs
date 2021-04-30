@@ -22,7 +22,6 @@ import Data.List.Split
 import qualified Data.Map.Strict as M
 import Data.Proxy
 import Game.Arrow.Types
-import qualified Data.Set as S
 
 class CoordSystem (k :: PuzzleShape) where
   type Coord k
@@ -99,37 +98,6 @@ gCoords ty sz = (fmap mkEqn allCoords, nestedAllCoords)
 
 hexCoords :: Int -> ([[Int]], [[CubeCoord]])
 hexCoords = gCoords (Proxy :: Proxy 'Hexagon)
-
-hexCoordsImpl :: Int -> ([[Int]], [[CubeCoord]])
-hexCoordsImpl sz = (fmap mkEqn allCoords, nestedAllCoords)
-  where
-    mx = sz -1
-    nestedAllCoords :: [[CubeCoord]]
-    nestedAllCoords =
-      [[(x, y, z) | y <- [3, 2 .. (-3 - z)], let x = - y - z] | z <- [- mx .. 0]]
-        <> [[(x, y, z) | x <- [-3 .. 3 - z], let y = - x - z] | z <- [1 .. mx]]
-    allCoords = concat nestedAllCoords
-    allCoords' = S.fromList allCoords
-    surrounding c@(x, y, z) =
-      c :
-      filter
-        (`S.member` allCoords')
-        [ (x, y + 1, z -1)
-        , (x, y -1, z + 1)
-        , (x + 1, y, z -1)
-        , (x -1, y, z + 1)
-        , (x + 1, y -1, z)
-        , (x - 1, y + 1, z)
-        ]
-    coordEqns :: M.Map CubeCoord [CubeCoord]
-    coordEqns = M.fromList $ fmap (\c -> (c, surrounding c)) allCoords
-    mkEqn :: CubeCoord -> [Int]
-    mkEqn c =
-      -- TODO: we might want to do something more efficient than this.
-      fmap (\c' -> if c' `elem` xs then 1 else 0) allCoords
-      where
-        xs :: [CubeCoord]
-        xs = coordEqns M.! c
 
 sqCoords :: Int -> ([[Int]], [[(Int, Int)]])
 sqCoords = gCoords (Proxy :: Proxy 'Square)
