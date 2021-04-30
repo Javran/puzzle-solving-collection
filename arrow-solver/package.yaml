@@ -15,6 +15,7 @@ dependencies:
 - utility-ht
 - split
 - singletons
+- tagged
 
 library:
   source-dirs: src

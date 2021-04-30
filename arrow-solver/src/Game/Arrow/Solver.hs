@@ -15,12 +15,18 @@ import Data.Proxy
 import Game.Arrow.CoordSystem
 import Game.Arrow.Gaussian
 import Game.Arrow.Types
+import Data.Tagged
 
 -- Split a list into lines of a flat-top hexagon whose side length is n.
 hexSplit :: Int -> [a] -> [[a]]
 hexSplit n = splitPlaces $ [n .. n + n -1] <> reverse (init splits)
   where
     splits = [n .. n + n -1]
+
+-- https://stackoverflow.com/a/67319945/315302
+promote :: forall r. PuzzleShape -> (forall k. CoordSystem k => Tagged k r) -> r
+promote Square a = unTagged (a @Square)
+promote Hexagon a = unTagged (a @Hexagon)
 
 solve :: Puzzle -> Either (Err Int) [[Int]]
 solve Puzzle {opMod, pzType = (pzShape@Hexagon, sz), grid} = do
