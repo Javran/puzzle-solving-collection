@@ -17,6 +17,15 @@ spec = describe "solve" $ do
             applyMoves puzzle moves
               `shouldBe` (fmap . fmap) (const 0) (grid puzzle)
   solvable
+    "example: mod 4, square 3"
+    $ Puzzle
+      4
+      (Square, 3)
+      [ [0, 2, 1]
+      , [3, 2, 0]
+      , [2, 2, 3]
+      ]
+  solvable
     "example: mod 6, hexagon 4"
     $ Puzzle
       6
