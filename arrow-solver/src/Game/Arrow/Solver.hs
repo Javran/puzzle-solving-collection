@@ -38,4 +38,4 @@ solve Puzzle {opMod, pzType = (pzShape@Hexagon, sz), grid} = do
       mat = zipWith (\xs rhs -> foldr (:) [rhs] xs) matLhs (concat inp)
   case solveMatOne opMod mat of
     Left e -> Left e
-    Right xs -> Right $ toChunks (Proxy @'Hexagon) sz xs
+    Right xs -> Right $ promote pzShape (unproxy (\px -> toChunks px sz xs))
