@@ -12,19 +12,12 @@ module Game.Arrow.Types
   , PuzzleType
   , Puzzle (..)
   , Err (..)
-  , module Game.Arrow.Types
   )
 where
 
-import Data.Singletons.TH
-
-$( singletons
-     [d|
-       data PuzzleShape
-         = Square
-         | Hexagon
-       |]
- )
+data PuzzleShape
+  = Square
+  | Hexagon
 
 deriving instance Show PuzzleShape
 
