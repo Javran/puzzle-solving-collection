@@ -97,10 +97,10 @@ gCoords ty sz = (fmap mkEqn allCoords, nestedAllCoords)
         xs = coordEqns M.! c
 
 hexCoords :: Int -> ([[Int]], [[CubeCoord]])
-hexCoords = gCoords (Proxy :: Proxy 'Hexagon)
+hexCoords = gCoords (Proxy @'Hexagon)
 
 sqCoords :: Int -> ([[Int]], [[(Int, Int)]])
-sqCoords = gCoords (Proxy :: Proxy 'Square)
+sqCoords = gCoords (Proxy @'Square)
 
 -- https://stackoverflow.com/a/67319945/315302
 withShape
