@@ -4,6 +4,10 @@ import Game.Arrow.Simulator
 import Game.Arrow.Solver
 import Game.Arrow.Types
 import Test.Hspec
+import Test.QuickCheck.Gen
+
+genMoves :: Int -> [[a]] -> Gen [[Int]]
+genMoves p = (traverse . traverse) (const $ choose (0,p-1))
 
 spec :: Spec
 spec = describe "solve" $ do
