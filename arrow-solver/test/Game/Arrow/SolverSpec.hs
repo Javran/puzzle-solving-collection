@@ -1,13 +1,16 @@
 module Game.Arrow.SolverSpec where
 
+import Game.Arrow.CoordSystem
 import Game.Arrow.Simulator
 import Game.Arrow.Solver
 import Game.Arrow.Types
 import Test.Hspec
-import Test.QuickCheck.Gen
+import Test.Hspec.QuickCheck
+import Test.QuickCheck
 
+-- Generates [0..p-1] following shape of a nested list.
 genMoves :: Int -> [[a]] -> Gen [[Int]]
-genMoves p = (traverse . traverse) (const $ choose (0,p-1))
+genMoves p = (traverse . traverse) (const $ choose (0, p -1))
 
 spec :: Spec
 spec = describe "solve" $ do
@@ -78,3 +81,23 @@ spec = describe "solve" $ do
       , [1, 1, 0, 0, 0]
       , [0, 0, 0, 0]
       ]
+  describe "solve random puzzles with QuickCheck Gen" $
+    prop "mod 6, hexagon 4" $ do
+      let gd =
+            withShape
+              Hexagon
+              (\pty ->
+                 fmap (const 0) <$> shapedCoords pty 4)
+
+          initPz =
+            Puzzle
+              6
+              (Hexagon, 4)
+              gd
+      ms <- genMoves 6 gd
+      let gd' = applyMoves initPz ms
+          pz = initPz {grid = gd'}
+      case solve pz of
+        Left _ -> pure $ property False
+        Right moves ->
+          pure $ applyMoves pz moves === (fmap . fmap) (const 0) (grid pz)
