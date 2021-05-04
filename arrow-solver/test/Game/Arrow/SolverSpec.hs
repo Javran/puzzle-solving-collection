@@ -1,5 +1,6 @@
 module Game.Arrow.SolverSpec where
 
+import Control.Monad
 import Game.Arrow.CoordSystem
 import Game.Arrow.Simulator
 import Game.Arrow.Solver
@@ -81,23 +82,40 @@ spec = describe "solve" $ do
       , [1, 1, 0, 0, 0]
       , [0, 0, 0, 0]
       ]
-  describe "solve random puzzles with QuickCheck Gen" $
-    prop "mod 6, hexagon 4" $ do
-      let gd =
-            withShape
-              Hexagon
-              (\pty ->
-                 fmap (const 0) <$> shapedCoords pty 4)
+  describe "solve random puzzles with QuickCheck Gen" $ do
+    let parameters =
+          [ -- easy
+            (4, (Square, 3))
+          , -- medium
+            (4, (Square, 4))
+          , -- hard
+            (2, (Hexagon, 4))
+          , -- expert
+            (6, (Hexagon, 4))
+          ]
 
-          initPz =
-            Puzzle
-              6
-              (Hexagon, 4)
-              gd
-      ms <- genMoves 6 gd
-      let gd' = applyMoves initPz ms
-          pz = initPz {grid = gd'}
-      case solve pz of
-        Left _ -> pure $ property False
-        Right moves ->
-          pure $ applyMoves pz moves === (fmap . fmap) (const 0) (grid pz)
+    forM_ parameters $ \(p, ty@(shape, side)) -> do
+      let desc =
+            "mod: " <> show p
+              <> ", type: "
+              <> show shape
+              <> ", "
+              <> show side
+      prop desc $ do
+        let gd =
+              withShape
+                shape
+                (\pty ->
+                   fmap (const 0) <$> shapedCoords pty side)
+            initPz =
+              Puzzle
+                p
+                ty
+                gd
+        ms <- genMoves p gd
+        let gd' = applyMoves initPz ms
+            pz = initPz {grid = gd'}
+        case solve pz of
+          Left _ -> pure $ property False
+          Right moves ->
+            pure $ applyMoves pz moves === (fmap . fmap) (const 0) (grid pz)
