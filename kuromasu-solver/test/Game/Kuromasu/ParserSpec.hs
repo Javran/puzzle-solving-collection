@@ -18,8 +18,8 @@ spec =
       -- as valid puzzles in the data file.
       let expectedCount =
             length
-            . filter ((&&) <$> (not . null) <*> all (== '='))
-            $ lines content
+              . filter ((&&) <$> (not . null) <*> all (== '='))
+              $ lines content
           boardReps = parseBoards content
           boards = mapMaybe mkBoardFromRep boardReps
       expectedCount `shouldSatisfy` (> 0)

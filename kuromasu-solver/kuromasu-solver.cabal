@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 38c2b9994062b27eb29908bc69dfd4e2564d1d2545a75d0ac1a0872e95aa3048
+-- hash: d352410b4e09ffe0d1ea1bb68678c74c0ab3bfa51eb2898fe7142fa4cf1c63fa
 
 name:           kuromasu-solver
 version:        0.1.0.0
@@ -31,13 +31,29 @@ library
       Paths_kuromasu_solver
   hs-source-dirs:
       src
-  ghc-options: -Wall -O2
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial
   build-depends:
       MemoTrie
     , base
     , containers
     , terminfo
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable demo
   main-is: Main.hs
@@ -45,14 +61,30 @@ executable demo
       Paths_kuromasu_solver
   hs-source-dirs:
       exe
-  ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -threaded -O2 -rtsopts -with-rtsopts=-N
   build-depends:
       MemoTrie
     , base
     , containers
     , kuromasu-solver
     , terminfo
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite hspec
   type: exitcode-stdio-1.0
@@ -63,7 +95,23 @@ test-suite hspec
       Paths_kuromasu_solver
   hs-source-dirs:
       test
-  ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
   build-depends:
       MemoTrie
     , base
@@ -72,4 +120,4 @@ test-suite hspec
     , kuromasu-solver
     , terminfo
     , utility-ht
-  default-language: Haskell2010
+  default-language: GHC2021

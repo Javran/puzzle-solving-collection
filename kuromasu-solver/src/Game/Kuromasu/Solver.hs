@@ -1,11 +1,11 @@
-{-# LANGUAGE
-    NamedFieldPuns
-  , TypeApplications
-  #-}
 module Game.Kuromasu.Solver
-  ( Cell, Coord, HintMap, ColorMap
-  , cBlue, cRed
-  , Board(..)
+  ( Cell
+  , Coord
+  , HintMap
+  , ColorMap
+  , cBlue
+  , cRed
+  , Board (..)
   , bdGet
   , mkBoard
   , updateCell
@@ -21,9 +21,15 @@ import Data.List
 import Data.Maybe
 import Data.MemoTrie
 import System.Console.Terminfo
-  ( Terminal, TermStr, Color(..), TermOutput
-  , getCapability, withForegroundColor, withBackgroundColor
-  , termText, runTermOutput
+  ( Color (..)
+  , TermOutput
+  , TermStr
+  , Terminal
+  , getCapability
+  , runTermOutput
+  , termText
+  , withBackgroundColor
+  , withForegroundColor
   )
 
 import qualified Data.Map.Merge.Strict as M
@@ -39,18 +45,17 @@ type Coord = (Int, Int) -- (<row>, <col>), 0-based.
 
 type Candidate = M.Map Coord Cell
 
-data Board
-  = Board
-    { bdDims :: (Int, Int) -- (rows, cols)
-    , bdTodos :: !(S.Set Coord) -- not yet filled cells
-    , bdCells :: !(M.Map Coord Cell) -- known cells
-      -- Every unsolved number cell is listed here.
-      -- each of the value is a list of possible "overlaps"
-      -- with the board. This allows us to:
-      -- - answer the question of what's common in all possible candidates
-      -- - eliminate candidates that are not possible.
-    , bdCandidates :: !(M.Map Coord [M.Map Coord Cell])
-    }
+data Board = Board
+  { bdDims :: (Int, Int) -- (rows, cols)
+  , bdTodos :: !(S.Set Coord) -- not yet filled cells
+  , bdCells :: !(M.Map Coord Cell) -- known cells
+  -- Every unsolved number cell is listed here.
+  -- each of the value is a list of possible "overlaps"
+  -- with the board. This allows us to:
+  -- - answer the question of what's common in all possible candidates
+  -- - eliminate candidates that are not possible.
+  , bdCandidates :: !(M.Map Coord [M.Map Coord Cell])
+  }
 
 {-
   The following type defines a building block for building "blueprint"s given a number
@@ -73,24 +78,24 @@ data Board
   can be done when building up the blueprint.
 
  -}
-data Placement =
-  Placement !Int !Int !Int !Int {- up, right, down, left. in this order -}
+data Placement
+  = Placement !Int !Int !Int !Int {- up, right, down, left. in this order -}
 
 {-
   pick up items in that order. one item can be pick up multiple times.
  -}
-pickInOrder' :: [a] -> [] (a,[a])
-pickInOrder' = fmap (\(x:xs) -> (x,x:xs)) . init . tails
+pickInOrder' :: [a] -> [] (a, [a])
+pickInOrder' = fmap (\(x : xs) -> (x, x : xs)) . init . tails
 
 precomputePlacements :: (Int, Int) -> Int -> [Placement]
 precomputePlacements (rows, cols) count =
-    gen initMods count (Placement 0 0 0 0)
+  gen initMods count (Placement 0 0 0 0)
   where
     initMods =
-      [ \(Placement u r d l) -> Placement (u+1) r d l
-      , \(Placement u r d l) -> Placement u (r+1) d l
-      , \(Placement u r d l) -> Placement u r (d+1) l
-      , \(Placement u r d l) -> Placement u r d (l+1)
+      [ \(Placement u r d l) -> Placement (u + 1) r d l
+      , \(Placement u r d l) -> Placement u (r + 1) d l
+      , \(Placement u r d l) -> Placement u r (d + 1) l
+      , \(Placement u r d l) -> Placement u r d (l + 1)
       ]
     gen :: [Placement -> Placement] -> Int -> Placement -> [Placement]
     gen _ 0 cur = [cur]
@@ -99,24 +104,23 @@ precomputePlacements (rows, cols) count =
       let cur'@(Placement u r d l) = f cur
       -- TODO: knowing the max number will help reducing the amount of unnecessary processing.
       guard $ u + d < rows && l + r < cols
-      gen mods' (todoCount-1) cur'
-
+      gen mods' (todoCount - 1) cur'
 
 placementToCandidate :: (Int, Int) -> Coord -> Placement -> Maybe (M.Map Coord Cell)
-placementToCandidate (rows, cols) cCoord@(row,col) (Placement u r d l) = do
+placementToCandidate (rows, cols) cCoord@(row, col) (Placement u r d l) = do
   let centerPair = (cCoord, cBlue)
       colors = cRed : repeat cBlue
       pUpCells =
-        zip [ (row', col) | row' <- [row-u-1 .. row-1]] colors
+        zip [(row', col) | row' <- [row - u - 1 .. row - 1]] colors
       pRightCells =
-        zip [ (row, col') | col' <- [col+r+1, col+r .. col+1]] colors
+        zip [(row, col') | col' <- [col + r + 1, col + r .. col + 1]] colors
       pDownCells =
-        zip [ (row', col) | row' <- [row+d+1, row+d .. row+1]] colors
+        zip [(row', col) | row' <- [row + d + 1, row + d .. row + 1]] colors
       pLeftCells =
-        zip [ (row, col') | col' <- [col-l-1 .. col-1]] colors
-      isInRange = inRange ((0,0), (rows-1,cols-1))
+        zip [(row, col') | col' <- [col - l - 1 .. col - 1]] colors
+      isInRange = inRange ((0, 0), (rows - 1, cols - 1))
       checkPair v@(coord', color)
-        | isInRange coord' = Just (v:)
+        | isInRange coord' = Just (v :)
         | color == cRed = Just id
         | otherwise = Nothing
       checkAndTransform =
@@ -132,9 +136,10 @@ placementToCandidate (rows, cols) cCoord@(row,col) (Placement u r d l) = do
   Create an empty board with candidates populated by clues.
  -}
 mkBoard :: (Int, Int) -> [(Coord, Int)] -> Board
-mkBoard bdDims@(rows, cols) clues = Board
+mkBoard bdDims@(rows, cols) clues =
+  Board
     { bdDims
-    , bdTodos = S.fromList [(r,c) | r <- [0..rows-1], c <- [0..cols-1]]
+    , bdTodos = S.fromList [(r, c) | r <- [0 .. rows - 1], c <- [0 .. cols - 1]]
     , bdCells = M.empty
     , bdCandidates = M.fromList $ uncurry mkCandidate <$> clues
     }
@@ -142,49 +147,51 @@ mkBoard bdDims@(rows, cols) clues = Board
     -- memoize by count.
     -- every different count can share the initial list of candidates
     -- and eliminate some based on position and other information as the board improves.
-    genMemoed = memo $ precomputePlacements (rows,cols)
+    genMemoed = memo $ precomputePlacements (rows, cols)
     mkCandidate :: Coord -> Int -> (Coord, [M.Map Coord Cell])
     mkCandidate cCoord count =
-        (cCoord, mapMaybe (placementToCandidate bdDims cCoord) ps)
+      (cCoord, mapMaybe (placementToCandidate bdDims cCoord) ps)
       where
         -- generate initial possible placements
         -- without knowing the location of the center coord
         ps = genMemoed count -- gen bdDims mods count (Placement 0 0 0 0)
 
 pprBoard :: Terminal -> [(Coord, Int)] -> Board -> IO ()
-pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
+pprBoard term hints Board {bdDims, bdTodos, bdCells, bdCandidates} = do
   putStrLn $ "Board dimensions: " <> show bdDims
   putStrLn "++++ Board Begin"
   let mRenderFs :: TermStr s => Maybe (Color -> s -> s, Color -> s -> s)
-      mRenderFs = (,)
-        <$> getCapability term withForegroundColor
-        <*> getCapability term withBackgroundColor
+      mRenderFs =
+        (,)
+          <$> getCapability term withForegroundColor
+          <*> getCapability term withBackgroundColor
       (rows, cols) = bdDims
   case mRenderFs @TermOutput of
     Nothing ->
-      forM_ [0..rows-1] $ \r -> do
+      forM_ [0 .. rows - 1] $ \r -> do
         let coordToChar coord = case bdCells M.!? coord of
               Nothing -> ' '
               Just c -> if c == cBlue then 'B' else 'R'
-        putStr ((\c -> coordToChar (r,c)) <$> [0..cols-1])
+        putStr ((\c -> coordToChar (r, c)) <$> [0 .. cols - 1])
     Just (fg, bg) ->
-      forM_ [0..rows-1] $ \r -> do
-        let ln = foldMap render [0..cols-1]
+      forM_ [0 .. rows - 1] $ \r -> do
+        let ln = foldMap render [0 .. cols - 1]
             sp = termText " "
             render :: Int -> TermOutput
             render c = case bdCells M.!? coord of
-                Nothing -> sp
-                Just color ->
-                  if color == cRed
-                    then bg Red sp
-                    else bg Blue $ case lookup coord hints of
-                      Nothing -> sp
-                      Just v -> fg White $
+              Nothing -> sp
+              Just color ->
+                if color == cRed
+                  then bg Red sp
+                  else bg Blue $ case lookup coord hints of
+                    Nothing -> sp
+                    Just v ->
+                      fg White $
                         if v > 9
                           then termText "."
                           else termText (show v)
               where
-                coord = (r,c)
+                coord = (r, c)
         runTermOutput term $ ln <> termText "\n"
   putStrLn "---- Board End"
   putStrLn $ "Todos: " <> show (length bdTodos)
@@ -192,8 +199,8 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
     putStr "Candidates: "
     let candidatesDisplay =
           intercalate ", "
-          . fmap (\(coord,xs) -> show coord <> ":" <> show (length xs))
-          $ M.toAscList bdCandidates
+            . fmap (\(coord, xs) -> show coord <> ":" <> show (length xs))
+            $ M.toAscList bdCandidates
     putStrLn candidatesDisplay
 
 {-
@@ -201,7 +208,7 @@ pprBoard term hints Board{bdDims, bdTodos, bdCells, bdCandidates} = do
   simplifies candidates, and remove contradiction candidates.
  -}
 updateCell :: Board -> Coord -> Cell -> Maybe Board
-updateCell Board{bdDims, bdTodos, bdCells, bdCandidates} coord color = do
+updateCell Board {bdDims, bdTodos, bdCells, bdCandidates} coord color = do
   guard $ coord `S.member` bdTodos
   let bdTodos' = S.delete coord bdTodos
       bdCells' = M.insert coord color bdCells
@@ -217,54 +224,57 @@ updateCell Board{bdDims, bdTodos, bdCells, bdCandidates} coord color = do
           pure $! M.delete coord cs
       bdCandidates' =
         M.filter (not . all M.null)
-        . M.map (mapMaybe checkAndElim)
-        $ bdCandidates
+          . M.map (mapMaybe checkAndElim)
+          $ bdCandidates
   guard $ all (not . null) bdCandidates'
-  pure Board
-    { bdDims
-    , bdTodos = bdTodos'
-    , bdCells = bdCells'
-    , bdCandidates = bdCandidates'
-    }
+  pure
+    Board
+      { bdDims
+      , bdTodos = bdTodos'
+      , bdCells = bdCells'
+      , bdCandidates = bdCandidates'
+      }
 
 {-
   Try to improve current board by eliminating candidates based on a specific hint.
   Hints are indexed by their coordinates.
  -}
 improve :: Board -> Coord -> Maybe Board
-improve bd@Board{bdCandidates} coord = do
+improve bd@Board {bdCandidates} coord = do
   cs <- bdCandidates M.!? coord
   let doMerge =
         M.merge
           M.dropMissing
           M.dropMissing
-          (M.zipWithMaybeAMatched $
-           \_k l r -> pure $ if l == r then Just l else Nothing)
+          ( M.zipWithMaybeAMatched $
+              \_k l r -> pure $ if l == r then Just l else Nothing
+          )
       commons =
-        concatMap (\(k, mv) -> case mv of
-                      Nothing -> []
-                      Just v -> [(k,v)]
-                  )
-        . M.toList
-        -- note that cs shouldn't be empty if the result comes from "updateCell",
-        -- therefore the use of foldl1 is safe.
-        . foldl1 doMerge
-        . (fmap . M.map) Just
-        $ cs
+        concatMap
+          ( \(k, mv) -> case mv of
+              Nothing -> []
+              Just v -> [(k, v)]
+          )
+          . M.toList
+          -- note that cs shouldn't be empty if the result comes from "updateCell",
+          -- therefore the use of foldl1 is safe.
+          . foldl1 doMerge
+          . (fmap . M.map) Just
+          $ cs
   guard $ not . null $ commons
-  foldM (\curBd (coord',cell) -> updateCell curBd coord' cell) bd commons
+  foldM (\curBd (coord', cell) -> updateCell curBd coord' cell) bd commons
 
 improveStep :: Board -> Maybe Board
-improveStep bd@Board{bdCandidates} = do
+improveStep bd@Board {bdCandidates} = do
   let candidateCounts = sortOn (length . snd) $ M.toList bdCandidates
       bds = mapMaybe (improve bd . fst) candidateCounts
   -- choose first successful improvement
-  (bd':_) <- pure bds
+  (bd' : _) <- pure bds
   pure bd'
 
 bdGet :: Board -> Coord -> Maybe Cell
-bdGet Board{bdCells, bdDims = (rows, cols)} coord =
-  if inRange ((0,0), (rows-1,cols-1)) coord
+bdGet Board {bdCells, bdDims = (rows, cols)} coord =
+  if inRange ((0, 0), (rows - 1, cols - 1)) coord
     then bdCells M.!? coord
     else Just cRed
 
@@ -273,17 +283,17 @@ bdGet Board{bdCells, bdDims = (rows, cols)} coord =
   If the solution is guaranteed to be unique, this step hopefully will fill in all remaining blanks.
  -}
 finalStep :: Board -> Board
-finalStep bd@Board{bdTodos} =
-    foldr go bd bdTodos
+finalStep bd@Board {bdTodos} =
+  foldr go bd bdTodos
   where
     go coord curBd =
       if surroundedByRed curBd coord
         then fromMaybe curBd (updateCell curBd coord cRed)
         else curBd
-    surroundedByRed curBd (r,c) =
+    surroundedByRed curBd (r, c) =
       all
         (\coord' -> bdGet curBd coord' == Just cRed)
-        [(r-1,c), (r+1,c), (r,c-1), (r,c+1)]
+        [(r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)]
 
 solve :: Board -> Board
 solve bd =
@@ -310,8 +320,8 @@ solveAndShow term bd hints = do
   are indeed following game rules.
  -}
 extractAnswer :: Board -> Maybe [[Cell]]
-extractAnswer bd@Board{bdDims, bdTodos} = do
+extractAnswer bd@Board {bdDims, bdTodos} = do
   guard $ S.null bdTodos
   let (rows, cols) = bdDims
-      coords = [ [ (r,c) | c <- [0..cols-1] ] | r <- [0 .. rows-1] ]
+      coords = [[(r, c) | c <- [0 .. cols - 1]] | r <- [0 .. rows - 1]]
   (mapM . mapM) (bdGet bd) coords

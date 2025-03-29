@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module Game.Kuromasu.Parser
   ( parseBoard
   , parseBoards
@@ -39,9 +38,9 @@ type CellRep = Maybe (Either Bool Int)
 cell :: ReadP CellRep
 cell =
   (Nothing <$ char '?')
-  <++ (Just (Left cRed) <$ char 'r')
-  <++ (Just (Left cBlue) <$ char 'b')
-  <++ (Just . Right <$> (read <$> munch1 isDigit))
+    <++ (Just (Left cRed) <$ char 'r')
+    <++ (Just (Left cBlue) <$ char 'b')
+    <++ (Just . Right <$> (read <$> munch1 isDigit))
 
 row :: Int -> ReadP [CellRep]
 row colCount = do
@@ -77,14 +76,14 @@ parseBoards raw = case readP_to_S (many (board <* endLine) <* eof) raw of
 
 mkBoardFromRep :: BoardRep -> Maybe (Board, HintMap)
 mkBoardFromRep (dims@(rows, cols), cellReps) =
-    (,hints) <$>
-      foldM
-        (\curBd (coord, color) -> updateCell curBd coord color)
-        initBoard
-        colors
+  (,hints)
+    <$> foldM
+      (\curBd (coord, color) -> updateCell curBd coord color)
+      initBoard
+      colors
   where
     initBoard = mkBoard dims hints
-    coords = [ (r,c) | r <- [0..rows-1], c <- [0..cols-1]]
+    coords = [(r, c) | r <- [0 .. rows - 1], c <- [0 .. cols - 1]]
     hints :: HintMap
     hints = concatMap (uncurry tr) $ zip coords (concat cellReps)
       where

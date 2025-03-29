@@ -12,7 +12,6 @@ import Game.Kuromasu.Parser
 import Game.Kuromasu.Solver
 import Paths_kuromasu_solver
 
-
 {-
   TODO: it turns out 0hn0 does not exactly
   follow the game rule of kuromasu. namely:
@@ -70,19 +69,21 @@ exampleRaw2 =
 
 countBlues :: M.Map Coord Cell -> Coord -> Int
 countBlues m coord =
-    getSum $ foldMap countInDir
-      [ \(r,c) -> (r-1,c)
-      , \(r,c) -> (r+1,c)
-      , \(r,c) -> (r,c-1)
-      , \(r,c) -> (r,c+1)
+  getSum $
+    foldMap
+      countInDir
+      [ \(r, c) -> (r - 1, c)
+      , \(r, c) -> (r + 1, c)
+      , \(r, c) -> (r, c - 1)
+      , \(r, c) -> (r, c + 1)
       ]
   where
     countInDir next =
       Sum
-      . length
-      . takeWhile ((== cBlue) . fromMaybe cRed . (m M.!?))
-      . tail -- exclude that cell itself.
-      $ iterate next coord
+        . length
+        . takeWhile ((== cBlue) . fromMaybe cRed . (m M.!?))
+        . tail -- exclude that cell itself.
+        $ iterate next coord
 
 {-
   TODO: rules are (according to 0hn0 rather than the original game
@@ -96,14 +97,15 @@ countBlues m coord =
 spec :: Spec
 spec =
   describe "solve" $ do
-    let solveAndVerifyBoard bdRep@((rows,cols), parsedBoard) = do
+    let solveAndVerifyBoard bdRep@((rows, cols), parsedBoard) = do
           Just (bd, hints) <- pure $ mkBoardFromRep bdRep
           Just solved <- pure $ extractAnswer (solve bd)
           -- Verify that outout has the same rows and cols as input.
           length solved `shouldBe` rows
           all ((== cols) . length) solved `shouldBe` True
-          let coords = [(r,c) | r <- [0 .. rows-1], c <- [0 .. cols-1]]
-              toMap xs = M.fromList $ zip coords (concat xs)
+          let coords = [(r, c) | r <- [0 .. rows - 1], c <- [0 .. cols - 1]]
+              toMap :: forall v. [[v]] -> M.Map (Int, Int) v
+              toMap = M.fromList . zip coords . concat
               inputBoard = toMap parsedBoard
               solvedBoard = toMap solved
           -- Verify that output and input are "compatible",

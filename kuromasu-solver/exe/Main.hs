@@ -55,9 +55,9 @@ main = do
   term <- setupTermFromEnv
   let boards =
         parseBoards
-        . unlines
-        . concatMap (<> ["===="])
-        $ [exampleRaw0, exampleRaw1, exampleRaw2]
+          . unlines
+          . concatMap (<> ["===="])
+          $ [exampleRaw0, exampleRaw1, exampleRaw2]
   forM_ boards $ \bdRep -> do
     let Just (bd, hints) = mkBoardFromRep bdRep
     solveAndShow term bd hints
