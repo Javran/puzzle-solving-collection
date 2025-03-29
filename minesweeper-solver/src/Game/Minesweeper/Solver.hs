@@ -26,6 +26,7 @@ import qualified Data.UnionFind.ST as UF
 import qualified Data.Vector as V
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
+import Data.Monoid
 
 -- 2d offset of 8 surrounding tiles.
 surroundings :: [Offset]
@@ -238,11 +239,17 @@ improveBoard bdPre xsPre = do
   bd <- foldM (\curBd (k, v) -> setMineMap curBd k v) bdPre xs
   tidyByCoords bd (fmap fst xs)
 
+{- TODO: figure out how to replace this. -}
+dList :: b -> (a -> DL.DList a -> b) -> DL.DList a -> b
+dList nl cn dl = case DL.toList dl of
+  [] -> nl
+  (x : xs) -> cn x (DL.fromList xs)
+
 -- keep improving until there is nothing to do.
 improveBoardFix :: Board -> DL.DList (Coord, Bool) -> Maybe Board
 improveBoardFix bd xs = do
   (ys, bd') <- improveBoard bd xs
-  DL.list
+  dList
     -- null case
     (pure bd')
     -- cons case

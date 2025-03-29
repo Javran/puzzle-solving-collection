@@ -5,6 +5,7 @@ import Game.Tents.Parser
 import Game.Tents.Solver
 import Game.Tents.Types
 import Game.Tents.Utils
+import Control.Monad
 
 processBoard :: Monad m => BoardRep -> ExceptT String m ()
 processBoard br = do

@@ -7,6 +7,7 @@ import Game.Tents.Types
 import Game.Tents.Utils
 import System.Console.Terminfo
 import System.Exit
+import Control.Monad.IO.Class
 
 batchPick :: Terminal -> FilePath -> String -> IO ()
 batchPick term fp puzzleId = do

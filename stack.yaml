@@ -1,4 +1,4 @@
-resolver: lts-16.31
+resolver: lts-23.14
 packages:
 - fifteen-solver
 - kuromasu-solver
@@ -9,4 +9,6 @@ packages:
 - arrow-solver
 
 extra-deps:
-- pqueue-1.4.1.3
+- pqueue-1.5.0.0
+- git: https://github.com/Javran/union-find.git
+  commit: 303e897af1dbea0f19906ceb054ef65bba58606c
