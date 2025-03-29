@@ -8,6 +8,30 @@ copyright: "Copyright: (c) 2020 Javran Cheng"
 
 description: A solver for https://en.wikipedia.org/wiki/Takuzu
 
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
 dependencies:
 - base
 - containers
@@ -19,9 +43,6 @@ data-files:
 
 library:
   source-dirs: src
-  ghc-options:
-    - -Wall
-    - -O2
 
 tests:
   hspec:
@@ -33,7 +54,6 @@ tests:
       - takuzu-solver
       - hspec
     ghc-options:
-      - -Wall
       - -threaded
       - -O2
       - -rtsopts
@@ -46,7 +66,6 @@ executables:
     source-dirs: exe
     ghc-options:
       - -main-is Main
-      - -Wall
       - -threaded
       - -O2
       - -rtsopts

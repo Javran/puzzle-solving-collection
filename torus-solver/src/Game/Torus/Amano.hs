@@ -1,6 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Game.Torus.Amano where
 
 {-
@@ -117,17 +114,18 @@ solveFocus = do
     let (fR, fC) = bdIndexToCoord bd focus
         srcInd =
           fix
-            (\loop curInd ->
-               if bdTiles V.! curInd == focus
-                 then curInd
-                 else loop (curInd + 1))
+            ( \loop curInd ->
+                if bdTiles V.! curInd == focus
+                  then curInd
+                  else loop (curInd + 1)
+            )
             (focus + 1)
         (sR, sC) = bdIndexToCoord bd srcInd
     if
-        | -- we are dealing with last row
-          fR == rows -1 ->
+      | -- we are dealing with last row
+        fR == rows - 1 ->
           if
-              | fC >= cols -2 ->
+            | fC >= cols - 2 ->
                 if odd cols
                   then {-
                          the paper claims that last two tiles should have been solved
@@ -138,22 +136,22 @@ solveFocus = do
                     pure ()
                   else -- we can do a swap here since col is even.
 
-                    let centers = take (cols `quot` 2) [cols -1, cols + 1 ..]
+                    let centers = take (cols `quot` 2) [cols - 1, cols + 1 ..]
                         twMoves = concatMap (\c -> terW fR (c `rem` cols) 1 1) centers
                      in playMoves $ twMoves <> [east fR 1]
-              | otherwise ->
+            | otherwise ->
                 if sC == cols - 1
-                  then playMoves $ terE fR (sC -1) (sC -1 - fC) 1
+                  then playMoves $ terE fR (sC - 1) (sC - 1 - fC) 1
                   else playMoves $ terW fR sC (sC - fC) 1
-        | -- when they share the same row.
-          fR == sR ->
+      | -- when they share the same row.
+        fR == sR ->
           {-
             since we know fC < sC,
             ccwB should do.
            -}
           playMoves $ ccwB fR fC 1 (sC - fC)
-        | -- when they share the same col.
-          fC == sC ->
+      | -- when they share the same col.
+        fC == sC ->
           {-
 
             special case when c = 0, otherwise just use fC-1
@@ -161,8 +159,8 @@ solveFocus = do
           if fC == 0
             then playMoves $ cwA sR sC (sR - fR) 1
             else playMoves $ ccwD sR sC (sR - fR) 1
-        | -- when they don't share row or col
-          otherwise ->
+      | -- when they don't share row or col
+        otherwise ->
           if sC < fC
             then playMoves $ cwD sR fC (sR - fR) (fC - sC)
             else playMoves $ ccwA sR fC (sR - fR) (sC - fC)

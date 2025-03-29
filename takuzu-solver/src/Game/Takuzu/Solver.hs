@@ -1,7 +1,5 @@
-{-# LANGUAGE
-    RecordWildCards
-  , NamedFieldPuns
-  #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Game.Takuzu.Solver where
 
 import Control.Monad
@@ -36,24 +34,29 @@ type Coord = (Int, Int) -- (row, col), 0-based
   also we should also update bdXXXCandidates when a line is fully completed - candidates other that that row/col
   now needs to exclude that specific CompleteLine following game rule.
  -}
-data Board
-  = Board
-  { bdLen :: Int -- | n, total length of the board.
-  , bdTodos :: S.Set Coord -- | coords of those not yet filled cells.
-  , bdCells :: V.Vector (Maybe Cell) -- | vector of size n * n, use Data.Ix for indexing.
-  , bdRowCandidates :: V.Vector (S.Set CompleteLine) -- | candidates that can be filled to that row, size=n
-  , bdColCandidates :: V.Vector (S.Set CompleteLine) -- | same as bdRowCandidates but for columns.
+data Board = Board
+  { bdLen :: Int
+  , bdTodos :: S.Set Coord
+  -- ^ n, total length of the board.
+  , bdCells :: V.Vector (Maybe Cell)
+  -- ^ coords of those not yet filled cells.
+  , bdRowCandidates :: V.Vector (S.Set CompleteLine)
+  -- ^ vector of size n * n, use Data.Ix for indexing.
+  , bdColCandidates :: V.Vector (S.Set CompleteLine)
+  -- ^ candidates that can be filled to that row, size=n
   }
 
+-- \| same as bdRowCandidates but for columns.
+
 getCell :: Board -> Coord -> Maybe Cell
-getCell Board{bdLen, bdCells} coord = bdCells V.! toFlatInd coord
+getCell Board {bdLen, bdCells} coord = bdCells V.! toFlatInd coord
   where
-    toFlatInd = index ((0,0), (bdLen-1,bdLen-1))
+    toFlatInd = index ((0, 0), (bdLen - 1, bdLen - 1))
 
 allCoords :: Board -> [Coord]
-allCoords Board{bdLen} = [(r,c) | r <- indices, c <- indices]
+allCoords Board {bdLen} = [(r, c) | r <- indices, c <- indices]
   where
-    indices = [0..bdLen-1]
+    indices = [0 .. bdLen - 1]
 
 mkEmptyBoard :: Int -> Board
 mkEmptyBoard halfN = bd
@@ -70,11 +73,11 @@ mkEmptyBoard halfN = bd
 
 -- Update a unknown cell in the board while still keep board fields valid.
 updateCell :: Coord -> Cell -> Board -> Maybe Board
-updateCell coord@(row,col) cVal bd@Board{..} = do
-  let ind = index ((0,0), (bdLen-1,bdLen-1)) coord
-      indices = [0 .. bdLen-1]
-      rowCoords = [(row,c) | c <- indices]
-      colCoords = [(r,col) | r <- indices]
+updateCell coord@(row, col) cVal bd@Board {..} = do
+  let ind = index ((0, 0), (bdLen - 1, bdLen - 1)) coord
+      indices = [0 .. bdLen - 1]
+      rowCoords = [(row, c) | c <- indices]
+      colCoords = [(r, col) | r <- indices]
       bdCells' = bdCells V.// [(ind, Just cVal)]
       getCompleteLine :: [Maybe Cell] -> Maybe CompleteLine
       getCompleteLine = fmap (VU.fromListN bdLen) . sequence
@@ -89,31 +92,29 @@ updateCell coord@(row,col) cVal bd@Board{..} = do
           upd r cs =
             if r == row
               then rowCandidate
-              else
-                -- Eliminate current line from other lines if current line is complete
-                case rowComplete of
-                  Nothing -> cs
-                  Just cl -> S.delete cl cs
+              else -- Eliminate current line from other lines if current line is complete
+              case rowComplete of
+                Nothing -> cs
+                Just cl -> S.delete cl cs
       bdColCandidates' = V.imap upd bdColCandidates
         where
           upd c cs =
             if c == col
               then colCandidate
-              else
-                case colComplete of
-                  Nothing -> cs
-                  Just cl -> S.delete cl cs
-      bd' = bd
-        { bdTodos = S.delete coord bdTodos
-        , bdCells = bdCells'
-        , bdRowCandidates = bdRowCandidates'
-        , bdColCandidates = bdColCandidates'
-        }
+              else case colComplete of
+                Nothing -> cs
+                Just cl -> S.delete cl cs
+      bd' =
+        bd
+          { bdTodos = S.delete coord bdTodos
+          , bdCells = bdCells'
+          , bdRowCandidates = bdRowCandidates'
+          , bdColCandidates = bdColCandidates'
+          }
   guard $ coord `S.member` bdTodos
   guard $ V.all (not . S.null) bdRowCandidates'
   guard $ V.all (not . S.null) bdColCandidates'
   pure bd'
-
 
 {-
   Total number of valid cell placements in a single line
@@ -125,27 +126,27 @@ updateCell coord@(row,col) cVal bd@Board{..} = do
 genLineAux :: Int -> Int -> [Bool] -> [] [Bool]
 genLineAux 0 0 xs = [xs]
 genLineAux rCount bCount xs = case xs of
-    x0:x1:_
-      | x0 == x1 ->
+  x0 : x1 : _
+    | x0 == x1 ->
         if x0
           then newR
           else newB
-    _ -> newB <> newR
+  _ -> newB <> newR
   where
     newB = do
       True <- [bCount > 0]
-      genLineAux rCount (bCount-1) (cRed : xs)
+      genLineAux rCount (bCount - 1) (cRed : xs)
     newR = do
       True <- [rCount > 0]
-      genLineAux (rCount-1) bCount (cBlue : xs)
+      genLineAux (rCount - 1) bCount (cBlue : xs)
 
 mkTable :: Int -> [] CompleteLine
-mkTable n = VU.fromListN (n+n) <$> genLineAux n n []
+mkTable n = VU.fromListN (n + n) <$> genLineAux n n []
 
 -- extract common features from lines.
 -- input must be non-empty, and all elements are assumed to have the same length.
 summarizeLines :: [] CompleteLine -> [] (S.Set Cell)
-summarizeLines ls = extractInd <$> [0 .. size-1]
+summarizeLines ls = extractInd <$> [0 .. size - 1]
   where
     extractInd :: Int -> S.Set Cell
     extractInd i = S.fromList ((VU.! i) <$> ls)
@@ -153,7 +154,7 @@ summarizeLines ls = extractInd <$> [0 .. size-1]
 
 mkBoard :: Int -> [[Maybe Cell]] -> Maybe Board
 mkBoard halfN rawMatPre =
-    foldM go bdInit (zip coords (concat rawMat))
+  foldM go bdInit (zip coords (concat rawMat))
   where
     bdInit = mkEmptyBoard halfN
     coords = allCoords bdInit
@@ -165,17 +166,19 @@ mkBoard halfN rawMatPre =
     rawMat =
       take n $
         fmap (take n . (<> repeat Nothing)) rawMatPre
-        <> repeat (replicate n Nothing)
+          <> repeat (replicate n Nothing)
 
 -- Improve a specific row by applying summarizeLines on it.
 improveRowAux :: Int -> Board -> Board
-improveRowAux row bd@Board{..} = bd'
+improveRowAux row bd@Board {..} = bd'
   where
     summarized :: [] (Coord, S.Set Cell)
     summarized =
-        zip
-          [(row, c) | c <- [0..bdLen-1]] $
-          summarizeLines $ S.toList $ bdRowCandidates V.! row
+      zip
+        [(row, c) | c <- [0 .. bdLen - 1]]
+        $ summarizeLines
+        $ S.toList
+        $ bdRowCandidates V.! row
     bd' = foldl go bd summarized
       where
         go :: Board -> (Coord, S.Set Cell) -> Board
@@ -184,13 +187,15 @@ improveRowAux row bd@Board{..} = bd'
           | otherwise = curBd
 
 improveColAux :: Int -> Board -> Board
-improveColAux col bd@Board{..} = bd'
+improveColAux col bd@Board {..} = bd'
   where
     summarized :: [] (Coord, S.Set Cell)
     summarized =
-        zip
-          [(r, col) | r <- [0..bdLen-1]] $
-          summarizeLines $ S.toList $ bdColCandidates V.! col
+      zip
+        [(r, col) | r <- [0 .. bdLen - 1]]
+        $ summarizeLines
+        $ S.toList
+        $ bdColCandidates V.! col
     bd' = foldl go bd summarized
       where
         go :: Board -> (Coord, S.Set Cell) -> Board
@@ -201,8 +206,8 @@ improveColAux col bd@Board{..} = bd'
 -- as the candidate can only be eliminated but never added, we can tell whether
 -- a Board is actually be updated by looking at whether candidateCount changes.
 candidateCount :: Board -> Int
-candidateCount Board{..} =
-    getSum $ collect bdRowCandidates <> collect bdColCandidates
+candidateCount Board {..} =
+  getSum $ collect bdRowCandidates <> collect bdColCandidates
   where
     collect :: V.Vector (S.Set CompleteLine) -> Sum Int
     collect = foldMap (Sum . S.size)
@@ -216,7 +221,8 @@ tryImprove bd = do
   let todoRows = S.toList $ S.map fst (bdTodos bd)
       todoCols = S.toList $ S.map snd (bdTodos bd)
       bd' =
-        foldr improveColAux
+        foldr
+          improveColAux
           (foldr improveRowAux bd todoRows)
           todoCols
   guard $ candidateCount bd /= candidateCount bd' || bdTodos bd /= bdTodos bd'
@@ -229,8 +235,8 @@ trySolve :: Board -> Board
 trySolve bd = maybe bd trySolve (tryImprove bd)
 
 toSolution :: Board -> Maybe [[Cell]]
-toSolution bd@Board{bdLen} = do
-  let indices = [0 .. bdLen-1]
+toSolution bd@Board {bdLen} = do
+  let indices = [0 .. bdLen - 1]
   forM indices $ \row ->
     forM indices $ \col ->
       getCell bd (row, col)
@@ -242,7 +248,7 @@ solveBoard sz bdInpRaw = do
   toSolution $ trySolve bdInp
 
 genMoves :: Board -> Board -> [(Coord, Cell)]
-genMoves bdOrig bdAfter = concatMap toMove [(r,c) | r <- [0..l-1], c <- [0..l-1]]
+genMoves bdOrig bdAfter = concatMap toMove [(r, c) | r <- [0 .. l - 1], c <- [0 .. l - 1]]
   where
     l = bdLen bdOrig
     toMove coord = case (getCell bdOrig coord, getCell bdAfter coord) of
@@ -252,25 +258,25 @@ genMoves bdOrig bdAfter = concatMap toMove [(r,c) | r <- [0..l-1], c <- [0..l-1]
 
 boardToInput :: Board -> [String]
 boardToInput bd =
-    "br 12" : bdLines
+  "br 12" : bdLines
   where
     -- since we are only dealing with 12x12 puzzles.
-    bdLines = map mkBdLine [0..11]
-    mkBdLine row = map (\col -> tr $ getCell bd (row,col)) [0..11]
+    bdLines = map mkBdLine [0 .. 11]
+    mkBdLine row = map (\col -> tr $ getCell bd (row, col)) [0 .. 11]
       where
         tr Nothing = ' '
         tr (Just b) = if b == cRed then 'r' else 'b'
 
 pprBoard :: Terminal -> Board -> IO ()
-pprBoard term bd@Board{..} = do
+pprBoard term bd@Board {..} = do
   putStrLn $ "Side length: " <> show bdLen
   putStrLn $ "Pending cells: " <> show (S.size bdTodos)
   putStrLn $ "Row candidate counts: " <> show (V.map S.size bdRowCandidates)
   putStrLn $ "Col candidate counts: " <> show (V.map S.size bdColCandidates)
   putStrLn "++++ Board Begin ++++"
-  forM_ [0..bdLen-1] $ \r -> do
-    forM_ [0..bdLen-1] $ \c -> do
-      let cell = getCell bd (r,c)
+  forM_ [0 .. bdLen - 1] $ \r -> do
+    forM_ [0 .. bdLen - 1] $ \c -> do
+      let cell = getCell bd (r, c)
       case cell of
         Nothing -> putStr " "
         Just b ->
@@ -281,7 +287,7 @@ pprBoard term bd@Board{..} = do
             Just useColor ->
               let color = if b then Red else Blue
                   rendered = termText "█"
-              in runTermOutput term (useColor color rendered)
+               in runTermOutput term (useColor color rendered)
     putStrLn ""
   putStrLn "---- Board End ----"
 

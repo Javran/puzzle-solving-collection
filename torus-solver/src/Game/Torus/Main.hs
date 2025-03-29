@@ -5,9 +5,9 @@ where
 
 import Control.Monad
 import Data.List
+import qualified Data.Vector as V
 import Game.Torus.Amano
 import Game.Torus.Board
-import qualified Data.Vector as V
 import Game.Torus.Parser
 import System.Environment
 import System.Exit

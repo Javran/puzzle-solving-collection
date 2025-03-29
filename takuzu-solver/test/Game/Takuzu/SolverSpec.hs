@@ -60,20 +60,21 @@ areCompatible inpBd outBd = and $ zipWith rowCompatible inpBd outBd
 
 expectSolution :: Int -> [[Cell]] -> Expectation
 expectSolution n board = do
-  let lengthMatches = LMatch.equalLength (replicate n ())
+  let lengthMatches :: forall a. [a] -> Bool
+      lengthMatches = LMatch.equalLength (replicate n ())
       expectRow :: [Cell] -> Expectation
       expectRow row = do
-          -- "same # of red / blue cell" rule.
-          blueCount `shouldBe` redCount
-          (blueCount + redCount) `shouldBe` n
-          -- "no more than two consecutive of the same color" rule.
-          group row `shouldSatisfy`
-            all (`LMatch.lessOrEqualLength` [(), ()])
+        -- "same # of red / blue cell" rule.
+        blueCount `shouldBe` redCount
+        (blueCount + redCount) `shouldBe` n
+        -- "no more than two consecutive of the same color" rule.
+        group row
+          `shouldSatisfy` all (`LMatch.lessOrEqualLength` [(), ()])
         where
           (Sum blueCount, Sum redCount) = foldMap go row
           go c
-            | c == cBlue = (1,0)
-            | c == cRed = (0,1)
+            | c == cBlue = (1, 0)
+            | c == cRed = (0, 1)
             | otherwise = mempty
 
   -- verify that resulting board is of n x n.
@@ -91,12 +92,12 @@ spec :: Spec
 spec =
   describe "solveBoard" $ do
     let solveAndVerifyBoard sz bd = do
-            sz `shouldSatisfy` even
-            sz `shouldSatisfy` (> 0)
-            Just solved <- pure $ solveBoard sz bd
-            expectSolution sz solved
-            -- verify that we do build the solution respecting input board.
-            (bd `areCompatible` solved) `shouldBe` True
+          sz `shouldSatisfy` even
+          sz `shouldSatisfy` (> 0)
+          Just solved <- pure $ solveBoard sz bd
+          expectSolution sz solved
+          -- verify that we do build the solution respecting input board.
+          (bd `areCompatible` solved) `shouldBe` True
         mkExample name rawInp =
           specify name $ do
             Just (sz, bd) <- pure $ parseBoard (unlines rawInp)

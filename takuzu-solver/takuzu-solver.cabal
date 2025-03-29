@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2c13db13ee48f788d7a34f852a919df1eec290e013ff6883e48baee788fc9c98
+-- hash: e355677b9189e7f718673372da6bf9d6251c093348e19fd01dce90d934706867
 
 name:           takuzu-solver
 version:        0.1.0.0
@@ -31,13 +31,29 @@ library
       Paths_takuzu_solver
   hs-source-dirs:
       src
-  ghc-options: -Wall -O2
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial
   build-depends:
       base
     , containers
     , terminfo
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable demo
   main-is: Main.hs
@@ -45,14 +61,30 @@ executable demo
       Paths_takuzu_solver
   hs-source-dirs:
       exe
-  ghc-options: -main-is Main -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -main-is Main -threaded -O2 -rtsopts -with-rtsopts=-N
   build-depends:
       base
     , containers
     , takuzu-solver
     , terminfo
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite hspec
   type: exitcode-stdio-1.0
@@ -63,7 +95,23 @@ test-suite hspec
       Paths_takuzu_solver
   hs-source-dirs:
       test
-  ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
   build-depends:
       base
     , containers
@@ -72,4 +120,4 @@ test-suite hspec
     , terminfo
     , utility-ht
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021

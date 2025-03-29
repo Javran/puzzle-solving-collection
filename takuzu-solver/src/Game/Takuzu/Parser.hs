@@ -24,7 +24,7 @@ import Game.Takuzu.Solver
 
  -}
 
-firstLine :: ReadP ((Char,Char), Int)
+firstLine :: ReadP ((Char, Char), Int)
 firstLine = do
   {-
     begin with two colors that are considered blue and red
@@ -41,10 +41,10 @@ firstLine = do
 
 boardRow :: (Char, Char) -> ReadP [Maybe Cell]
 boardRow (cB, cR) = do
-    raw <- munch validCell <* char '\n'
-    pure $ tr <$> raw
+  raw <- munch validCell <* char '\n'
+  pure $ tr <$> raw
   where
-    validCell c = c `elem` [' ',cB,cR]
+    validCell c = c `elem` [' ', cB, cR]
     tr ' ' = Nothing
     tr c = if c == cB then Just cBlue else Just cRed
 

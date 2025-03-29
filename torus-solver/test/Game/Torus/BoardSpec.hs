@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Game.Torus.BoardSpec where
 
 import qualified Data.List.Split

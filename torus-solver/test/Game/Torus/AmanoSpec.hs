@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Game.Torus.AmanoSpec where
 
 import Control.Monad
@@ -18,10 +16,10 @@ import Test.QuickCheck
 unsolvableWorkaround :: Board -> Board
 unsolvableWorkaround bd =
   if odd cols
-    then operateOnIndices bd [lastInd -1, lastInd] reverse
+    then operateOnIndices bd [lastInd - 1, lastInd] reverse
     else bd
   where
-    lastInd = rows * cols -1
+    lastInd = rows * cols - 1
     (rows, cols) = bdDims bd
 
 data Triangle = TA | TB | TC | TD deriving (Show)
@@ -32,12 +30,12 @@ fixCoord Board {bdDims = (rows, cols)} (r, c) = (r `mod` rows, c `mod` cols)
 intendedRotationEffect :: Board -> Bool -> Int -> Int -> Int -> Int -> Triangle -> Board
 intendedRotationEffect bd clockwise r c p q t
   | p `rem` rows == 0 || q `rem` cols == 0 =
-    {-
-      We need to make a special case here as when either effective p and q are 0, the rotation
-      is effectively no-op. and it is unexpected for operateOnIndices to handle cases
-      with duplicated indices.
-     -}
-    bd
+      {-
+        We need to make a special case here as when either effective p and q are 0, the rotation
+        is effectively no-op. and it is unexpected for operateOnIndices to handle cases
+        with duplicated indices.
+       -}
+      bd
   | otherwise = operateOnIndices bd (fmap (bdIndex bd) coords) op
   where
     Board {bdDims = (rows, cols)} = bd
@@ -54,6 +52,7 @@ intendedRotationEffect bd clockwise r c p q t
       TB -> [right, center, down]
       TC -> [down, center, left]
       TD -> [left, center, up]
+    op :: forall a. [a] -> [a]
     op = rotateLeft (if clockwise then 1 else 2)
 
 newtype LargerBoard
@@ -75,7 +74,8 @@ spec = do
       let initBd = Board (3, 5) $ V.fromListN 15 [0 ..]
           bdExample xs = Board (3, 5) $ V.fromListN 15 (concat xs)
       forM_
-        [ ( TA
+        [
+          ( TA
           , cwA
           , ccwA
           , bdExample
@@ -84,7 +84,8 @@ spec = do
               , [10, 11, 12, 13, 14]
               ]
           )
-        , ( TB
+        ,
+          ( TB
           , cwB
           , ccwB
           , bdExample
@@ -93,7 +94,8 @@ spec = do
               , [10, 11, 9, 13, 14]
               ]
           )
-        , ( TC
+        ,
+          ( TC
           , cwC
           , ccwC
           , bdExample
@@ -102,7 +104,8 @@ spec = do
               , [10, 11, 7, 13, 14]
               ]
           )
-        , ( TD
+        ,
+          ( TD
           , cwD
           , ccwD
           , bdExample
@@ -122,24 +125,24 @@ spec = do
               applyMoves initBd (cwOp 1 2 1 2) `shouldBe` cwExpected
             specify "counterclockwise" $
               applyMoves cwExpected (ccwOp 1 2 1 2) `shouldBe` initBd
-    describe "properties" $
-      forM_
+    describe "properties"
+      $ forM_
         [ (TA, cwA, ccwA)
         , (TB, cwB, ccwB)
         , (TC, cwC, ccwC)
         , (TD, cwD, ccwD)
         ]
-        $ \(t, cwOp, ccwOp) -> do
-          let tagPre = "triangle " <> drop 1 (show t)
-          forM_
-            [ (cwOp, True, tagPre <> ", clockwise")
-            , (ccwOp, False, tagPre <> ", counterclockwise")
-            ]
-            $ \(rOp, isCw, tag) ->
-              prop tag $
-                \(LargerBoard bd) (rPre :: Int) (cPre :: Int) (p :: Int) (q :: Int) ->
-                  let (r, c) = fixCoord bd (rPre, cPre)
-                   in applyMoves bd (rOp r c p q) === intendedRotationEffect bd isCw r c p q t
+      $ \(t, cwOp, ccwOp) -> do
+        let tagPre = "triangle " <> drop 1 (show t)
+        forM_
+          [ (cwOp, True, tagPre <> ", clockwise")
+          , (ccwOp, False, tagPre <> ", counterclockwise")
+          ]
+          $ \(rOp, isCw, tag) ->
+            prop tag $
+              \(LargerBoard bd) (rPre :: Int) (cPre :: Int) (p :: Int) (q :: Int) ->
+                let (r, c) = fixCoord bd (rPre, cPre)
+                 in applyMoves bd (rOp r c p q) === intendedRotationEffect bd isCw r c p q t
   describe "solveBoard" $
     prop "SmallBoard" $
       \(SmallBoard bd) ->
@@ -147,7 +150,8 @@ spec = do
          in label
               "moves are consistent"
               (applyMoves bd moves === bdFin)
-              .&&. (label "solvable" (isSolved bdFin)
+              .&&. ( label "solvable" (isSolved bdFin)
                       .||. label
                         "not solvable but can be fixed"
-                        (isSolved (unsolvableWorkaround bdFin)))
+                        (isSolved (unsolvableWorkaround bdFin))
+                   )

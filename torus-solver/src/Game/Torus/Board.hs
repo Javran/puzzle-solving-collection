@@ -1,7 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TupleSections #-}
-
 module Game.Torus.Board
   ( Board (..)
   , Move (..)
@@ -70,11 +66,11 @@ normalizeMove Board {bdDims = (rows, cols)} m = case m of
   MoveLeft i s ->
     MoveLeft i (s `mod` cols)
   MoveRight i s ->
-    MoveLeft i ((- s) `mod` cols)
+    MoveLeft i ((-s) `mod` cols)
   MoveUp i s ->
     MoveUp i (s `mod` rows)
   MoveDown i s ->
-    MoveUp i ((- s) `mod` rows)
+    MoveUp i ((-s) `mod` rows)
 
 {-
   Try to pack a sequence of moves into smaller sequences.
@@ -93,22 +89,22 @@ simplifyMoves bd = go [] . fmap (normalizeMove bd)
     go acc (m : ms)
       | mStep m == 0 = go acc ms
       | otherwise =
-        case acc of
-          [] -> go (m : acc) ms
-          x : xs -> case (x, m) of
-            (MoveLeft i a, MoveLeft j b)
-              | i == j ->
-                let s = (a + b) `rem` cols
-                 in if s == 0
-                      then go xs ms
-                      else go (MoveLeft i s : xs) ms
-            (MoveUp i a, MoveUp j b)
-              | i == j ->
-                let s = (a + b) `rem` rows
-                 in if s == 0
-                      then go xs ms
-                      else go (MoveUp i s : xs) ms
-            _ -> go (m : acc) ms
+          case acc of
+            [] -> go (m : acc) ms
+            x : xs -> case (x, m) of
+              (MoveLeft i a, MoveLeft j b)
+                | i == j ->
+                    let s = (a + b) `rem` cols
+                     in if s == 0
+                          then go xs ms
+                          else go (MoveLeft i s : xs) ms
+              (MoveUp i a, MoveUp j b)
+                | i == j ->
+                    let s = (a + b) `rem` rows
+                     in if s == 0
+                          then go xs ms
+                          else go (MoveUp i s : xs) ms
+              _ -> go (m : acc) ms
 
 {-
   basic operation of rotating a list towards left,
@@ -141,15 +137,19 @@ operateOnIndices bd@Board {bdTiles} linearIndices action =
 applyMove :: Board -> Move -> Board
 applyMove bd@Board {bdDims = (rows, cols)} mPre = case m of
   MoveLeft r s ->
-    let -- from (r, 0) to (r, cols-1)
-        linearIndices =
-          [r * cols .. r * cols + cols -1]
-     in operateOnIndices bd linearIndices (rotateLeft s)
+    let
+      -- from (r, 0) to (r, cols-1)
+      linearIndices =
+        [r * cols .. r * cols + cols - 1]
+     in
+      operateOnIndices bd linearIndices (rotateLeft s)
   MoveUp c s ->
-    let -- from (0, c) to (rows-1, c)
-        linearIndices =
-          [c, c + cols .. c + cols * (rows -1)]
-     in operateOnIndices bd linearIndices (rotateLeft s)
+    let
+      -- from (0, c) to (rows-1, c)
+      linearIndices =
+        [c, c + cols .. c + cols * (rows - 1)]
+     in
+      operateOnIndices bd linearIndices (rotateLeft s)
   _ -> error "unreachable."
   where
     m = normalizeMove bd mPre
@@ -201,13 +201,14 @@ pprBoard bd@Board {bdDims = (rows, cols)} = do
             ]
 
   printSep "╔" "╦" "╗"
-  forM_ [0 .. rows -1] $ \r -> do
-    let lineTiles = fmap (bdGet bd . (r,)) [0 .. cols -1]
+  forM_ [0 .. rows - 1] $ \r -> do
+    let lineTiles = fmap (bdGet bd . (r,)) [0 .. cols - 1]
     putStrLn $
-      "║ " <> intercalate " ║ " (fmap (renderTile . succ) lineTiles)
+      "║ "
+        <> intercalate " ║ " (fmap (renderTile . succ) lineTiles)
         <> " ║ "
         <> show r
-    if r < rows -1
+    if r < rows - 1
       then printSep "╠" "╬" "╣"
       else printSep "╚" "╩" "╝"
-  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile) [0 .. cols -1]
+  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile) [0 .. cols - 1]
