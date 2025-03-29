@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Game.Fifteen.ThreeByThree where
 
 import Control.Monad
@@ -10,6 +8,7 @@ import Data.Function
 import Data.HashTable.ST.Basic as HT
 import Data.List
 import Data.Maybe
+
 -- GB for general Board
 import Data.Monoid
 import qualified Data.PQueue.Prio.Min as PQ
@@ -134,12 +133,13 @@ goalDistance :: Board3 -> Int
 goalDistance bd =
   getSum $
     foldMap
-      (\coord ->
-         if coord == holeCoord
-           then -- ignore distance between hole.
-             0
-           else -- calculate distance of this coord
-             Sum $ getDist coord)
+      ( \coord ->
+          if coord == holeCoord
+            then -- ignore distance between hole.
+              0
+            else -- calculate distance of this coord
+              Sum $ getDist coord
+      )
       allCoords
   where
     getDist coord = coordDist coord targetCoord
@@ -170,24 +170,25 @@ solveBoard initBoard = runST $ do
       initQ = PQ.singleton (goalDistance initBoard) (initBoard, DL.empty, 0)
   HT.insert discovered initBoard ()
   fix
-    (\loop dl -> case PQ.minView dl of
-       Nothing -> pure []
-       Just ((bd, path, pLen), todos) -> do
-         if bd == goal
-           then pure [DL.toList path]
-           else do
-             let nextMoves :: [(Coord, Board3)]
-                 nextMoves = possibleMoves bd
-             expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
-               r' <- HT.lookup discovered nextBd
-               case r' of
-                 Nothing -> do
-                   HT.insert discovered nextBd ()
-                   pure $
-                     Just
-                       ( pLen + 1 + goalDistance nextBd
-                       , (nextBd, DL.snoc path coord, pLen + 1)
-                       )
-                 Just () -> pure Nothing
-             loop (PQ.union todos (PQ.fromList expanded)))
+    ( \loop dl -> case PQ.minView dl of
+        Nothing -> pure []
+        Just ((bd, path, pLen), todos) -> do
+          if bd == goal
+            then pure [DL.toList path]
+            else do
+              let nextMoves :: [(Coord, Board3)]
+                  nextMoves = possibleMoves bd
+              expanded <- fmap catMaybes <$> forM nextMoves $ \(coord, nextBd) -> do
+                r' <- HT.lookup discovered nextBd
+                case r' of
+                  Nothing -> do
+                    HT.insert discovered nextBd ()
+                    pure $
+                      Just
+                        ( pLen + 1 + goalDistance nextBd
+                        , (nextBd, DL.snoc path coord, pLen + 1)
+                        )
+                  Just () -> pure Nothing
+              loop (PQ.union todos (PQ.fromList expanded))
+    )
     initQ

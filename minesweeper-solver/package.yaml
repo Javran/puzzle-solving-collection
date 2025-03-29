@@ -8,6 +8,30 @@ copyright: "Copyright: (c) 2019 Javran Cheng"
 
 description: description
 
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
 dependencies:
 - base
 - containers
@@ -21,8 +45,6 @@ dependencies:
 
 library:
   source-dirs: src
-  ghc-options:
-    - -Wall
 
 tests:
   hspec:
@@ -33,7 +55,6 @@ tests:
       - minesweeper-solver
       - hspec
     ghc-options:
-      - -Wall
       - -threaded
       - -O2
       - -rtsopts
@@ -47,7 +68,6 @@ executables:
     dependencies:
       - minesweeper-solver
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts

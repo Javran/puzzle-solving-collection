@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "kuromasu-solver:lib"
+    - path: "./test"
+      component: "kuromasu-solver:test:hspec"
+    - path: "./exe"
+      component: "kuromasu-solver:exe:demo"

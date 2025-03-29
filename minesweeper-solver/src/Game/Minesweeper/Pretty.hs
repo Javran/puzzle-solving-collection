@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Game.Minesweeper.Pretty where
 
 import Control.Monad
@@ -14,8 +12,8 @@ pprBoard term extraInfo bd@Board {bdDims = (rows, cols), bdNums, bdCandidates} =
   let fgColor = fromMaybe (flip const) (getCapability term withForegroundColor)
       bgColor = fromMaybe (flip const) (getCapability term withBackgroundColor)
   putStrLn "===="
-  forM_ [0 .. rows -1] $ \r -> do
-    rs <- forM [0 .. cols -1] $ \c -> do
+  forM_ [0 .. rows - 1] $ \r -> do
+    rs <- forM [0 .. cols - 1] $ \c -> do
       let coord = (r, c)
       pure $ case getTile bd coord of
         Nothing -> bgColor Green $ fgColor White $ termText "?"

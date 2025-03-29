@@ -1,8 +1,4 @@
 {-# LANGUAGE ExplicitForAll #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Game.Fifteen.Solvability where
 
@@ -46,26 +42,27 @@ mergeSortFromListNImpl n xs = do
           -- the merge step. indices are always pointing to first elements that are not read from / written to.
           (leftoverInd, tmpInd0) <-
             fix
-              (\loop lInd rInd tmpInd ->
-                 if
-                     | lInd > mid ->
-                       pure (rInd, tmpInd)
-                     | rInd > r ->
-                       pure (lInd, tmpInd)
-                     | otherwise -> do
-                       vL <- VM.unsafeRead v lInd
-                       vR <- VM.unsafeRead v rInd
-                       if vL <= vR
-                         then do
-                           -- insert head element from left
-                           VM.write tmp tmpInd vL
-                           loop (lInd + 1) rInd (tmpInd + 1)
-                         else do
-                           -- insert head element from right
-                           VM.write tmp tmpInd vR
-                           -- count # of inversions, which is just length of the left.
-                           tell $ Sum (mid - lInd + 1)
-                           loop lInd (rInd + 1) (tmpInd + 1))
+              ( \loop lInd rInd tmpInd ->
+                  if
+                    | lInd > mid ->
+                        pure (rInd, tmpInd)
+                    | rInd > r ->
+                        pure (lInd, tmpInd)
+                    | otherwise -> do
+                        vL <- VM.unsafeRead v lInd
+                        vR <- VM.unsafeRead v rInd
+                        if vL <= vR
+                          then do
+                            -- insert head element from left
+                            VM.write tmp tmpInd vL
+                            loop (lInd + 1) rInd (tmpInd + 1)
+                          else do
+                            -- insert head element from right
+                            VM.write tmp tmpInd vR
+                            -- count # of inversions, which is just length of the left.
+                            tell $ Sum (mid - lInd + 1)
+                            loop lInd (rInd + 1) (tmpInd + 1)
+              )
               l
               (mid + 1)
               l
@@ -81,7 +78,7 @@ mergeSortFromListNImpl n xs = do
                 src = VM.slice l len tmp
                 dst = VM.slice l len v
             VM.unsafeCopy dst src
-  sortAux 0 (VM.length v -1)
+  sortAux 0 (VM.length v - 1)
   V.unsafeFreeze v
 
 mergeSortFromListN :: forall a. Ord a => Int -> [a] -> (V.Vector a, Int)
@@ -92,8 +89,9 @@ bdParity :: Board -> Bool
 bdParity Board {bdSize, bdTiles} = odd count
   where
     (_, count) =
-      mergeSortFromListN (bdSize * bdSize -1) $
-        catMaybes $ V.toList bdTiles
+      mergeSortFromListN (bdSize * bdSize - 1) $
+        catMaybes $
+          V.toList bdTiles
 
 -- TODO: to be tested.
 {-

@@ -8,6 +8,30 @@ copyright: "Copyright: (c) 2020 Javran Cheng"
 
 description: description
 
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
 dependencies:
 - base
 - containers
@@ -24,9 +48,6 @@ data-files:
 library:
   generated-exposed-modules: Paths_tents_solver
   source-dirs: src
-  ghc-options:
-    - -Wall
-    - -O2
 
 executables:
   tents-demo:
@@ -35,7 +56,6 @@ executables:
       - tents-solver
     source-dirs: exe
     ghc-options:
-      - -Wall
       - -threaded
       - -O2
       - -rtsopts
@@ -50,7 +70,6 @@ tests:
       - hspec
       - tents-solver
     ghc-options:
-      - -Wall
       - -threaded
       - -O2
       - -rtsopts

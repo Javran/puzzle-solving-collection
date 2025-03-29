@@ -1,13 +1,13 @@
 module Game.Minesweeper.Types
-  ( Coord,
-    Offset,
-    mkOffset,
-    applyOffset,
-    MinePlacement,
-    MineCoords,
-    MineMap,
-    Board (..),
-    BoardRep (..),
+  ( Coord
+  , Offset
+  , mkOffset
+  , applyOffset
+  , MinePlacement
+  , MineCoords
+  , MineMap
+  , Board (..)
+  , BoardRep (..)
   )
 where
 
@@ -37,14 +37,14 @@ type MineMap = M.Map Coord Bool
 
 data Board = Board
   { -- rows, cols
-    bdDims :: (Int, Int),
-    -- note that one should avoid querying on this directly,
+    bdDims :: (Int, Int)
+  , -- note that one should avoid querying on this directly,
     -- use getTile to handle out-of-bound coords properly.
-    bdMines :: MineMap,
-    bdNums :: M.Map Coord Int, -- number tiles.
-    -- possible ways of arranging mines so that the number tile (key) is satisfied.
-    -- note that satisfied MineCoords would have some common coords discharged.
-    bdCandidates :: M.Map Coord [MineCoords]
+    bdMines :: MineMap
+  , bdNums :: M.Map Coord Int -- number tiles.
+  -- possible ways of arranging mines so that the number tile (key) is satisfied.
+  -- note that satisfied MineCoords would have some common coords discharged.
+  , bdCandidates :: M.Map Coord [MineCoords]
   }
   deriving (Show)
 
@@ -52,10 +52,10 @@ data Board = Board
 -- doesn't keep track of any internal states like candidates.
 -- invariant: brNums, brMines and brMissing should never contain conflicting info.
 data BoardRep = BoardRep
-  { brDims :: (Int, Int),
-    brNums :: M.Map Coord Int, -- num tiles
-    brMines :: MineMap,
-    -- set of coordinates that we don't have information.
+  { brDims :: (Int, Int)
+  , brNums :: M.Map Coord Int -- num tiles
+  , brMines :: MineMap
+  , -- set of coordinates that we don't have information.
     -- if this field is non-empty, that indicates a partial board representation.
     brMissing :: S.Set Coord
   }

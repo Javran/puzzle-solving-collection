@@ -40,8 +40,8 @@ verifyBoard dims cells = isJust $ do
   let allCoords =
         S.fromList
           [ (r, c)
-          | r <- [0 .. rows -1]
-          , c <- [0 .. cols -1]
+          | r <- [0 .. rows - 1]
+          , c <- [0 .. cols - 1]
           ]
       (treeCoords, tentCoords) = foldMap go (M.toList cells)
         where
@@ -67,7 +67,7 @@ verifyBoard dims cells = isJust $ do
                   those might be out-of-bound, but since we are just looking for matches
                   in region already constrainted by dims, there is no impact in terms of correctness.
                  -}
-                [(r -1, c), (r + 1, c), (r, c -1), (r, c + 1)]
+                [(r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)]
 
   -- make sure all coords are assigned Cell values.
   guard $ allCoords == M.keysSet cells

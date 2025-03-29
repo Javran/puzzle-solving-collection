@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-
 module Game.Fifteen.SimplePartialBoard where
 
 import Control.Monad
@@ -117,50 +115,50 @@ type SPBoard = (Coord, Coord)
 applyMove :: SPBoard -> Coord -> Maybe SPBoard
 applyMove (curCoord@(cR, cC), holeCoord@(hR, hC)) mCoord@(mR, mC)
   | curCoord == holeCoord =
-    -- impossible case
-    Nothing
+      -- impossible case
+      Nothing
   | mCoord == holeCoord =
-    -- invalid move if hole is already at that coord.
-    Nothing
+      -- invalid move if hole is already at that coord.
+      Nothing
   | mR /= hR && mC /= hC =
-    -- move must share either row or col with the hole
-    Nothing
+      -- move must share either row or col with the hole
+      Nothing
   | mR == hR =
-    -- same row
-    if
+      -- same row
+      if
         | hR /= cR ->
-          -- curCoord and holeCoord is not on the same row
-          Just (curCoord, mCoord)
+            -- curCoord and holeCoord is not on the same row
+            Just (curCoord, mCoord)
         | hC < cC ->
-          -- hole is on the left side of cur tile.
-          if mC < cC
-            then Just (curCoord, mCoord)
-            else Just ((cR, cC -1), mCoord)
+            -- hole is on the left side of cur tile.
+            if mC < cC
+              then Just (curCoord, mCoord)
+              else Just ((cR, cC - 1), mCoord)
         | cC < hC ->
-          -- hole is on the right side of cur tile.
-          if cC < mC
-            then Just (curCoord, mCoord)
-            else Just ((cR, cC + 1), mCoord)
+            -- hole is on the right side of cur tile.
+            if cC < mC
+              then Just (curCoord, mCoord)
+              else Just ((cR, cC + 1), mCoord)
         | otherwise ->
-          error "unreachable"
+            error "unreachable"
   | mC == hC =
-    -- same col
-    if
+      -- same col
+      if
         | hC /= cC ->
-          -- curCoord and holeCoord is not on the same col
-          Just (curCoord, mCoord)
+            -- curCoord and holeCoord is not on the same col
+            Just (curCoord, mCoord)
         | hR < cR ->
-          -- hole is on the up side of cur tile.
-          if mR < cR
-            then Just (curCoord, mCoord)
-            else Just ((cR -1, cC), mCoord)
+            -- hole is on the up side of cur tile.
+            if mR < cR
+              then Just (curCoord, mCoord)
+              else Just ((cR - 1, cC), mCoord)
         | cR < hR ->
-          -- hole is on the right side of cur tile.
-          if cR < mR
-            then Just (curCoord, mCoord)
-            else Just ((cR + 1, cC), mCoord)
+            -- hole is on the right side of cur tile.
+            if cR < mR
+              then Just (curCoord, mCoord)
+              else Just ((cR + 1, cC), mCoord)
         | otherwise ->
-          error "unreachable"
+            error "unreachable"
   | otherwise = error "unreachable"
 
 type PQ = PQ.MinPQueue Int PQElem
@@ -182,9 +180,9 @@ searchMoveTile boundingRect pCoords srcCoord initHoleCoord dstCoord =
     doSearch q discovered = do
       ((spBoard@(curCoord, holeCoord), moveLen, moves), todos) <- PQ.minView q
       if
-          | curCoord == dstCoord ->
+        | curCoord == dstCoord ->
             pure (DL.toList moves)
-          | otherwise -> do
+        | otherwise -> do
             let (hR, hC) = holeCoord
                 ext :: [(Int, PQElem)]
                 ext = do

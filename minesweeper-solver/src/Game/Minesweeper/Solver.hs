@@ -1,14 +1,9 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-
 module Game.Minesweeper.Solver
-  ( getTile,
-    mkBoard,
-    isCoordInRange,
-    solveBoardFromRaw,
-    solveBoard,
+  ( getTile
+  , mkBoard
+  , isCoordInRange
+  , solveBoardFromRaw
+  , solveBoard
   )
 where
 
@@ -21,12 +16,12 @@ import Data.List
 import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.UnionFind.ST as UF
 import qualified Data.Vector as V
 import Game.Minesweeper.Parser
 import Game.Minesweeper.Types
-import Data.Monoid
 
 -- 2d offset of 8 surrounding tiles.
 surroundings :: [Offset]
@@ -34,16 +29,16 @@ surroundings =
   fmap
     (uncurry mkOffset)
     [ -- top
-      (-1, -1),
-      (-1, 0),
-      (-1, 1),
-      -- middle
-      (0, -1),
-      (0, 1),
-      (1, -1),
-      -- bottom
-      (1, 0),
-      (1, 1)
+      (-1, -1)
+    , (-1, 0)
+    , (-1, 1)
+    , -- middle
+      (0, -1)
+    , (0, 1)
+    , (1, -1)
+    , -- bottom
+      (1, 0)
+    , (1, 1)
     ]
 
 {-
@@ -63,7 +58,7 @@ genPlacement n0 = convert <$> genAux n0 [] surroundings
     genAux 0 selected _ = pure selected
     genAux n selected candidates = do
       (s, candidates') <- pickInOrder candidates
-      genAux (n -1) (s : selected) candidates'
+      genAux (n - 1) (s : selected) candidates'
     -- TODO: let's not worry about performance for now.
     convert :: [Offset] -> MinePlacement
     convert ms = M.fromList $ fmap (\c -> (c, c `elem` ms)) surroundings
@@ -133,16 +128,17 @@ eliminateCommon coord ms@(t : ts) = (commons, fmap (`M.withoutKeys` commonKeys) 
 -- note that this step might generate out-of-bound future updates.
 tidyBoard :: Board -> Coord -> Maybe (DL.DList (Coord, Bool), Board)
 tidyBoard bd@Board {bdCandidates = bdCandidates0} coord = do
-  let {-
-        aoi for "area of interest"
-        here we want to extract the affected part out,
-        make modification on it and then put it back.
-      -}
-      (aoiCandidates1, bdCandidates1) =
-        M.partitionWithKey (\k _ -> isCoordClose k coord) bdCandidates0
-      -- invalid candidates are eliminated here.
-      aoiCandidates2 =
-        M.map (filter (checkCandidate bd coord)) aoiCandidates1
+  let
+    {-
+      aoi for "area of interest"
+      here we want to extract the affected part out,
+      make modification on it and then put it back.
+    -}
+    (aoiCandidates1, bdCandidates1) =
+      M.partitionWithKey (\k _ -> isCoordClose k coord) bdCandidates0
+    -- invalid candidates are eliminated here.
+    aoiCandidates2 =
+      M.map (filter (checkCandidate bd coord)) aoiCandidates1
   -- if any of those number tiles end up having no candidate
   -- to pick from, that means the current solution is not possible.
   guard $ not (any null aoiCandidates2)
@@ -197,10 +193,10 @@ tidyByCoords bd =
 mkBoard :: BoardRep -> Maybe (DL.DList (Coord, Bool), Board)
 mkBoard
   BoardRep
-    { brDims = bdDims@(rows, cols),
-      brNums = bdNums,
-      brMines = bdMines,
-      brMissing
+    { brDims = bdDims@(rows, cols)
+    , brNums = bdNums
+    , brMines = bdMines
+    , brMissing
     } = do
     guard $ S.null brMissing
     let initCandidates :: M.Map Coord [MineCoords]
@@ -222,7 +218,7 @@ mkBoard
         -- those are "just-out-of-bound" coordinates that we intend to perform "tidyBoard" on.
         -- this way we'll eliminate candidates that doesn't fit into the board.
         edgeCoords =
-          [(r, c) | r <- [-1, rows], c <- [0 .. cols -1]]
+          [(r, c) | r <- [-1, rows], c <- [0 .. cols - 1]]
             <> [(r, c) | r <- [-1 .. rows], c <- [-1, cols]]
         tidyCoords = edgeCoords <> M.keys bdMines
     tidyByCoords bd0 tidyCoords

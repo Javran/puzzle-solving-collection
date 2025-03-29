@@ -84,7 +84,8 @@ batchReorganize fp = do
     then putStrLn "Skipped saving as the file content is identical."
     else do
       when (removed > 0) $
-        putStrLn $ "Dropped " <> show removed <> " duplicated puzzles."
+        putStrLn $
+          "Dropped " <> show removed <> " duplicated puzzles."
       writeFile fp (unlines $ concatMap (\(c, (_sz, ps)) -> c : ps) dedupedPuzzles)
       putStrLn $ "Written to: " <> fp
   putStrLn $ "There are " <> show (length dedupedPuzzles) <> " puzzles in this batch."

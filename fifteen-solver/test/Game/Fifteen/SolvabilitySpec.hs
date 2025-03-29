@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Game.Fifteen.SolvabilitySpec where
 
 import Data.List
@@ -87,7 +85,9 @@ spec = do
         if isSolvable bd
           then
             label "solvable" $
-              not . null $ solveBoard bd
+              not . null $
+                solveBoard bd
           else
             label "not solvable" $
-              not . null $ solveBoard (flipSolvability bd)
+              not . null $
+                solveBoard (flipSolvability bd)

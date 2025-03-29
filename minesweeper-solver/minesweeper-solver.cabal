@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dcd6da7851d1fb5bb457f3f1310969ae07a4b757a3151783215e896f6d2984b9
+-- hash: 2bca78986c9338201bd9726645a59d0765d1a5281baf57ebd21e0c7621222649
 
 name:           minesweeper-solver
 version:        0.1.0.0
@@ -32,7 +32,23 @@ library
       Paths_minesweeper_solver
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial
   build-depends:
       base
     , containers
@@ -43,7 +59,7 @@ library
     , union-find
     , unordered-containers
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable minesweeper-demo
   main-is: Main.hs
@@ -51,7 +67,23 @@ executable minesweeper-demo
       Paths_minesweeper_solver
   hs-source-dirs:
       exe
-  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
     , containers
@@ -63,7 +95,7 @@ executable minesweeper-demo
     , union-find
     , unordered-containers
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite hspec
   type: exitcode-stdio-1.0
@@ -74,7 +106,23 @@ test-suite hspec
       Paths_minesweeper_solver
   hs-source-dirs:
       test
-  ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -threaded -O2 -rtsopts -with-rtsopts=-N -main-is Spec
   build-depends:
       base
     , containers
@@ -87,4 +135,4 @@ test-suite hspec
     , union-find
     , unordered-containers
     , vector
-  default-language: Haskell2010
+  default-language: GHC2021

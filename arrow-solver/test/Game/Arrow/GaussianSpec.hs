@@ -1,7 +1,3 @@
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Arrow.GaussianSpec where
 
 import Control.Monad
@@ -30,8 +26,9 @@ spec = do
       pure $
         label lbl $
           t === gcd x y
-            .&&. (gcd x y =/= 1
-                    .||. u * x + v * y === 1)
+            .&&. ( gcd x y =/= 1
+                    .||. u * x + v * y === 1
+                 )
   describe "multInv" $ do
     prop "props" $ do
       m <- choose (1, 0xFFFFFF)
@@ -40,9 +37,10 @@ spec = do
       pure $
         either
           (label "no inv" . (=== n))
-          (\n' ->
-             label "has inv" $
-               n' >= 0 .&&. n' < m .&&. (n' * n) `mod` m === 1)
+          ( \n' ->
+              label "has inv" $
+                n' >= 0 .&&. n' < m .&&. (n' * n) `mod` m === 1
+          )
           r
   describe "solveMatOne" $ do
     {-

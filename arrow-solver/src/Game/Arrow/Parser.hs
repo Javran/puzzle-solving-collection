@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Game.Arrow.Parser where
 
 import Control.Monad
@@ -36,7 +33,7 @@ gridP = \case
   (Square, sz) ->
     replicateM sz (intsOfLen sz)
   (Hexagon, sz) ->
-    let lens = [sz .. sz * 2 - 1] <> [sz * 2 -2, sz * 2 -3 .. sz]
+    let lens = [sz .. sz * 2 - 1] <> [sz * 2 - 2, sz * 2 - 3 .. sz]
      in mapM intsOfLen lens
   where
     intsOfLen l = do

@@ -1,6 +1,6 @@
 module Game.Minesweeper.BoardRep
-  ( isPartial,
-    mergeBoardRep,
+  ( isPartial
+  , mergeBoardRep
   )
 where
 
@@ -31,7 +31,7 @@ mergeBoardRep brNew brCur = do
   mines <- (consistentMerge `on` brMines) brNew brCur
   pure
     brCur
-      { brNums = nums,
-        brMines = mines,
-        brMissing = (S.intersection `on` brMissing) brNew brCur
+      { brNums = nums
+      , brMines = mines
+      , brMissing = (S.intersection `on` brMissing) brNew brCur
       }

@@ -1,6 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-
 module Game.Fifteen.Board where
 
 import Control.Monad
@@ -23,22 +20,22 @@ mkBoard tileSource =
   where
     bdSize = length tileSource
     szSq = bdSize * bdSize
-    allCoords = [(r, c) | r <- [0 .. bdSize -1], c <- [0 .. bdSize -1]]
+    allCoords = [(r, c) | r <- [0 .. bdSize - 1], c <- [0 .. bdSize - 1]]
     pairs = zip allCoords (concat tileSource)
     ([(bdHole, _)], digitPairsPre) =
       partition (isNothing . snd) pairs
     digitPairs :: [(Int, Coord)]
     digitPairs = fmap (swap . second fromJust) digitPairsPre
     bdTiles = V.fromListN szSq $ concat tileSource
-    bdNums = V.replicate (szSq -1) undefined V.// digitPairs
+    bdNums = V.replicate (szSq - 1) undefined V.// digitPairs
 
 mkBoardFromRaw :: String -> Maybe Board
 mkBoardFromRaw = fmap mkBoard . parseRaw
 
 isSolved :: Board -> Bool
 isSolved Board {bdTiles, bdSize, bdHole} =
-  bdHole == (bdSize -1, bdSize -1)
-    && and (zipWith (==) (V.toList bdTiles) (Just <$> [0 .. bdSize * bdSize -2]))
+  bdHole == (bdSize - 1, bdSize - 1)
+    && and (zipWith (==) (V.toList bdTiles) (Just <$> [0 .. bdSize * bdSize - 2]))
 
 demo0Raw :: String
 demo0Raw =
@@ -72,11 +69,11 @@ parseRaw raw = do
               "_" -> pure Nothing
               _
                 | [(v, "")] <- reads xs ->
-                  -- note that number starts from 0,
-                  -- this is admittedly weird but allows
-                  -- vector indexing to be more convenient.
+                    -- note that number starts from 0,
+                    -- this is admittedly weird but allows
+                    -- vector indexing to be more convenient.
 
-                  pure (Just (pred v))
+                    pure (Just (pred v))
               _ -> Nothing
         guard $ length rawTiles == size
         mapM convertTile rawTiles
@@ -92,9 +89,9 @@ data Dir = DUp | DDown | DLeft | DRight
 
 applyDir :: Coord -> Dir -> Coord
 applyDir (r, c) d = case d of
-  DUp -> (r -1, c)
+  DUp -> (r - 1, c)
   DDown -> (r + 1, c)
-  DLeft -> (r, c -1)
+  DLeft -> (r, c - 1)
   DRight -> (r, c + 1)
 
 bdInRange :: Board -> Coord -> Bool
@@ -158,17 +155,17 @@ pprBoard bd@Board {bdSize} = do
             ]
 
   printSep "╔" "╦" "╗"
-  forM_ [0 .. bdSize -1] $ \r -> do
-    let lineTiles = fmap (bdGet bd . (r,)) [0 .. bdSize -1]
+  forM_ [0 .. bdSize - 1] $ \r -> do
+    let lineTiles = fmap (bdGet bd . (r,)) [0 .. bdSize - 1]
     putStrLn $ "║ " <> intercalate " ║ " (fmap (renderTile . fmap succ) lineTiles) <> " ║ " <> show r
-    if r < bdSize -1
+    if r < bdSize - 1
       then printSep "╠" "╬" "╣"
       else printSep "╚" "╩" "╝"
-  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [0 .. bdSize -1]
+  putStrLn $ drop 1 $ concatMap (("   " <>) . renderTile . Just) [0 .. bdSize - 1]
 
 mkGoalBoard :: Int -> Board
 mkGoalBoard sz =
-  mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz -2] <> [Nothing]
+  mkBoard $ chunksOf sz $ fmap Just [0 .. sz * sz - 2] <> [Nothing]
 
 pprSteps :: Board -> [Coord] -> IO (Maybe Board)
 pprSteps initBd allMoves = do

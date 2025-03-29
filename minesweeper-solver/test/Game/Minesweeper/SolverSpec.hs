@@ -1,4 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Game.Minesweeper.SolverSpec where
@@ -168,38 +167,39 @@ getTile' bd coord =
 
 spec :: Spec
 spec =
-  describe "mkBoard & solveBoard" $ forM_ tests $
-    \(label, (bdBeforeTmp, bdAfterTmp)) ->
-      specify ("Label " <> label) $ do
-        let Just bdSolved = do
-              (xs, bd) <- mkBoard bdBeforeTmp
-              solveBoard bd xs
-            Just bdAfter@Board {bdDims = (rows, cols)} =
-              -- as we only care about the parsed board,
-              -- we don't need to do anything with bdCandidates.
-              snd <$> mkBoard bdAfterTmp
-            allCoords =
-              [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
-        bdDims bdSolved `shouldBe` bdDims bdAfter
+  describe "mkBoard & solveBoard" $
+    forM_ tests $
+      \(label, (bdBeforeTmp, bdAfterTmp)) ->
+        specify ("Label " <> label) $ do
+          let Just bdSolved = do
+                (xs, bd) <- mkBoard bdBeforeTmp
+                solveBoard bd xs
+              Just bdAfter@Board {bdDims = (rows, cols)} =
+                -- as we only care about the parsed board,
+                -- we don't need to do anything with bdCandidates.
+                snd <$> mkBoard bdAfterTmp
+              allCoords =
+                [(r, c) | r <- [0 .. rows - 1], c <- [0 .. cols - 1]]
+          bdDims bdSolved `shouldBe` bdDims bdAfter
 
-        when (bdMines bdSolved /= bdMines bdAfter) $ do
-          putStrLn "Solver founds a different solution:"
-          forM_ [0 .. rows -1] $ \r -> do
-            let f c = case getTile' bdSolved (r, c) of
-                  Nothing -> "?"
-                  Just (Left False) -> "_"
-                  Just (Left True) -> "*"
-                  Just (Right v) -> show v
-            putStrLn $ concatMap f [0 .. cols -1]
+          when (bdMines bdSolved /= bdMines bdAfter) $ do
+            putStrLn "Solver founds a different solution:"
+            forM_ [0 .. rows - 1] $ \r -> do
+              let f c = case getTile' bdSolved (r, c) of
+                    Nothing -> "?"
+                    Just (Left False) -> "_"
+                    Just (Left True) -> "*"
+                    Just (Right v) -> show v
+              putStrLn $ concatMap f [0 .. cols - 1]
 
-        do
-          -- verify that solver doesn't add out-of-range assignments
-          -- into the MineMap.
-          let assignedCoords = M.keys (bdMines bdSolved)
-          assignedCoords `shouldSatisfy` all (isCoordInRange bdSolved)
-        forM_ allCoords $ \coord -> do
-          let tSolved = getTile' bdSolved coord
-              tAfter = getTile' bdAfter coord
-          -- verify that solver does come up with a solution that is
-          -- at least as good as the one given in this test case.
-          (tAfter, tSolved) `shouldSatisfy` uncurry isSameOrImproved
+          do
+            -- verify that solver doesn't add out-of-range assignments
+            -- into the MineMap.
+            let assignedCoords = M.keys (bdMines bdSolved)
+            assignedCoords `shouldSatisfy` all (isCoordInRange bdSolved)
+          forM_ allCoords $ \coord -> do
+            let tSolved = getTile' bdSolved coord
+                tAfter = getTile' bdAfter coord
+            -- verify that solver does come up with a solution that is
+            -- at least as good as the one given in this test case.
+            (tAfter, tSolved) `shouldSatisfy` uncurry isSameOrImproved

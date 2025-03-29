@@ -1,6 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Game.Fifteen.Human where
 
 import Control.Applicative
@@ -41,7 +38,6 @@ import Game.Fifteen.Types
 
  -}
 
-
 minMax :: Ord a => a -> a -> (a, a)
 minMax a b = if a <= b then (a, b) else (b, a)
 
@@ -56,19 +52,19 @@ minMax a b = if a <= b then (a, b) else (b, a)
 findRotatingRect :: Coord -> Coord -> Rect
 findRotatingRect target@(tr, tc) cur@(cr, cc)
   | target == cur =
-    error "This function should not be called with identical coords"
+      error "This function should not be called with identical coords"
   | tr == cr =
-    let (minR, maxR) = (tr, tr + 1)
-        (minC, maxC) = minMax tc cc
-     in ((minR, minC), (maxR, maxC))
+      let (minR, maxR) = (tr, tr + 1)
+          (minC, maxC) = minMax tc cc
+       in ((minR, minC), (maxR, maxC))
   | tc == cc =
-    let (minR, maxR) = minMax tr cr
-        (minC, maxC) = (tc, tc + 1)
-     in ((minR, minC), (maxR, maxC))
+      let (minR, maxR) = minMax tr cr
+          (minC, maxC) = (tc, tc + 1)
+       in ((minR, minC), (maxR, maxC))
   | otherwise =
-    let (minR, maxR) = minMax tr cr
-        (minC, maxC) = minMax tc cc
-     in ((minR, minC), (maxR, maxC))
+      let (minR, maxR) = minMax tr cr
+          (minC, maxC) = minMax tc cc
+       in ((minR, minC), (maxR, maxC))
 
 {-
   Protected coords are coordinates that have been solved,
@@ -100,18 +96,18 @@ findPathForHole bd@Board {bdHole} targetCoordsPre pCoords =
       | S.member coord targetCoords = pure (reverse path)
       | S.member coord visited = findPath todos visited
       | otherwise = do
-        let coordsInOneDir d = unfoldr go coord
-              where
-                go curCoord = do
-                  let nextCoord = applyDir curCoord d
-                  guard $ bdInRange bd nextCoord
-                  guard $ S.notMember nextCoord pCoords
-                  pure (nextCoord, nextCoord)
-            nextCoords =
-              filter (`S.notMember` visited) $
-                concatMap coordsInOneDir [DUp, DDown, DLeft, DRight]
-            todos' = todos <> fmap (\x -> (x, x : path)) nextCoords
-        findPath todos' (S.insert coord visited)
+          let coordsInOneDir d = unfoldr go coord
+                where
+                  go curCoord = do
+                    let nextCoord = applyDir curCoord d
+                    guard $ bdInRange bd nextCoord
+                    guard $ S.notMember nextCoord pCoords
+                    pure (nextCoord, nextCoord)
+              nextCoords =
+                filter (`S.notMember` visited) $
+                  concatMap coordsInOneDir [DUp, DDown, DLeft, DRight]
+              todos' = todos <> fmap (\x -> (x, x : path)) nextCoords
+          findPath todos' (S.insert coord visited)
 
 -- Sim for Simulator.
 type Sim = RWST () (DL.DList Coord) (Board, ProtectedCoords) Maybe
@@ -193,16 +189,16 @@ solveBoard initBoard@Board {bdSize}
   | bdSize <= 1 = [[]]
   | bdSize < 3 = error "not supported yet."
   | bdSize == 3 =
-    let Just bd' = TBT.fromBoard initBoard
-     in TBT.solveBoard bd'
+      let Just bd' = TBT.fromBoard initBoard
+       in TBT.solveBoard bd'
   | otherwise = do
-    -- bdSize > 3
-    case runRWST solveAux () (initBoard, S.empty) of
-      Just (bdEnd, _, moves) -> do
-        Just smBd <- pure (subBoard bdEnd)
-        smMoves <- solveBoard smBd
-        pure $ DL.toList moves <> fmap (\(r, c) -> (r + 1, c + 1)) smMoves
-      Nothing -> []
+      -- bdSize > 3
+      case runRWST solveAux () (initBoard, S.empty) of
+        Just (bdEnd, _, moves) -> do
+          Just smBd <- pure (subBoard bdEnd)
+          smMoves <- solveBoard smBd
+          pure $ DL.toList moves <> fmap (\(r, c) -> (r + 1, c + 1)) smMoves
+        Nothing -> []
   where
     solveCoord goalCoord@(gR, gC) = do
       guard $ gR == 0 || gC == 0
@@ -214,11 +210,11 @@ solveBoard initBoard@Board {bdSize}
              -}
             gR * bdSize + gC
       if
-          | goalCoord == (0, bdSize -1) ->
+        | goalCoord == (0, bdSize - 1) ->
             solveLastTile True goalCoord goalTile
-          | goalCoord == (bdSize -1, 0) ->
+        | goalCoord == (bdSize - 1, 0) ->
             solveLastTile False goalCoord goalTile
-          | otherwise ->
+        | otherwise ->
             solveSimpleTile goalCoord goalTile
 
     solveAux :: Sim Board
@@ -227,8 +223,8 @@ solveBoard initBoard@Board {bdSize}
       -- otherwise a tile meant for col might stuck in a corner that is tricky
       -- to get out.
       mapM_ solveCoord $
-        [(0, c) | c <- [0 .. bdSize -1]]
-          <> [(r, 0) | r <- [1 .. bdSize -1]]
+        [(0, c) | c <- [0 .. bdSize - 1]]
+          <> [(r, 0) | r <- [1 .. bdSize - 1]]
       gets fst
 
 play :: Coord -> Sim ()
@@ -307,9 +303,9 @@ solveSimpleTile goalCoord@(gR, gC) goalTile = do
       <|> do
         let goalCoord' =
               if
-                  | gR == 0 -> (1, gC)
-                  | gC == 0 -> (gR, 1)
-                  | otherwise ->
+                | gR == 0 -> (1, gC)
+                | gC == 0 -> (gR, 1)
+                | otherwise ->
                     {-
                       This is always available,
                       but it is likely that we will never hit this branch
@@ -325,22 +321,22 @@ tryMoveTile :: Coord -> Coord -> Sim ()
 tryMoveTile srcCoord dstCoord
   | srcCoord == dstCoord = pure ()
   | otherwise = do
-    (bd, pCoords) <- get
-    let holeCoord = bdHole bd
-    if dstCoord == holeCoord
-      && distance srcCoord dstCoord == 1
-      then -- if it only takes one step, we can't do anything better than this
-        play srcCoord
-      else do
-        let rotatingRect = findRotatingRect srcCoord dstCoord
-            rectCoords = rectToCoords rotatingRect
-        guard $ S.null (S.intersection rectCoords pCoords)
-        -- move the hole somewhere into the Rect without moving source tile.
-        moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
-        mapM_ play moves
-        curHoleCoord <- gets (bdHole . fst)
-        moves' <- lift $ SPB.searchMoveTile rotatingRect pCoords srcCoord curHoleCoord dstCoord
-        mapM_ play moves'
+      (bd, pCoords) <- get
+      let holeCoord = bdHole bd
+      if dstCoord == holeCoord
+        && distance srcCoord dstCoord == 1
+        then -- if it only takes one step, we can't do anything better than this
+          play srcCoord
+        else do
+          let rotatingRect = findRotatingRect srcCoord dstCoord
+              rectCoords = rectToCoords rotatingRect
+          guard $ S.null (S.intersection rectCoords pCoords)
+          -- move the hole somewhere into the Rect without moving source tile.
+          moves : _ <- pure $ findPathForHole bd rectCoords (S.insert srcCoord pCoords)
+          mapM_ play moves
+          curHoleCoord <- gets (bdHole . fst)
+          moves' <- lift $ SPB.searchMoveTile rotatingRect pCoords srcCoord curHoleCoord dstCoord
+          mapM_ play moves'
 
 {-
   for a n x n board (n > 1), check that first row and col are solved,
@@ -352,26 +348,26 @@ subBoard bd@Board {bdSize} = do
     -- check size and expect first row and col to be solved.
     guard $ bdSize > 1
     let expectSolvedCoords =
-          [(0, c) | c <- [0 .. bdSize -1]] <> [(r, 0) | r <- [1 .. bdSize -1]]
+          [(0, c) | c <- [0 .. bdSize - 1]] <> [(r, 0) | r <- [1 .. bdSize - 1]]
     forM_ expectSolvedCoords $ \coord@(r, c) -> do
       let goalTile = Just $ r * bdSize + c
       guard $ bdGet bd coord == goalTile
   let tileMap =
         M.fromList
           . fmap
-            (\(r, c) ->
-               let goalTile = Just $ r * bdSize + c
-                   smallGoalTile = Just $ (r -1) * (bdSize -1) + (c -1)
-                in ( fromJust $ goalTile
-                   , fromJust $ smallGoalTile
-                   ))
+            ( \(r, c) ->
+                let goalTile = Just $ r * bdSize + c
+                    smallGoalTile = Just $ (r - 1) * (bdSize - 1) + (c - 1)
+                 in ( fromJust $ goalTile
+                    , fromJust $ smallGoalTile
+                    )
+            )
           . init -- drop last one, which is Nothing.
-          $ [(r, c) | r <- [1 .. bdSize -1], c <- [1 .. bdSize -1]]
+          $ [(r, c) | r <- [1 .. bdSize - 1], c <- [1 .. bdSize - 1]]
       tileSource =
         [ [ fmap (tileMap M.!) $ bdGet bd (r, c)
-          | c <- [1 .. bdSize -1]
+          | c <- [1 .. bdSize - 1]
           ]
-        | r <- [1 .. bdSize -1]
+        | r <- [1 .. bdSize - 1]
         ]
   pure $ mkBoard tileSource
-

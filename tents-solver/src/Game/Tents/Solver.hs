@@ -1,6 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
@@ -153,7 +150,7 @@ mkBoard
     , brRowTentCounts = bdRowTentCounts
     , brColTentCounts = bdColTentCounts
     } = do
-    let allCoords = S.fromList [(r, c) | r <- [0 .. rows -1], c <- [0 .. cols -1]]
+    let allCoords = S.fromList [(r, c) | r <- [0 .. rows - 1], c <- [0 .. cols - 1]]
         coordIsInside (r, c) = r >= 0 && r < rows && c >= 0 && c < cols
         missingCoords = allCoords `S.difference` M.keysSet brBoard
         allTrees = M.keysSet $ M.filter (== Tree) brBoard
@@ -173,21 +170,22 @@ mkBoard
           where
             go coords count =
               fmap
-                (M.filterWithKey (\coord _ -> isUnknown coord)
-                   . M.fromList
-                   . zip coords)
-                filledLine
-              :: Candidates
+                ( M.filterWithKey (\coord _ -> isUnknown coord)
+                    . M.fromList
+                    . zip coords
+                )
+                filledLine ::
+                Candidates
               where
                 isUnknown coord = bdCells M.!? coord == Nothing
                 filledLine = fillLine count $ fmap (bdCells M.!?) coords
     todoRowCandidates <-
       genRowOrColCandidates
-        [[(r, c) | c <- [0 .. cols -1]] | r <- [0 ..]]
+        [[(r, c) | c <- [0 .. cols - 1]] | r <- [0 ..]]
         (V.toList bdRowTentCounts)
     todoColCandidates <-
       genRowOrColCandidates
-        [[(r, c) | r <- [0 .. rows -1]] | c <- [0 ..]]
+        [[(r, c) | r <- [0 .. rows - 1]] | c <- [0 ..]]
         (V.toList bdColTentCounts)
     let todoCandidateCleanup :: [Candidates] -> [Candidates]
         todoCandidateCleanup = filter shouldKeep
@@ -199,15 +197,17 @@ mkBoard
           candidateTentCoords coord = do
             let result =
                   filter
-                    (\coord' ->
-                       let r = bdCells M.!? coord'
-                        in r == Nothing || r == Just Tent)
+                    ( \coord' ->
+                        let r = bdCells M.!? coord'
+                         in r == Nothing || r == Just Tent
+                    )
                     . filter coordIsInside
                     $ directNeighbors coord
             guardNotNull result
       M.fromList
-        <$> (forM (S.toList allTrees) $ \tCoord ->
-               (tCoord,) <$> candidateTentCoords tCoord)
+        <$> ( forM (S.toList allTrees) $ \tCoord ->
+                (tCoord,) <$> candidateTentCoords tCoord
+            )
     {-
       Note that it's intentional that tentRepel is not performed on this initial board.
       This decision is made so that we can untie any test on tentRepel from this function.
@@ -253,7 +253,7 @@ fillLine tentCount = fillLineAux tentCount Empty []
         [reverse revAcc | n == 0]
       hd : tl -> case hd of
         Just v -> do
-          let n' = if v == Tent then n -1 else n
+          let n' = if v == Tent then n - 1 else n
           guard $ n' >= 0
           fillLineAux n' v (v : revAcc) tl
         Nothing ->
@@ -265,7 +265,7 @@ fillLine tentCount = fillLineAux tentCount Empty []
             <> do
               guard $ prevCell /= Tent
               guard $ n > 0
-              fillLineAux (n -1) Tent (Tent : revAcc) tl
+              fillLineAux (n - 1) Tent (Tent : revAcc) tl
 
 {-
   It is guaranteed that getCell will never access any field with Todo in name.
@@ -281,8 +281,8 @@ tentRepel bd coord@(r, c) = case getCell bd coord of
   Just Tent -> do
     let Board {bdDims = (rows, cols)} = bd
         coordsToEmpty = do
-          r' <- [max 0 (r -1) .. min (rows -1) (r + 1)]
-          c' <- [max 0 (c -1) .. min (cols -1) (c + 1)]
+          r' <- [max 0 (r - 1) .. min (rows - 1) (r + 1)]
+          c' <- [max 0 (c - 1) .. min (cols - 1) (c + 1)]
           let coord' = (r', c')
           guard $ getCell bd coord' == Nothing
           pure coord'
@@ -574,7 +574,7 @@ solve bd = do
           treeItems :: [SearchItem]
           treeItems = fmap (\(treeCoord, alts) -> ((length alts, Nothing), tryTree treeCoord alts bd)) $ M.toList bdTodoTrees
           rowOrColItems :: [SearchItem]
-          rowOrColItems = fmap (\cs -> ((length cs, Just (- M.size (head cs))), tryCandidates cs bd)) bdTodoCandidates
+          rowOrColItems = fmap (\cs -> ((length cs, Just (-M.size (head cs))), tryCandidates cs bd)) bdTodoCandidates
           {-
             all possible next steps to explore. see comments in SearchItem.
             it is probably tempting to do sorting on two lists and them merging sorted results,
@@ -613,9 +613,9 @@ pprBoard
             Just Tree -> bg Green $ fg White $ termText "R"
             Just Tent -> bg Blue $ fg White $ termText "E"
 
-    forM_ [0 .. rows -1] $ \r -> do
+    forM_ [0 .. rows - 1] $ \r -> do
       let rendered =
-            foldMap (renderCell (getCell bd) . (r,)) [0 .. cols -1]
+            foldMap (renderCell (getCell bd) . (r,)) [0 .. cols - 1]
               <> termText (show (bdRowTentCounts V.! r))
               <> termText "\n"
       runTermOutput term rendered
@@ -624,8 +624,8 @@ pprBoard
           if n > 9 then "-" else show n
     putStrLn (concatMap tr $ V.toList bdColTentCounts)
     putStrLn "Tree candidates counts:"
-    forM_ [0 .. rows -1] $ \r -> do
-      forM_ [0 .. cols -1] $ \c ->
+    forM_ [0 .. rows - 1] $ \r -> do
+      forM_ [0 .. cols - 1] $ \c ->
         putStr $
           case getCell bd (r, c) of
             Nothing -> "?"
@@ -656,7 +656,10 @@ pprBoard
               foldMap (let f v = (Just (Min v), Just (Max v)) in bimap f f) coords
 
       putStrLn $
-        show idx <> ": " <> show (length cs) <> " pieces, with range: "
+        show idx
+          <> ": "
+          <> show (length cs)
+          <> " pieces, with range: "
           <> show (minRow, minCol)
           <> "-"
           <> show (maxRow, maxCol)
@@ -693,10 +696,11 @@ isSolved Board {bdCells} =
   where
     (getSum -> countTree, getSum -> countTent) =
       foldMap
-        (\x ->
-           ( if x == Tree then 1 :: Sum Int else 0
-           , if x == Tent then 1 :: Sum Int else 0
-           ))
+        ( \x ->
+            ( if x == Tree then 1 :: Sum Int else 0
+            , if x == Tent then 1 :: Sum Int else 0
+            )
+        )
         (M.elems bdCells)
 
 printTentPositions :: Board -> IO ()

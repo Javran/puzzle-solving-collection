@@ -1,17 +1,14 @@
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 
 module Game.Minesweeper.Parser
-  ( sampleRaw,
-    parseBoard,
-    newlineP,
-    rowsAndColsP,
-    tileP,
-    boardP,
-    fullBoardP,
+  ( sampleRaw
+  , parseBoard
+  , newlineP
+  , rowsAndColsP
+  , tileP
+  , boardP
+  , fullBoardP
   )
 where
 
@@ -90,13 +87,13 @@ boardP brDims@(rows, cols) = do
   (results :: [((Int, Int), Either () (Maybe Int, Maybe Bool))]) <-
     concat
       <$> forM
-        [0 .. rows -1]
+        [0 .. rows - 1]
         ( \row ->
-            forM [0 .. cols -1] (\col -> ((row, col),) <$> tileP) <* newlineP
+            forM [0 .. cols - 1] (\col -> ((row, col),) <$> tileP) <* newlineP
         )
-  let ( M.fromList . DL.toList -> brNums,
-        M.fromList . DL.toList -> brMines,
-        S.fromList . DL.toList -> brMissing
+  let ( M.fromList . DL.toList -> brNums
+        , M.fromList . DL.toList -> brMines
+        , S.fromList . DL.toList -> brMissing
         ) =
           foldMap
             ( (,,)

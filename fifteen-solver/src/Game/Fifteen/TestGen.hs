@@ -1,7 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Fifteen.TestGen where
 
 {-
@@ -32,7 +28,7 @@ import Test.QuickCheck
 
 genBoardOfSize :: Int -> Gen Board
 genBoardOfSize sz = do
-  let lastNum = sz * sz -1
+  let lastNum = sz * sz - 1
       tr x = if x == lastNum then Nothing else Just x
   xs <- shuffle [0 .. lastNum]
   pure $ mkBoard $ (fmap . fmap) tr $ Data.List.Split.chunksOf sz xs
@@ -57,7 +53,8 @@ testGenBundle = do
           commentLine = "# " <> UUID.toString tag
           tiles = Data.List.Split.chunksOf bdSize $ V.toList bdTiles
       genTestBoard sz =
-        (,) <$> UUID.nextRandom
+        (,)
+          <$> UUID.nextRandom
           <*> generate (genSolvableBoardOfSize sz)
   pairs <- fmap concat <$> for [3 .. 12] $ \sz -> replicateM 5 (genTestBoard sz)
   mapM_ putStrLn $ concatMap renderBoard pairs
@@ -110,7 +107,10 @@ testGenSolveAll fpPuzzle = do
         desc = case mOldMoveCount of
           Nothing -> show moveCount
           Just oldMoveCount ->
-            show moveCount <> ", was " <> show oldMoveCount <> ", "
+            show moveCount
+              <> ", was "
+              <> show oldMoveCount
+              <> ", "
               <> case compare moveCount oldMoveCount of
                 EQ -> "same"
                 LT -> "less"

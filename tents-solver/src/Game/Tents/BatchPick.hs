@@ -1,13 +1,13 @@
 module Game.Tents.BatchPick where
 
 import Control.Monad.Except
+import Control.Monad.IO.Class
 import Game.Tents.Parser
 import Game.Tents.Solver
 import Game.Tents.Types
 import Game.Tents.Utils
 import System.Console.Terminfo
 import System.Exit
-import Control.Monad.IO.Class
 
 batchPick :: Terminal -> FilePath -> String -> IO ()
 batchPick term fp puzzleId = do

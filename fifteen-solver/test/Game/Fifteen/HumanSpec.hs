@@ -30,9 +30,9 @@ spec = do
               not (null solutions)
                 .&&. let moves = head solutions
                       in case applyMoves bd moves of
-                           Nothing -> False
-                           Just bdFin ->
-                             isSolved bdFin
+                          Nothing -> False
+                          Just bdFin ->
+                            isSolved bdFin
     describe "examples from data files" $ do
       {-
         The main purpose of this section is to show whether

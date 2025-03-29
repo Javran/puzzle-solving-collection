@@ -1,6 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TupleSections #-}
-
 module Game.Tents.Parser
   ( loadPuzzles
   , parseBoard
@@ -70,7 +67,7 @@ boardRep = do
       brBoard =
         M.fromList
           . mapMaybe (\(coord, m) -> (coord,) <$> m)
-          $ zip [(row, col) | row <- [0 .. rows -1], col <- [0 .. cols -1]] joinedLines
+          $ zip [(row, col) | row <- [0 .. rows - 1], col <- [0 .. cols - 1]] joinedLines
   brColTentCounts <- V.fromListN cols <$> lastLine cols
   pure
     BoardRep

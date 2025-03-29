@@ -8,6 +8,31 @@ copyright: "Copyright: (c) 2021 Javran Cheng"
 
 description: description
 
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
+
 dependencies:
 - base
 - containers
@@ -17,9 +42,6 @@ dependencies:
 
 library:
   source-dirs: src
-  ghc-options:
-    - -Wall
-    - -O2
 
 executables:
   arrow-demo:
@@ -28,7 +50,6 @@ executables:
     dependencies:
       - arrow-solver
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts
@@ -45,7 +66,6 @@ tests:
       - hspec
       - arithmoi
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts

@@ -8,6 +8,30 @@ copyright: "Copyright: (c) 2020 Javran Cheng"
 
 description: description
 
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
 dependencies:
 - base
 - containers
@@ -29,9 +53,6 @@ data-files:
 library:
   generated-exposed-modules: Paths_fifteen_solver
   source-dirs: src
-  ghc-options:
-    - -Wall
-    - -O2
 
 executables:
   fifteen-demo:
@@ -40,7 +61,6 @@ executables:
     dependencies:
       - fifteen-solver
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts
@@ -55,7 +75,6 @@ tests:
       - fifteen-solver
       - hspec
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts

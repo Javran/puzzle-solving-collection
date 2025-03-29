@@ -21,14 +21,14 @@ instance Arbitrary DemoBoard where
       sz <- choose (5, 12)
       let bd0 = mkGoalBoard sz
       -- pick a random coord and move hole to that coord.
-      hR <- choose (0, sz -1)
+      hR <- choose (0, sz - 1)
       let bd1 =
-            if hR == sz -1
+            if hR == sz - 1
               then bd0
-              else fromJust $ applyMoves bd0 [(hR, sz -1)]
-      hC <- choose (0, sz -1)
+              else fromJust $ applyMoves bd0 [(hR, sz - 1)]
+      hC <- choose (0, sz - 1)
       let bd2 =
-            if hC == sz -1
+            if hC == sz - 1
               then bd1
               else fromJust $ applyMoves bd1 [(hR, hC)]
       pure bd2
@@ -59,7 +59,7 @@ spec = do
             this is important as it covers cases where curCoord is not involved
             with the move at all.
            -}
-          forM_ [0 .. 4 * 4 -2] $ \tileNum -> do
+          forM_ [0 .. 4 * 4 - 2] $ \tileNum -> do
             let spBd = bdToSpBd tileNum bd
                 expectedSpBd = bdToSpBd tileNum bd'
             applyMove spBd mv `shouldBe` Just expectedSpBd
@@ -77,10 +77,10 @@ spec = do
       prop "correctness" $ do
         sz <- choose (3, 3)
         bd <- genBoardOfSize sz
-        let boundingRect = ((0, 0), (sz -1, sz -1))
-            rowOrCol = choose (0, sz -1)
+        let boundingRect = ((0, 0), (sz - 1, sz - 1))
+            rowOrCol = choose (0, sz - 1)
         dstCoord <- (,) <$> rowOrCol <*> rowOrCol
-        srcTile <- choose (0, sz * sz -2)
+        srcTile <- choose (0, sz * sz - 2)
         let srcCoord = bdNums bd V.! srcTile
             Just moves =
               searchMoveTile boundingRect mempty srcCoord (bdHole bd) dstCoord

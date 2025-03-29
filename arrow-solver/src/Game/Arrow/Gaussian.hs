@@ -7,8 +7,6 @@
   we only have M = 2, 4, 6 to worry about, and this method of solving seems to work
   after some workaround.
  -}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Game.Arrow.Gaussian
   ( extEuclidean
@@ -74,68 +72,69 @@ underDetFallback :: Integral i => i -> ElimStepM i
 underDetFallback m eqns
   | null eqns = stop
   | isLhsSquare = do
-    {-
-      note that here we also have l >= 1.
-     -}
-    let fstNonZeroInd =
-          getFirst
-            . mconcat
-            . fmap (First . findIndex (\v -> v `mod` m /= 0))
-            $ eqns
-    case fstNonZeroInd of
-      Nothing ->
-        {-
-          On this branch, we have a square full of zeros modulo `m`, we can
-          make this determined by fixing all underdetermined variables to 0.
-         -}
-        let (hdL : tlL) =
-              fmap
-                (<> [0])
-                [[if r == c then 1 else 0 | c <- [1 .. l]] | r <- [1 .. l]]
-         in Right $ Just (hdL, fmap (drop 1) tlL)
-      Just nzInd -> do
-        {-
-          On this branch, we have some non-zero columns that we can swap to the front
-          so that we can keep making more progress, after the swapped matrix is solved,
-          we swap the resulting values back and move on.
-         -}
-        let common = foldr gcd m (concat eqns)
-            m' = m `div` common
-            eqns' = (fmap . fmap) (`div` common) eqns
-            (doShuffle, unShuffle) = shuffler nzInd
-            eqns'' = fmap doShuffle eqns'
-        {-
-          It seems that by moving a column that contains
-          non-zero element to the front, we can make sure it's making progress,
-          therefore we don't actually have a potential of infinte loop here.
-          But that is not true: if `gcd m` through the equations gives 1,
-          it can be shown that we will run into an infinite loop.
-          For now we just throw a `Left` here and leave it be,
-          as we doesn't seem to run into this case for simple puzzles.
-         -}
-        when (common == 1) $
-          Left $ Todo (show nzInd)
-        rsPre <- solveMatOne m' eqns''
-        let rs = unShuffle rsPre
-            (hdL : tlL) =
-              zipWith
-                (\r lhs -> lhs <> [r])
-                rs
-                [[if r == c then 1 else 0 | c <- [1 .. l]] | r <- [1 .. l]]
-        Right $ Just (hdL, fmap (drop 1) tlL)
+      {-
+        note that here we also have l >= 1.
+       -}
+      let fstNonZeroInd =
+            getFirst
+              . mconcat
+              . fmap (First . findIndex (\v -> v `mod` m /= 0))
+              $ eqns
+      case fstNonZeroInd of
+        Nothing ->
+          {-
+            On this branch, we have a square full of zeros modulo `m`, we can
+            make this determined by fixing all underdetermined variables to 0.
+           -}
+          let (hdL : tlL) =
+                fmap
+                  (<> [0])
+                  [[if r == c then 1 else 0 | c <- [1 .. l]] | r <- [1 .. l]]
+           in Right $ Just (hdL, fmap (drop 1) tlL)
+        Just nzInd -> do
+          {-
+            On this branch, we have some non-zero columns that we can swap to the front
+            so that we can keep making more progress, after the swapped matrix is solved,
+            we swap the resulting values back and move on.
+           -}
+          let common = foldr gcd m (concat eqns)
+              m' = m `div` common
+              eqns' = (fmap . fmap) (`div` common) eqns
+              (doShuffle, unShuffle) = shuffler nzInd
+              eqns'' = fmap doShuffle eqns'
+          {-
+            It seems that by moving a column that contains
+            non-zero element to the front, we can make sure it's making progress,
+            therefore we don't actually have a potential of infinte loop here.
+            But that is not true: if `gcd m` through the equations gives 1,
+            it can be shown that we will run into an infinite loop.
+            For now we just throw a `Left` here and leave it be,
+            as we doesn't seem to run into this case for simple puzzles.
+           -}
+          when (common == 1) $
+            Left $
+              Todo (show nzInd)
+          rsPre <- solveMatOne m' eqns''
+          let rs = unShuffle rsPre
+              (hdL : tlL) =
+                zipWith
+                  (\r lhs -> lhs <> [r])
+                  rs
+                  [[if r == c then 1 else 0 | c <- [1 .. l]] | r <- [1 .. l]]
+          Right $ Just (hdL, fmap (drop 1) tlL)
   | otherwise = stop
   where
     stop = Left Underdetermined
     l = length eqns
     isLhsSquare = all ((== l + 1) . length) eqns
 
-upperTriangular
-  :: forall i.
-  Integral i
-  => (i -> ElimStepM i)
-  -> i
-  -> [[i]]
-  -> Either (Err i) [[i]]
+upperTriangular ::
+  forall i.
+  Integral i =>
+  (i -> ElimStepM i) ->
+  i ->
+  [[i]] ->
+  Either (Err i) [[i]]
 upperTriangular fallback m = unfoldrM elimStepM
   where
     elimStepM :: ElimStepM i

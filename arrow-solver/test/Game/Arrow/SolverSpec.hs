@@ -11,7 +11,7 @@ import Test.QuickCheck
 
 -- Generates [0..p-1] following shape of a nested list.
 genMoves :: Int -> [[a]] -> Gen [[Int]]
-genMoves p = (traverse . traverse) (const $ choose (0, p -1))
+genMoves p = (traverse . traverse) (const $ choose (0, p - 1))
 
 spec :: Spec
 spec = describe "solve" $ do
@@ -96,7 +96,8 @@ spec = describe "solve" $ do
 
     forM_ parameters $ \(p, ty@(shape, side)) -> do
       let desc =
-            "mod: " <> show p
+            "mod: "
+              <> show p
               <> ", type: "
               <> show shape
               <> ", "
@@ -105,8 +106,9 @@ spec = describe "solve" $ do
         let gd =
               withShape
                 shape
-                (\pty ->
-                   fmap (const 0) <$> shapedCoords pty side)
+                ( \pty ->
+                    fmap (const 0) <$> shapedCoords pty side
+                )
             initPz =
               Puzzle
                 p

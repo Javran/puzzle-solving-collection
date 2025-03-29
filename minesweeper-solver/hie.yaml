@@ -1,1 +1,9 @@
-cradle: {stack: {component: "minesweeper-solver:exe:minesweeper-demo"}}
+cradle:
+  stack:
+    - path: "./src"
+      component: "minesweeper-solver:lib"
+    - path: "./test"
+      component: "minesweeper-solver:exe:minesweeper-demo"
+    - path: "./exe"
+      component: "minesweeper-solver:test:hspec"
+
