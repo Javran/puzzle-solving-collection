@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "kakuro-solver:lib"
+    - path: "./exe"
+      component: "kakuro-solver:exe:demo"
+    - path: "./test"
+      component: "kakuro-solver:test:hspec"

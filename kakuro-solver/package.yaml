@@ -1,0 +1,79 @@
+name: kakuro-solver
+version: 0.1.0.0
+github: Javran/kakuro-solver
+license: BSD3
+author: Javran Cheng
+maintainer: javran.c@gmail.com
+description: description
+
+ghc-options:
+  - -Wall
+  - -Wno-incomplete-uni-patterns
+  - -Wno-x-partial
+
+language: GHC2021
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DefaultSignatures
+  - DerivingVia
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiWayIf
+  - NoDoAndIfThenElse
+  - NoImportQualifiedPost
+  - NoNamedWildCards
+  - NoUnicodeSyntax
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - TypeFamilies
+
+dependencies:
+  - base
+  - containers
+
+library:
+  source-dirs: src
+  dependencies:
+    - aeson
+    - bytestring
+    - deepseq
+    - dlist
+    - mtl
+    - safe-exceptions
+    - shower
+    - split
+    - terminfo
+    - text
+    - transformers
+    - yaml
+
+executables:
+  demo:
+    main: Main.hs
+    source-dirs: exe
+    dependencies:
+      - kakuro-solver
+    ghc-options:
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+tests:
+  hspec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - kakuro-solver
+      - QuickCheck
+      - hspec
+    ghc-options:
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -main-is Spec

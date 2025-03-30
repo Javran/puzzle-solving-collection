@@ -1,0 +1,130 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           kakuro-solver
+version:        0.1.0.0
+description:    description
+homepage:       https://github.com/Javran/kakuro-solver#readme
+bug-reports:    https://github.com/Javran/kakuro-solver/issues
+author:         Javran Cheng
+maintainer:     javran.c@gmail.com
+license:        BSD3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/Javran/kakuro-solver
+
+library
+  exposed-modules:
+      Game.Kakuro.DigitSet
+      Game.Kakuro.Main
+      Game.Kakuro.Parse
+      Game.Kakuro.PrettyPrint
+      Game.Kakuro.PuzzleCompact
+      Game.Kakuro.Solver
+      Game.Kakuro.Types
+      Game.Kakuro.Uldr
+  other-modules:
+      Paths_kakuro_solver
+  hs-source-dirs:
+      src
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , containers
+    , deepseq
+    , dlist
+    , mtl
+    , safe-exceptions
+    , shower
+    , split
+    , terminfo
+    , text
+    , transformers
+    , yaml
+  default-language: GHC2021
+
+executable demo
+  main-is: Main.hs
+  other-modules:
+      Paths_kakuro_solver
+  hs-source-dirs:
+      exe
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -O2 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , containers
+    , kakuro-solver
+  default-language: GHC2021
+
+test-suite hspec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Game.Kakuro.DigitSetSpec
+      Game.Kakuro.SolverSpec
+      Paths_kakuro_solver
+  hs-source-dirs:
+      test
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DerivingVia
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      MultiWayIf
+      NoDoAndIfThenElse
+      NoImportQualifiedPost
+      NoNamedWildCards
+      NoUnicodeSyntax
+      OverloadedStrings
+      PartialTypeSignatures
+      TypeFamilies
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -Wno-x-partial -O2 -threaded -rtsopts -with-rtsopts=-N -main-is Spec
+  build-depends:
+      QuickCheck
+    , base
+    , containers
+    , hspec
+    , kakuro-solver
+  default-language: GHC2021
