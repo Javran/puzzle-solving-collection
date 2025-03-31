@@ -20,12 +20,12 @@ import Game.Kakuro.Parse
   , fromYaml
   , puzzleToSolState
   )
+import Game.Kakuro.PrettyPrint (pprPuzzle)
 import Game.Kakuro.PuzzleCompact as Pc
 import Game.Kakuro.Solver (isSolved, solve)
 import Game.Kakuro.Types
 import System.CPUTime
-
--- import System.Console.Terminfo (setupTermFromEnv)
+import System.Console.Terminfo (setupTermFromEnv)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO
@@ -103,10 +103,16 @@ loadBundles ty fs = do
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
-  -- TODO: restore the command for solving just one puzzle and pretty print.
-  -- _term <- setupTermFromEnv
+  term <- setupTermFromEnv
 
   getArgs >>= \case
+    ["solve", fp] -> do
+      Right pr <- fromYaml fp
+      let
+        Right pz = repToPuzzle pr
+        ss0 = puzzleToSolState pz
+        ssFin = solve ss0
+      pprPuzzle term pz ssFin
     "solve-bundle" : ty : fps -> do
       pzs <- loadBundles ty fps
       solveAll pzs
