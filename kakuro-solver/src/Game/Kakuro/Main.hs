@@ -6,8 +6,10 @@ import Control.DeepSeq (NFData, force)
 import Control.Exception
 import Control.Monad
 import Data.Aeson
+import qualified Data.DList as DL
 import Data.Either
 import Data.Foldable (toList)
+import Data.Functor.Identity
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -15,15 +17,15 @@ import Data.Monoid
 import qualified Data.Text as T
 import Game.Kakuro.Parse
   ( PuzzleRaw
-  , fromYamlFileOrDie
+  , fromYaml
   , puzzleToSolState
   )
-import Game.Kakuro.PrettyPrint (pprPuzzle)
 import Game.Kakuro.PuzzleCompact as Pc
 import Game.Kakuro.Solver (isSolved, solve)
 import Game.Kakuro.Types
 import System.CPUTime
-import System.Console.Terminfo (setupTermFromEnv)
+
+-- import System.Console.Terminfo (setupTermFromEnv)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO
@@ -64,23 +66,48 @@ solveAll xs0 = do
   printf "solved: %d, partial: %d, failed: %d\n" solved partial failed
   printf "total CPU time elapsed: %d ms\n" (quot (t1 - t0) 1_000_000_000)
 
+convertPuzzles :: (Foldable f, IsPuzzleRep pr) => f pr -> ([String], [Puzzle])
+convertPuzzles = partitionEithers . fmap repToPuzzle . toList
+
+data EPz = forall f pr. (Foldable f, IsPuzzleRep pr) => EPz (FilePath -> IO (Either String (f pr)))
+
+puzzleLoaders :: [(String, EPz)]
+puzzleLoaders =
+  [ ("yaml", EPz @Identity @PuzzleRaw $ (fmap . fmap . fmap) Identity fromYaml)
+  , ("bd0", EPz @IM.IntMap @PuzzleRaw $ eitherDecodeFileStrict' @Bundle)
+  , ("bd1", EPz @Bundle2 @PuzzleCompact $ eitherDecodeFileStrict')
+  ]
+
+loadBundles :: String -> [FilePath] -> IO [Puzzle]
+loadBundles ty fs = do
+  EPz loader <- case lookup ty puzzleLoaders of
+    Just f -> pure f
+    Nothing -> die $ "Cannot find puzzle loader for type " <> ty
+
+  (ls0, rs0) <-
+    mconcat <$> forM fs \fp -> do
+      r <- loader fp
+      case r of
+        Left err -> pure (DL.singleton (fp, err), mempty)
+        Right r1 -> pure (mempty, DL.fromList $ toList r1)
+
+  let failed = DL.toList ls0
+  unless (null failed) do
+    putStrLn $ "Failed to load from following sources: " <> show failed
+
+  let (ls1, rs1) = convertPuzzles rs0
+  unless (null ls1) do
+    printf "Puzzles failed during conversion: %d\n" (length ls1)
+  pure rs1
+
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
-  term <- setupTermFromEnv
+  -- TODO: restore the command for solving just one puzzle and pretty print.
+  -- _term <- setupTermFromEnv
 
-  {-
-    TODO: messy subcommands, do better.
-   -}
   getArgs >>= \case
-    ["solve", fp] -> do
-      (puzzle, ss) <- fromYamlFileOrDie fp
-      let ss' = solve ss
-      pprPuzzle term puzzle ss'
-    ["solve-bundle", fp] -> do
-      Just bundle <- decodeFileStrict' @Bundle fp
-      solveAll bundle
-    ["solve-bundle2", fp] -> do
-      Just bundle <- decodeFileStrict' @(Bundle2 PuzzleCompact) fp
-      solveAll bundle
+    "solve-bundle" : ty : fps -> do
+      pzs <- loadBundles ty fps
+      solveAll pzs
     xs -> die $ "unknown args: " <> unwords xs

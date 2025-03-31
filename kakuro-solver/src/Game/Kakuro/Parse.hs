@@ -1,5 +1,5 @@
 module Game.Kakuro.Parse
-  ( fromYamlFileOrDie
+  ( fromYaml
   , PuzzleRaw (..)
   , puzzleFromRaw
   , puzzleToSolState
@@ -44,7 +44,6 @@ import Data.Tuple
 import qualified Data.Yaml as Yaml
 import qualified Game.Kakuro.DigitSet as DS
 import Game.Kakuro.Types
-import System.Exit (die)
 
 {-
   Intermediate data type meant to simply receive
@@ -90,14 +89,14 @@ groupCoords d = fix $ \go -> \case
      in
       NE.fromList (fmap fst ls) : go (fmap fst rs)
 
-fromYamlFileOrDie :: FilePath -> IO (Puzzle, SolState)
-fromYamlFileOrDie fp =
+fromYaml :: FilePath -> IO (Either String PuzzleRaw)
+fromYaml fp =
   Yaml.decodeFileEither @Value fp >>= \case
-    Left err -> die $ "Error loading from Yaml: " <> displayException err
+    Left err -> pure $ Left (displayException err)
     Right r ->
-      case parseEither (parseJSON @PuzzleRaw) r >>= puzzleFromRaw of
-        Left err -> die err
-        Right r1 -> pure r1
+      case parseEither (parseJSON @PuzzleRaw) r of
+        Left err -> pure $ Left err
+        Right r1 -> pure $ Right r1
 
 puzzleFromRaw :: PuzzleRaw -> Either String (Puzzle, SolState)
 puzzleFromRaw PuzzleRaw {prGrid, prClueRows, prClueCols} = do
