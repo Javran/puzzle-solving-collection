@@ -51,7 +51,7 @@ theGood, theBad, theUgly :: GoodBadUgly Int
 solveAll :: (IsPuzzleRep pr, Functor f, Foldable f) => f pr -> IO ()
 solveAll xs0 = do
   (parseFailed, xs1) <- evaluate do
-    force . partitionEithers . fmap repToPuzzle $ toList xs0
+    force . convertPuzzles $ xs0
   unless (null parseFailed) do
     printf "Puzzles failed during conversion: %d\n" (length parseFailed)
   t0 <- getCPUTime
@@ -69,7 +69,11 @@ solveAll xs0 = do
 convertPuzzles :: (Foldable f, IsPuzzleRep pr) => f pr -> ([String], [Puzzle])
 convertPuzzles = partitionEithers . fmap repToPuzzle . toList
 
+{-
+  TODO: feels wrong having this many existentials, maybe https://stackoverflow.com/a/55152065 ?
+ -}
 data EPz = forall f pr. (Foldable f, IsPuzzleRep pr) => EPz (FilePath -> IO (Either String (f pr)))
+data EPz2 = forall f pr. (Foldable f, Functor f, IsPuzzleRep pr) => EPz2 (f pr)
 
 puzzleLoaders :: [(String, EPz)]
 puzzleLoaders =
@@ -78,7 +82,7 @@ puzzleLoaders =
   , ("bd1", EPz @Bundle2 @PuzzleCompact $ eitherDecodeFileStrict')
   ]
 
-loadBundles :: String -> [FilePath] -> IO [Puzzle]
+loadBundles :: String -> [FilePath] -> IO EPz2
 loadBundles ty fs = do
   EPz loader <- case lookup ty puzzleLoaders of
     Just f -> pure f
@@ -94,11 +98,7 @@ loadBundles ty fs = do
   let failed = DL.toList ls0
   unless (null failed) do
     putStrLn $ "Failed to load from following sources: " <> show failed
-
-  let (ls1, rs1) = convertPuzzles rs0
-  unless (null ls1) do
-    printf "Puzzles failed during conversion: %d\n" (length ls1)
-  pure rs1
+  pure (EPz2 (DL.toList rs0))
 
 main :: IO ()
 main = do
@@ -114,6 +114,6 @@ main = do
         ssFin = solve ss0
       pprPuzzle term pz ssFin
     "solve-bundle" : ty : fps -> do
-      pzs <- loadBundles ty fps
+      EPz2 pzs <- loadBundles ty fps
       solveAll pzs
     xs -> die $ "unknown args: " <> unwords xs
